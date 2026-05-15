@@ -1,9 +1,21 @@
 import { create } from 'zustand'
-import { CREATORS } from '../lib/data'
-import { getTier, getNextTier } from '../lib/tierUtils'
+import { getTier } from '../lib/tierUtils'
+import { fetchCreators, createCreator } from '../lib/api/creators'
 
 export const useCreatorStore = create((set, get) => ({
-  creators: CREATORS,
+  creators: [],
+  loading: false,
+  error: null,
+
+  fetchCreators: async () => {
+    set({ loading: true, error: null })
+    try {
+      const creators = await fetchCreators()
+      set({ creators, loading: false })
+    } catch (err) {
+      set({ error: err.message, loading: false })
+    }
+  },
 
   awardCoins: (creatorId, amount) => {
     set(state => {
@@ -21,30 +33,16 @@ export const useCreatorStore = create((set, get) => ({
 
   getCreatorById: (id) => get().creators.find(c => c.id === id),
 
-  addCreator: (creator) =>
-    set(state => ({
-      creators: [
-        ...state.creators,
-        {
-          ...creator,
-          id: `c${Date.now()}`,
-          coins: 0,
-          tasksCompleted: 0,
-          joinedDate: new Date().toISOString().split('T')[0],
-          persona: {
-            contentStyle: '',
-            toneOfVoice: '',
-            brandFitTags: [],
-            audienceAgeRange: '',
-            audienceGender: '',
-            audienceLocations: '',
-            engagementStyle: '',
-            pastCollabs: [],
-            dos: [],
-            donts: [],
-            internalNotes: '',
-          },
-        },
-      ],
-    })),
+  addCreator: async (creator) => {
+    const newCreator = await createCreator({
+      ...creator,
+      persona: {
+        contentStyle: '', toneOfVoice: '', brandFitTags: [],
+        audienceAgeRange: '', audienceGender: '', audienceLocations: '',
+        engagementStyle: '', pastCollabs: [], dos: [], donts: '', internalNotes: '',
+      },
+    })
+    set(state => ({ creators: [...state.creators, newCreator] }))
+    return newCreator
+  },
 }))

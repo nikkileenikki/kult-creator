@@ -1,5 +1,6 @@
 import { Routes, Route } from 'react-router-dom'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react'
+import { useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import Dashboard from '@/pages/Dashboard'
@@ -11,6 +12,9 @@ import Persona from '@/pages/Persona'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import { useUIStore } from '@/store/uiStore'
+import { useCreatorStore } from '@/store/creatorStore'
+import { useTaskStore } from '@/store/taskStore'
+import { useRecruitStore } from '@/store/recruitStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -35,6 +39,16 @@ function Toast() {
 }
 
 export default function App() {
+  const fetchCreators = useCreatorStore(s => s.fetchCreators)
+  const fetchTasks    = useTaskStore(s => s.fetchTasks)
+  const fetchRecruits = useRecruitStore(s => s.fetchRecruits)
+
+  useEffect(() => {
+    fetchCreators()
+    fetchTasks()
+    fetchRecruits()
+  }, [])
+
   return (
     <div className="flex h-screen overflow-hidden bg-[#0D0D10]">
       <Sidebar />
@@ -47,7 +61,7 @@ export default function App() {
             <Route path="/creators" element={<Creators />} />
             <Route path="/recruit"  element={<Recruit />} />
             <Route path="/tiering"  element={<Tiering />} />
-            <Route path="/persona"  element={<Persona />} />
+            <Route path="/persona/:id" element={<Persona />} />
           </Routes>
         </main>
       </div>

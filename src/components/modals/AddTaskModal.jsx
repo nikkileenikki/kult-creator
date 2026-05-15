@@ -60,9 +60,9 @@ export default function AddTaskModal() {
     closeModal()
   }
 
-  function onSubmit(data) {
+  async function onSubmit(data) {
     const creator = creators.find(c => c.id === data.creatorId)
-    addTask({
+    await addTask({
       creatorId:   data.creatorId,
       creatorName: creator?.name ?? '',
       platform:    creator?.platform ?? '',

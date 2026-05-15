@@ -5,8 +5,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        syne:    ['Syne', 'sans-serif'],
-        figtree: ['Figtree', 'sans-serif'],
+        syne:    ['Inter', 'sans-serif'],
+        figtree: ['Inter', 'sans-serif'],
         mono:    ['JetBrains Mono', 'monospace'],
       },
       colors: {

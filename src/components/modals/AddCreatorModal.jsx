@@ -73,8 +73,8 @@ export default function AddCreatorModal() {
     closeModal()
   }
 
-  function onSubmit(data) {
-    addCreator(data)
+  async function onSubmit(data) {
+    await addCreator(data)
     showToast(`${data.name} added as a Bronze creator`)
     onClose()
   }
