@@ -1,18 +1,26 @@
 import { Bell, Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
+import { useUIStore } from '@/store/uiStore'
 
 const PAGE_META = {
-  '/':         { title: 'Dashboard',        cta: 'Add Task' },
-  '/projects': { title: 'Projects',         cta: 'Add Task' },
-  '/creators': { title: 'Creators',         cta: 'Add Creator' },
-  '/recruit':  { title: 'Recruit Requests', cta: 'Manual Add' },
-  '/tiering':  { title: 'Tiering',          cta: 'Award Coins' },
-  '/persona':  { title: 'Creator Persona',  cta: 'Edit Profile' },
+  '/':         { title: 'Dashboard',        cta: 'Add Task',    action: 'openAddTask' },
+  '/projects': { title: 'Projects',         cta: 'Add Task',    action: 'openAddTask' },
+  '/creators': { title: 'Creators',         cta: 'Add Creator', action: 'openAddCreator' },
+  '/recruit':  { title: 'Recruit Requests', cta: 'Manual Add',  action: null },
+  '/tiering':  { title: 'Tiering',          cta: 'Award Coins', action: null },
+  '/persona':  { title: 'Creator Persona',  cta: 'Edit Profile',action: null },
 }
 
 export default function Topbar() {
   const { pathname } = useLocation()
-  const meta = PAGE_META[pathname] || PAGE_META['/']
+  const meta         = PAGE_META[pathname] || PAGE_META['/']
+  const openAddTask    = useUIStore(s => s.openAddTask)
+  const openAddCreator = useUIStore(s => s.openAddCreator)
+
+  function handleCTA() {
+    if (meta.action === 'openAddTask')    openAddTask()
+    if (meta.action === 'openAddCreator') openAddCreator()
+  }
 
   return (
     <header className="h-[58px] bg-[#111116] border-b border-white/7 flex items-center px-6 gap-4 flex-shrink-0">
@@ -33,7 +41,10 @@ export default function Topbar() {
         </div>
 
         {/* CTA */}
-        <button className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:shadow-[0_0_28px_rgba(108,92,231,.4)] hover:-translate-y-px">
+        <button
+          onClick={handleCTA}
+          className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:shadow-[0_0_28px_rgba(108,92,231,.4)] hover:-translate-y-px"
+        >
           <span className="text-base leading-none">+</span>
           {meta.cta}
         </button>

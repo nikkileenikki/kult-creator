@@ -22,6 +22,25 @@ export default {
       borderColor: {
         DEFAULT: 'rgba(255,255,255,0.07)',
       },
+      keyframes: {
+        'modal-overlay': {
+          '0%':   { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        'modal-content': {
+          '0%':   { opacity: '0', transform: 'translate(-50%, -48%) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translate(-50%, -50%) scale(1)' },
+        },
+        'toast-in': {
+          '0%':   { opacity: '0', transform: 'translateY(8px) scale(0.97)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+      },
+      animation: {
+        'modal-overlay': 'modal-overlay 0.15s ease',
+        'modal-content': 'modal-content 0.18s cubic-bezier(0.16,1,0.3,1)',
+        'toast-in':      'toast-in 0.2s cubic-bezier(0.16,1,0.3,1)',
+      },
     },
   },
   plugins: [],

@@ -1,3 +1,17 @@
+export const PROJECTS = ['Ramadan Campaign', 'Brand Launch Q2', 'Skincare Series']
+export const PICS = ['Sarah K.', 'Lina M.']
+export const PLATFORMS = ['TikTok', 'YouTube', 'Instagram', 'X / Twitter', 'LinkedIn']
+export const CONTACT_METHODS = ['WhatsApp', 'Email', 'Instagram DM', 'Discord', 'Telegram']
+export const AVATAR_COLOR_OPTIONS = [
+  { key: 'v', gradient: 'from-violet-600 to-violet-400', label: 'Violet' },
+  { key: 'b', gradient: 'from-blue-600 to-blue-400',     label: 'Blue' },
+  { key: 'g', gradient: 'from-emerald-600 to-emerald-400', label: 'Green' },
+  { key: 'a', gradient: 'from-amber-600 to-amber-400',   label: 'Amber' },
+  { key: 'r', gradient: 'from-rose-700 to-rose-400',     label: 'Rose' },
+  { key: 't', gradient: 'from-teal-700 to-teal-400',     label: 'Teal' },
+  { key: 'i', gradient: 'from-purple-700 to-purple-400', label: 'Purple' },
+]
+
 export const CREATORS = [
   {
     id: '1', initials: 'SR', name: 'Siti Rania', platform: 'TikTok',

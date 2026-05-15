@@ -20,4 +20,31 @@ export const useCreatorStore = create((set, get) => ({
   },
 
   getCreatorById: (id) => get().creators.find(c => c.id === id),
+
+  addCreator: (creator) =>
+    set(state => ({
+      creators: [
+        ...state.creators,
+        {
+          ...creator,
+          id: `c${Date.now()}`,
+          coins: 0,
+          tasksCompleted: 0,
+          joinedDate: new Date().toISOString().split('T')[0],
+          persona: {
+            contentStyle: '',
+            toneOfVoice: '',
+            brandFitTags: [],
+            audienceAgeRange: '',
+            audienceGender: '',
+            audienceLocations: '',
+            engagementStyle: '',
+            pastCollabs: [],
+            dos: [],
+            donts: [],
+            internalNotes: '',
+          },
+        },
+      ],
+    })),
 }))

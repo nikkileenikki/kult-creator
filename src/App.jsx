@@ -1,4 +1,5 @@
 import { Routes, Route } from 'react-router-dom'
+import { CheckCircle2, AlertCircle, Info } from 'lucide-react'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import Dashboard from '@/pages/Dashboard'
@@ -7,6 +8,31 @@ import Creators from '@/pages/Creators'
 import Recruit from '@/pages/Recruit'
 import Tiering from '@/pages/Tiering'
 import Persona from '@/pages/Persona'
+import AddTaskModal from '@/components/modals/AddTaskModal'
+import AddCreatorModal from '@/components/modals/AddCreatorModal'
+import { useUIStore } from '@/store/uiStore'
+import { cn } from '@/lib/utils'
+
+const TOAST_STYLES = {
+  success: { cls: 'bg-emerald-500/12 border-emerald-500/25 text-emerald-300', Icon: CheckCircle2, iconCls: 'text-emerald-400' },
+  error:   { cls: 'bg-rose-500/12 border-rose-500/25 text-rose-300',          Icon: AlertCircle,   iconCls: 'text-rose-400' },
+  info:    { cls: 'bg-violet-500/12 border-violet-500/25 text-violet-300',    Icon: Info,          iconCls: 'text-violet-400' },
+}
+
+function Toast() {
+  const toast = useUIStore(s => s.toast)
+  if (!toast) return null
+  const { cls, Icon, iconCls } = TOAST_STYLES[toast.type] || TOAST_STYLES.success
+  return (
+    <div className={cn(
+      'fixed bottom-6 right-6 z-[200] flex items-center gap-3 px-4 py-3 rounded-xl border text-[13px] font-medium shadow-2xl animate-toast-in',
+      cls,
+    )}>
+      <Icon size={15} className={cn('flex-shrink-0', iconCls)} />
+      {toast.message}
+    </div>
+  )
+}
 
 export default function App() {
   return (
@@ -25,6 +51,13 @@ export default function App() {
           </Routes>
         </main>
       </div>
+
+      {/* Global modals */}
+      <AddTaskModal />
+      <AddCreatorModal />
+
+      {/* Toast */}
+      <Toast />
     </div>
   )
 }
