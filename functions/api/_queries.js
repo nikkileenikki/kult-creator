@@ -82,6 +82,31 @@ export const recruitQ = {
     db.prepare('UPDATE recruit_requests SET status = ? WHERE id = ?').bind(status, id).run(),
 }
 
+export const campaignQ = {
+  list: (db) =>
+    db.prepare('SELECT * FROM campaigns ORDER BY created_at DESC').all(),
+
+  byId: (db, id) =>
+    db.prepare('SELECT * FROM campaigns WHERE id = ?').bind(id).first(),
+
+  create: (db, c) =>
+    db.prepare(`
+      INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(c.id, c.name, c.description ?? '', c.status ?? 'Planning', c.budget ?? 0, c.startDate ?? '', c.endDate ?? '', c.color ?? '#6C5CE7').run(),
+
+  patch: (db, id, fields) => {
+    const colMap = { name:'name', description:'description', status:'status', budget:'budget', startDate:'start_date', endDate:'end_date', color:'color' }
+    const sets = [], vals = []
+    for (const [key, col] of Object.entries(colMap)) {
+      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+    }
+    if (!sets.length) return null
+    vals.push(id)
+    return db.prepare(`UPDATE campaigns SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+  },
+}
+
 export const analyticsQ = {
   dashboard: (db) =>
     db.prepare(`

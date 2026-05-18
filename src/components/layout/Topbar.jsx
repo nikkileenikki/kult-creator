@@ -3,24 +3,26 @@ import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 
 const PAGE_META = {
-  '/':         { title: 'Dashboard',        cta: 'Add Task',    action: 'openAddTask' },
-  '/projects': { title: 'Projects',         cta: 'Add Task',    action: 'openAddTask' },
-  '/creators': { title: 'Creators',         cta: 'Add Creator', action: 'openAddCreator' },
-  '/niche':    { title: 'Niche',            cta: 'Add Creator', action: 'openAddCreator' },
-  '/recruit':  { title: 'Recruit Requests', cta: 'Manual Add',  action: null },
-  '/tiering':  { title: 'Tiering',          cta: 'Award Coins', action: null },
+  '/':          { title: 'Dashboard',        cta: 'Add Task',     action: 'openAddTask' },
+  '/campaigns': { title: 'Campaigns',        cta: 'Add Campaign', action: 'openAddCampaign' },
+  '/creators':  { title: 'Creators',         cta: 'Add Creator',  action: 'openAddCreator' },
+  '/niche':     { title: 'Niche',            cta: 'Add Creator',  action: 'openAddCreator' },
+  '/recruit':   { title: 'Recruit Requests', cta: null,           action: null },
+  '/tiering':   { title: 'Tiering',          cta: null,           action: null },
 }
 
 export default function Topbar() {
   const { pathname } = useLocation()
   const meta = PAGE_META[pathname]
-    ?? (pathname.startsWith('/persona/') ? { title: 'Creator Persona', cta: 'Edit Profile', action: null } : PAGE_META['/'])
-  const openAddTask    = useUIStore(s => s.openAddTask)
-  const openAddCreator = useUIStore(s => s.openAddCreator)
+    ?? (pathname.startsWith('/persona/') ? { title: 'Creator Persona', cta: null, action: null } : PAGE_META['/'])
+  const openAddTask     = useUIStore(s => s.openAddTask)
+  const openAddCreator  = useUIStore(s => s.openAddCreator)
+  const openAddCampaign = useUIStore(s => s.openAddCampaign)
 
   function handleCTA() {
-    if (meta.action === 'openAddTask')    openAddTask()
-    if (meta.action === 'openAddCreator') openAddCreator()
+    if (meta.action === 'openAddTask')     openAddTask()
+    if (meta.action === 'openAddCreator')  openAddCreator()
+    if (meta.action === 'openAddCampaign') openAddCampaign()
   }
 
   return (
@@ -41,14 +43,16 @@ export default function Topbar() {
           <span className="absolute top-[7px] right-[7px] w-1.5 h-1.5 bg-violet-500 rounded-full border border-[#111116]" />
         </div>
 
-        {/* CTA */}
-        <button
-          onClick={handleCTA}
-          className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:shadow-[0_0_28px_rgba(108,92,231,.4)] hover:-translate-y-px"
-        >
-          <span className="text-base leading-none">+</span>
-          {meta.cta}
-        </button>
+        {/* CTA — hidden when no action defined for this page */}
+        {meta.cta && (
+          <button
+            onClick={handleCTA}
+            className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:shadow-[0_0_28px_rgba(108,92,231,.4)] hover:-translate-y-px"
+          >
+            <span className="text-base leading-none">+</span>
+            {meta.cta}
+          </button>
+        )}
       </div>
     </header>
   )

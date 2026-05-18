@@ -69,3 +69,17 @@ export function mapRecruit(row) {
     avatarColor:    row.avatar_color,
   }
 }
+
+export function mapCampaign(row) {
+  if (!row) return null
+  return {
+    id:          row.id,
+    name:        row.name,
+    description: row.description ?? '',
+    status:      row.status,
+    budget:      row.budget ?? 0,
+    startDate:   row.start_date ?? '',
+    endDate:     row.end_date ?? '',
+    color:       row.color ?? '#6C5CE7',
+  }
+}

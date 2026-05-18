@@ -64,6 +64,19 @@ CREATE TABLE IF NOT EXISTS activity_feed (
   created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- Campaigns
+CREATE TABLE IF NOT EXISTS campaigns (
+  id          TEXT PRIMARY KEY,
+  name        TEXT NOT NULL,
+  description TEXT NOT NULL DEFAULT '',
+  status      TEXT NOT NULL DEFAULT 'Planning',
+  budget      REAL NOT NULL DEFAULT 0,
+  start_date  TEXT NOT NULL DEFAULT '',
+  end_date    TEXT NOT NULL DEFAULT '',
+  color       TEXT NOT NULL DEFAULT '#6C5CE7',
+  created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ============================================================
 -- SEED DATA
 -- ============================================================
@@ -100,6 +113,11 @@ INSERT INTO recruit_requests (id, initials, name, platform, followers, engagemen
 ('r1', 'RI', 'Razif Idham',  'YouTube',   280000, 8.2,  'Gaming',  '["YouTube","Gaming","Tech"]',               '2026-04-13', 'Link in Bio', 'Unassigned', 'Specialises in mobile gaming content. Portfolio includes Samsung and Razer collabs. Strong community engagement with regular live streams.', 'Pending',      't'),
 ('r2', 'NZ', 'Nur Zulaikha', 'Instagram', 94000,  12.0, 'Skincare','["Instagram","Skincare","Halal Beauty"]',   '2026-04-11', 'Referral',    'Lina M.',    'Focuses on halal and clean beauty. Audience predominantly female 20–30. Very high story engagement. Strong skincare product reviews.',        'Under Review', 'i'),
 ('r3', 'AM', 'Aqil Mukhriz', 'TikTok',    51000,  9.2,  'Fitness', '["TikTok","Fitness","Wellness"]',           '2026-04-14', 'Referral',    'Unassigned', 'Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.', 'Pending',      'g');
+
+INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color) VALUES
+('camp1', 'Ramadan Campaign', 'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7'),
+('camp2', 'Brand Launch Q2',  'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2'),
+('camp3', 'Skincare Series',  'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706');
 
 INSERT INTO activity_feed (id, color, text, time) VALUES
 ('a1', 'green',  '<strong>Aina Nadia</strong> completed Post IG Reel — <strong>+100 coins</strong>', '2h ago'),

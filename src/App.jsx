@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import Dashboard from '@/pages/Dashboard'
-import Projects from '@/pages/Projects'
+import Campaigns from '@/pages/Campaigns'
 import Creators from '@/pages/Creators'
 import Recruit from '@/pages/Recruit'
 import Tiering from '@/pages/Tiering'
@@ -12,11 +12,13 @@ import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
+import AddCampaignModal from '@/components/modals/AddCampaignModal'
 import EditTaskModal from '@/components/modals/EditTaskModal'
 import { useUIStore } from '@/store/uiStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
+import { useCampaignStore } from '@/store/campaignStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -41,14 +43,16 @@ function Toast() {
 }
 
 export default function App() {
-  const fetchCreators = useCreatorStore(s => s.fetchCreators)
-  const fetchTasks    = useTaskStore(s => s.fetchTasks)
-  const fetchRecruits = useRecruitStore(s => s.fetchRecruits)
+  const fetchCreators  = useCreatorStore(s => s.fetchCreators)
+  const fetchTasks     = useTaskStore(s => s.fetchTasks)
+  const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
+  const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns)
 
   useEffect(() => {
     fetchCreators()
     fetchTasks()
     fetchRecruits()
+    fetchCampaigns()
   }, [])
 
   return (
@@ -58,11 +62,11 @@ export default function App() {
         <Topbar />
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route path="/"         element={<Dashboard />} />
-            <Route path="/projects" element={<Projects />} />
-            <Route path="/creators" element={<Creators />} />
-            <Route path="/recruit"  element={<Recruit />} />
-            <Route path="/tiering"  element={<Tiering />} />
+            <Route path="/"            element={<Dashboard />} />
+            <Route path="/campaigns"   element={<Campaigns />} />
+            <Route path="/creators"    element={<Creators />} />
+            <Route path="/recruit"     element={<Recruit />} />
+            <Route path="/tiering"     element={<Tiering />} />
             <Route path="/niche"       element={<Niche />} />
             <Route path="/persona/:id" element={<Persona />} />
           </Routes>
@@ -72,6 +76,7 @@ export default function App() {
       {/* Global modals */}
       <AddTaskModal />
       <AddCreatorModal />
+      <AddCampaignModal />
       <EditTaskModal />
 
       {/* Toast */}

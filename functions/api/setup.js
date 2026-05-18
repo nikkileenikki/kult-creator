@@ -72,6 +72,20 @@ export async function onRequestGet({ env }) {
         created_at TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
     },
+    {
+      name: 'Create campaigns table',
+      sql: `CREATE TABLE IF NOT EXISTS campaigns (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        status      TEXT NOT NULL DEFAULT 'Planning',
+        budget      REAL NOT NULL DEFAULT 0,
+        start_date  TEXT NOT NULL DEFAULT '',
+        end_date    TEXT NOT NULL DEFAULT '',
+        color       TEXT NOT NULL DEFAULT '#6C5CE7',
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
   ]
 
   for (const step of steps) {
@@ -153,7 +167,19 @@ export async function onRequestGet({ env }) {
       ).bind(id, color, text, time).run()
     }
 
-    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity' })
+    const campaignsData = [
+      ['camp1', 'Ramadan Campaign',  'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7'],
+      ['camp2', 'Brand Launch Q2',   'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2'],
+      ['camp3', 'Skincare Series',   'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706'],
+    ]
+
+    for (const [id, name, description, status, budget, start_date, end_date, color] of campaignsData) {
+      await DB.prepare(
+        `INSERT OR IGNORE INTO campaigns (id,name,description,status,budget,start_date,end_date,color) VALUES (?,?,?,?,?,?,?,?)`
+      ).bind(id, name, description, status, budget, start_date, end_date, color).run()
+    }
+
+    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns' })
   } else {
     results.push({ step: 'Seed data', status: 'skipped', reason: `${count} creators already exist` })
   }

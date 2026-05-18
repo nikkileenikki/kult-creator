@@ -1,4 +1,4 @@
-import { NavLink, useLocation } from 'react-router-dom'
+import { NavLink } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useRecruitStore } from '@/store/recruitStore'
 import {
@@ -7,26 +7,20 @@ import {
 
 const NAV = [
   { section: 'Overview', items: [
-    { to: '/',         label: 'Dashboard',        icon: LayoutGrid },
-    { to: '/projects', label: 'Projects',          icon: FolderOpen },
+    { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
+    { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
   ]},
   { section: 'Creators', items: [
-    { to: '/creators', label: 'All Creators',      icon: Users },
-    { to: '/niche',    label: 'Niche',               icon: User },
-    { to: '/tiering',  label: 'Tiering',           icon: Star },
-    { to: '/recruit',  label: 'Recruit Requests',  icon: UserPlus, badge: true },
+    { to: '/creators',  label: 'All Creators',     icon: Users },
+    { to: '/niche',     label: 'Niche',             icon: User },
+    { to: '/tiering',   label: 'Tiering',           icon: Star },
+    { to: '/recruit',   label: 'Recruit Requests',  icon: UserPlus, badge: true },
   ]},
-]
-
-const PROJECTS = [
-  { label: 'Ramadan Campaign', color: '#6C5CE7' },
-  { label: 'Brand Launch Q2',  color: '#0891B2' },
-  { label: 'Skincare Series',  color: '#D97706' },
 ]
 
 export default function Sidebar() {
   const requests = useRecruitStore(s => s.requests)
-  const pending = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+  const pending  = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
 
   return (
     <aside className="w-[228px] bg-[#111116] border-r border-white/7 flex flex-col flex-shrink-0 relative overflow-hidden">
@@ -45,7 +39,7 @@ export default function Sidebar() {
       </div>
 
       {/* Nav */}
-      <div className="flex-1 overflow-y-auto px-2.5 py-2.5 space-y-1">
+      <div className="flex-1 overflow-y-auto px-2.5 py-2.5">
         {NAV.map(group => (
           <div key={group.section} className="mb-1">
             <p className="font-mono text-[9px] font-medium text-white/20 uppercase tracking-[.1em] px-2 pt-3 pb-1">{group.section}</p>
@@ -72,21 +66,6 @@ export default function Sidebar() {
             ))}
           </div>
         ))}
-
-        {/* Projects */}
-        <div>
-          <p className="font-mono text-[9px] font-medium text-white/20 uppercase tracking-[.1em] px-2 pt-3 pb-1">Campaigns</p>
-          {PROJECTS.map(p => (
-            <NavLink
-              key={p.label}
-              to="/projects"
-              className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-white/40 hover:bg-white/5 hover:text-white/80 transition-all mb-0.5"
-            >
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: p.color }} />
-              {p.label}
-            </NavLink>
-          ))}
-        </div>
       </div>
 
       {/* Footer */}
