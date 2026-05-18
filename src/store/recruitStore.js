@@ -1,10 +1,11 @@
 import { create } from 'zustand'
 import { fetchRecruits, updateRecruitStatus as apiUpdateStatus } from '../lib/api/recruits'
+import { useCreatorStore } from './creatorStore'
 
 export const useRecruitStore = create((set, get) => ({
   requests: [],
-  loading: false,
-  error: null,
+  loading:  false,
+  error:    null,
 
   fetchRecruits: async () => {
     set({ loading: true, error: null })
@@ -24,5 +25,8 @@ export const useRecruitStore = create((set, get) => ({
       requests: state.requests.map(r => r.id === id ? { ...r, status } : r),
     }))
     await apiUpdateStatus(id, status)
+    if (status === 'Approved' || status === 'Rejected') {
+      await useCreatorStore.getState().fetchCreators()
+    }
   },
 }))

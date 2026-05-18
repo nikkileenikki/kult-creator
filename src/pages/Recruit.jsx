@@ -1,13 +1,25 @@
 import { useRecruitStore } from '@/store/recruitStore'
+import { useUIStore } from '@/store/uiStore'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 
 const STATUS_BADGE = { Pending:'amber', 'Under Review':'blue', Approved:'green', Rejected:'red' }
 
 export default function Recruit() {
-  const requests = useRecruitStore(s => s.requests)
+  const requests     = useRecruitStore(s => s.requests)
   const updateStatus = useRecruitStore(s => s.updateStatus)
-  const pending = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+  const showToast    = useUIStore(s => s.showToast)
+  const pending      = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+
+  async function handleApprove(id) {
+    await updateStatus(id, 'Approved')
+    showToast('Creator approved and added to All Creators')
+  }
+
+  async function handleReject(id) {
+    await updateStatus(id, 'Rejected')
+    showToast('Creator rejected and archived', 'error')
+  }
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
@@ -43,7 +55,6 @@ export default function Recruit() {
                 ))}
               </div>
 
-              {/* Bars */}
               <div className="space-y-1.5 mb-3">
                 {[
                   { label: 'Followers', val: Math.min(100, r.followers/5000) },
@@ -69,11 +80,11 @@ export default function Recruit() {
 
               {!isDone && (
                 <div className="flex gap-2">
-                  <button onClick={() => updateStatus(r.id, 'Approved')}
+                  <button onClick={() => handleApprove(r.id)}
                     className="bg-emerald-400/12 text-emerald-400 border border-emerald-400/20 px-3.5 py-1.5 rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-emerald-400/20 transition-all font-figtree">
                     ✓ Approve
                   </button>
-                  <button onClick={() => updateStatus(r.id, 'Rejected')}
+                  <button onClick={() => handleReject(r.id)}
                     className="bg-rose-400/12 text-rose-400 border border-rose-400/20 px-3.5 py-1.5 rounded-lg text-[12px] font-semibold cursor-pointer hover:bg-rose-400/20 transition-all font-figtree">
                     ✕ Reject
                   </button>

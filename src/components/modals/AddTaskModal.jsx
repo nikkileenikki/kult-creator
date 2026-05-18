@@ -3,15 +3,17 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { X } from 'lucide-react'
+import { useEffect } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useCreatorStore } from '@/store/creatorStore'
+import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
-import { PROJECTS, PICS } from '@/lib/data'
+import { PICS } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
-  creatorId: z.string().min(1, 'Select a creator'),
+  creatorId: z.string().optional(),
   task:      z.string().min(1, 'Task name is required').max(100, 'Max 100 characters'),
   project:   z.string().min(1, 'Select a project'),
   status:    z.enum(['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue']),
@@ -19,6 +21,7 @@ const schema = z.object({
   pic:       z.string().min(1, 'PIC is required'),
   dueDate:   z.string().min(1, 'Due date is required'),
   coins:     z.coerce.number().min(0, 'Min 0').max(10000, 'Max 10,000'),
+  notes:     z.string().default(''),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -26,11 +29,15 @@ const LABEL = 'block text-[11px] font-semibold text-white/40 uppercase tracking-
 const ERR   = 'text-[11px] text-rose-400 mt-1'
 
 export default function AddTaskModal() {
-  const open        = useUIStore(s => s.addTaskOpen)
-  const closeModal  = useUIStore(s => s.closeAddTask)
-  const showToast   = useUIStore(s => s.showToast)
-  const addTask     = useTaskStore(s => s.addTask)
-  const creators    = useCreatorStore(s => s.creators)
+  const open       = useUIStore(s => s.addTaskOpen)
+  const prefill    = useUIStore(s => s.addTaskPrefill)
+  const closeModal = useUIStore(s => s.closeAddTask)
+  const showToast  = useUIStore(s => s.showToast)
+  const addTask    = useTaskStore(s => s.addTask)
+  const creators   = useCreatorStore(s => s.creators)
+  const campaigns  = useCampaignStore(s => s.campaigns)
+
+  const defaultProject = campaigns[0]?.name ?? ''
 
   const {
     register,
@@ -43,14 +50,31 @@ export default function AddTaskModal() {
     defaultValues: {
       creatorId: '',
       task:      '',
-      project:   PROJECTS[0],
+      project:   defaultProject,
       status:    'Not Started',
       priority:  'Medium',
       pic:       PICS[0],
       dueDate:   '',
       coins:     100,
+      notes:     '',
     },
   })
+
+  useEffect(() => {
+    if (open) {
+      reset({
+        creatorId: prefill?.creatorId ?? '',
+        task:      '',
+        project:   prefill?.project ?? defaultProject,
+        status:    'Not Started',
+        priority:  'Medium',
+        pic:       PICS[0],
+        dueDate:   '',
+        coins:     100,
+        notes:     '',
+      })
+    }
+  }, [open, prefill]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedCreatorId = watch('creatorId')
   const selectedCreator   = creators.find(c => c.id === selectedCreatorId)
@@ -63,8 +87,8 @@ export default function AddTaskModal() {
   async function onSubmit(data) {
     const creator = creators.find(c => c.id === data.creatorId)
     await addTask({
-      creatorId:   data.creatorId,
-      creatorName: creator?.name ?? '',
+      creatorId:   data.creatorId || '',
+      creatorName: creator?.name ?? 'Unassigned',
       platform:    creator?.platform ?? '',
       task:        data.task,
       project:     data.project,
@@ -73,10 +97,14 @@ export default function AddTaskModal() {
       pic:         data.pic,
       dueDate:     data.dueDate,
       coins:       data.coins,
+      notes:       data.notes,
     })
-    showToast(`Task added for ${creator?.name ?? 'creator'}`)
+    showToast(creator ? `Task added for ${creator.name}` : 'Task added (unassigned)')
     onClose()
   }
+
+  const projectLocked = !!prefill?.project
+  const creatorLocked = !!prefill?.creatorId
 
   return (
     <Dialog.Root open={open} onOpenChange={v => !v && onClose()}>
@@ -87,31 +115,24 @@ export default function AddTaskModal() {
           onOpenAutoFocus={e => e.preventDefault()}
         >
           <div className="bg-[#111116] border border-white/[0.07] rounded-2xl shadow-2xl">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
               <div>
-                <Dialog.Title className="font-syne text-[15px] font-bold text-white">
-                  Add Task
-                </Dialog.Title>
+                <Dialog.Title className="font-syne text-[15px] font-bold text-white">Add Task</Dialog.Title>
                 <Dialog.Description className="text-[12px] text-white/30 mt-0.5">
-                  Assign a new deliverable to a creator
+                  {prefill?.project ? `Campaign: ${prefill.project}` : 'Assign a new deliverable to a creator'}
                 </Dialog.Description>
               </div>
-              <button
-                onClick={onClose}
-                className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
-              >
+              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all">
                 <X size={15} />
               </button>
             </div>
 
-            {/* Body */}
             <form onSubmit={handleSubmit(onSubmit)}>
               <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
 
                 {/* Creator */}
                 <div>
-                  <label className={LABEL}>Creator</label>
+                  <label className={LABEL}>Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
                   <div className="relative">
                     {selectedCreator && (
                       <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -120,27 +141,21 @@ export default function AddTaskModal() {
                     )}
                     <select
                       {...register('creatorId')}
-                      className={cn(INPUT, selectedCreator ? 'pl-11' : '')}
+                      disabled={creatorLocked}
+                      className={cn(INPUT, selectedCreator ? 'pl-11' : '', creatorLocked ? 'opacity-60 cursor-not-allowed' : '')}
                     >
-                      <option value="">Select a creator…</option>
-                      {creators.map(c => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} — {c.platform}
-                        </option>
+                      <option value="">Unassigned</option>
+                      {creators.filter(c => c.status !== 'Rejected').map(c => (
+                        <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
                       ))}
                     </select>
                   </div>
-                  {errors.creatorId && <p className={ERR}>{errors.creatorId.message}</p>}
                 </div>
 
                 {/* Task name */}
                 <div>
                   <label className={LABEL}>Task / Deliverable</label>
-                  <input
-                    {...register('task')}
-                    placeholder="e.g. Film Lifestyle Reel"
-                    className={INPUT}
-                  />
+                  <input {...register('task')} placeholder="e.g. Film Lifestyle Reel" className={INPUT} />
                   {errors.task && <p className={ERR}>{errors.task.message}</p>}
                 </div>
 
@@ -148,15 +163,19 @@ export default function AddTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Project</label>
-                    <select {...register('project')} className={INPUT}>
-                      {PROJECTS.map(p => <option key={p}>{p}</option>)}
+                    <select
+                      {...register('project')}
+                      disabled={projectLocked}
+                      className={cn(INPUT, projectLocked ? 'opacity-60 cursor-not-allowed' : '')}
+                    >
+                      {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                     {errors.project && <p className={ERR}>{errors.project.message}</p>}
                   </div>
                   <div>
                     <label className={LABEL}>Status</label>
                     <select {...register('status')} className={INPUT}>
-                      {['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue'].map(s => (
+                      {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
                         <option key={s}>{s}</option>
                       ))}
                     </select>
@@ -168,9 +187,7 @@ export default function AddTaskModal() {
                   <div>
                     <label className={LABEL}>Priority</label>
                     <select {...register('priority')} className={INPUT}>
-                      {['Low', 'Medium', 'High', 'Urgent'].map(p => (
-                        <option key={p}>{p}</option>
-                      ))}
+                      {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
                     </select>
                   </div>
                   <div>
@@ -186,34 +203,30 @@ export default function AddTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Due Date</label>
-                    <input
-                      type="date"
-                      {...register('dueDate')}
-                      className={cn(INPUT, '[color-scheme:dark]')}
-                    />
+                    <input type="date" {...register('dueDate')} className={cn(INPUT, '[color-scheme:dark]')} />
                     {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
                   </div>
                   <div>
                     <label className={LABEL}>Coins</label>
-                    <input
-                      type="number"
-                      {...register('coins')}
-                      min={0}
-                      max={10000}
-                      className={INPUT}
-                    />
+                    <input type="number" {...register('coins')} min={0} max={10000} className={INPUT} />
                     {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
                   </div>
                 </div>
+
+                {/* Notes */}
+                <div>
+                  <label className={LABEL}>Notes for Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                  <textarea
+                    {...register('notes')}
+                    rows={2}
+                    placeholder="Specific instructions, references, or creative direction…"
+                    className={cn(INPUT, 'resize-none')}
+                  />
+                </div>
               </div>
 
-              {/* Footer */}
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.07]">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all"
-                >
+                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
                   Cancel
                 </button>
                 <button

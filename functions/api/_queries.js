@@ -52,18 +52,18 @@ export const taskQ = {
   create: (db, t) =>
     db.prepare(`
       INSERT INTO tasks
-        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      t.id, t.creatorId, t.creatorName, t.platform, t.task,
-      t.project, t.status, t.priority, t.pic, t.dueDate, t.coins,
+      t.id, t.creatorId ?? '', t.creatorName ?? 'Unassigned', t.platform ?? '', t.task,
+      t.project, t.status, t.priority, t.pic, t.dueDate, t.coins, t.notes ?? '',
     ).run(),
 
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, id).run(),
 
   update: (db, id, fields) => {
-    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins' }
+    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
       if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
@@ -91,12 +91,12 @@ export const campaignQ = {
 
   create: (db, c) =>
     db.prepare(`
-      INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(c.id, c.name, c.description ?? '', c.status ?? 'Planning', c.budget ?? 0, c.startDate ?? '', c.endDate ?? '', c.color ?? '#6C5CE7').run(),
+      INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color, brief)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(c.id, c.name, c.description ?? '', c.status ?? 'Planning', c.budget ?? 0, c.startDate ?? '', c.endDate ?? '', c.color ?? '#6C5CE7', c.brief ?? '').run(),
 
   patch: (db, id, fields) => {
-    const colMap = { name:'name', description:'description', status:'status', budget:'budget', startDate:'start_date', endDate:'end_date', color:'color' }
+    const colMap = { name:'name', description:'description', status:'status', budget:'budget', startDate:'start_date', endDate:'end_date', color:'color', brief:'brief' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
       if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }

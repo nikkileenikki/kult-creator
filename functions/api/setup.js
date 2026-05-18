@@ -83,8 +83,17 @@ export async function onRequestGet({ env }) {
         start_date  TEXT NOT NULL DEFAULT '',
         end_date    TEXT NOT NULL DEFAULT '',
         color       TEXT NOT NULL DEFAULT '#6C5CE7',
+        brief       TEXT NOT NULL DEFAULT '',
         created_at  TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
+    },
+    {
+      name: 'Add notes column to tasks',
+      sql: `ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT ''`,
+    },
+    {
+      name: 'Add brief column to campaigns',
+      sql: `ALTER TABLE campaigns ADD COLUMN brief TEXT NOT NULL DEFAULT ''`,
     },
   ]
 

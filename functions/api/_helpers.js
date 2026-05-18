@@ -47,6 +47,7 @@ export function mapTask(row) {
     pic:         row.pic,
     dueDate:     row.due_date,
     coins:       row.coins,
+    notes:       row.notes ?? '',
   }
 }
 
@@ -81,5 +82,6 @@ export function mapCampaign(row) {
     startDate:   row.start_date ?? '',
     endDate:     row.end_date ?? '',
     color:       row.color ?? '#6C5CE7',
+    brief:       row.brief ?? '',
   }
 }
