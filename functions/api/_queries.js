@@ -19,25 +19,20 @@ export const creatorQ = {
       JSON.stringify(c.persona ?? {}),
     ).run(),
 
-  patch: (db, id, fields) => {
-    const colMap = {
-      name: 'name', initials: 'initials',
-      coins: 'coins', status: 'status', pic: 'pic', contact: 'contact',
-      platform: 'platform', niche: 'niche', secondaryNiche: 'secondary_niche',
-      followers: 'followers', tasksCompleted: 'tasks_completed',
-      avatarColor: 'avatar_color', persona: 'persona',
-    }
-    const sets = [], vals = []
-    for (const [key, col] of Object.entries(colMap)) {
-      if (key in fields) {
-        sets.push(`${col} = ?`)
-        vals.push(key === 'persona' ? JSON.stringify(fields[key]) : fields[key])
-      }
-    }
-    if (!sets.length) return null
-    vals.push(id)
-    return db.prepare(`UPDATE creators SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
-  },
+  fullUpdate: (db, id, c) =>
+    db.prepare(`
+      UPDATE creators SET
+        name = ?, initials = ?, platform = ?, niche = ?, secondary_niche = ?,
+        followers = ?, coins = ?, tasks_completed = ?, status = ?,
+        pic = ?, contact = ?, avatar_color = ?, persona = ?
+      WHERE id = ?
+    `).bind(
+      c.name, c.initials, c.platform, c.niche, c.secondaryNiche ?? '',
+      c.followers, c.coins, c.tasksCompleted, c.status,
+      c.pic, c.contact, c.avatarColor,
+      typeof c.persona === 'string' ? c.persona : JSON.stringify(c.persona ?? {}),
+      id,
+    ).run(),
 }
 
 export const taskQ = {
