@@ -9,6 +9,8 @@ export const useUIStore = create((set) => ({
   editTaskId:        null,
   notificationsOpen: false,
   toast:             null,
+  globalSearch:      '',
+  sidebarCollapsed:  false,
 
   openAddTask:         (prefill = null) => set({ addTaskOpen: true, addTaskPrefill: prefill }),
   closeAddTask:        () => set({ addTaskOpen: false, addTaskPrefill: null }),
@@ -20,6 +22,8 @@ export const useUIStore = create((set) => ({
   closeEditTask:       () => set({ editTaskOpen: false, editTaskId: null }),
   toggleNotifications: () => set(s => ({ notificationsOpen: !s.notificationsOpen })),
   closeNotifications:  () => set({ notificationsOpen: false }),
+  setGlobalSearch:     (q) => set({ globalSearch: q }),
+  toggleSidebar:       () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
   showToast: (message, type = 'success') => {
     set({ toast: { message, type } })

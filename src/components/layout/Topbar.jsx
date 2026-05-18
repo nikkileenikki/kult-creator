@@ -2,28 +2,33 @@ import { Bell, Search } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { useTaskStore } from '@/store/taskStore'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import NotificationsPanel from './NotificationsPanel'
 
 const PAGE_META = {
-  '/':          { title: 'Dashboard',        cta: 'Add Task',     action: 'openAddTask' },
-  '/campaigns': { title: 'Campaigns',        cta: 'Add Campaign', action: 'openAddCampaign' },
-  '/creators':  { title: 'Creators',         cta: 'Add Creator',  action: 'openAddCreator' },
-  '/niche':     { title: 'Niche',            cta: 'Add Creator',  action: 'openAddCreator' },
-  '/recruit':   { title: 'Recruit Requests', cta: null,           action: null },
-  '/tiering':   { title: 'Tiering',          cta: null,           action: null },
+  '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
+  '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…' },
+  '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
+  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
+  '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
+  '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
 }
 
 export default function Topbar() {
   const { pathname } = useLocation()
   const meta = PAGE_META[pathname]
-    ?? (pathname.startsWith('/persona/') ? { title: 'Creator Persona', cta: null, action: null } : PAGE_META['/'])
+    ?? (pathname.startsWith('/persona/') ? { cta: null, action: null, placeholder: 'Search…' } : PAGE_META['/'])
 
-  const openAddTask          = useUIStore(s => s.openAddTask)
-  const openAddCreator       = useUIStore(s => s.openAddCreator)
-  const openAddCampaign      = useUIStore(s => s.openAddCampaign)
-  const toggleNotifications  = useUIStore(s => s.toggleNotifications)
-  const notificationsOpen    = useUIStore(s => s.notificationsOpen)
+  const openAddTask         = useUIStore(s => s.openAddTask)
+  const openAddCreator      = useUIStore(s => s.openAddCreator)
+  const openAddCampaign     = useUIStore(s => s.openAddCampaign)
+  const toggleNotifications = useUIStore(s => s.toggleNotifications)
+  const notificationsOpen   = useUIStore(s => s.notificationsOpen)
+  const globalSearch        = useUIStore(s => s.globalSearch)
+  const setGlobalSearch     = useUIStore(s => s.setGlobalSearch)
+
+  // Clear search when navigating
+  useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tasks = useTaskStore(s => s.tasks)
   const alertCount = useMemo(() => {
@@ -45,16 +50,20 @@ export default function Topbar() {
 
   return (
     <header className="h-[58px] bg-[#111116] border-b border-white/7 flex items-center px-6 gap-4 flex-shrink-0">
-      <span className="font-syne text-[15px] font-bold text-white tracking-tight">{meta.title}</span>
+      <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-60 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
+        <Search size={13} className="flex-shrink-0 text-white/30" />
+        <input
+          value={globalSearch}
+          onChange={e => setGlobalSearch(e.target.value)}
+          placeholder={meta.placeholder}
+          className="bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 w-full"
+        />
+        {globalSearch && (
+          <button onClick={() => setGlobalSearch('')} className="text-white/25 hover:text-white/60 text-[11px] leading-none flex-shrink-0">✕</button>
+        )}
+      </div>
 
       <div className="ml-auto flex items-center gap-2">
-        {/* Search */}
-        <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-52 text-[12px] text-white/30 cursor-text hover:border-white/12 transition-all">
-          <Search size={13} className="flex-shrink-0" />
-          <span>Search creators, tasks...</span>
-          <kbd className="ml-auto font-mono text-[9px] bg-[#16161C] border border-white/7 px-1 py-0.5 rounded text-white/20">⌘K</kbd>
-        </div>
-
         {/* Notification bell */}
         <div className="relative">
           <button
@@ -69,7 +78,7 @@ export default function Topbar() {
           {notificationsOpen && <NotificationsPanel />}
         </div>
 
-        {/* CTA — hidden when no action defined for this page */}
+        {/* CTA */}
         {meta.cta && (
           <button
             onClick={handleCTA}

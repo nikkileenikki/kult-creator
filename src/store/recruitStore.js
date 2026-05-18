@@ -21,12 +21,39 @@ export const useRecruitStore = create((set, get) => ({
     get().requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length,
 
   updateStatus: async (id, status) => {
+    const recruit = get().requests.find(r => r.id === id)
     set(state => ({
       requests: state.requests.map(r => r.id === id ? { ...r, status } : r),
     }))
     await apiUpdateStatus(id, status)
-    if (status === 'Approved' || status === 'Rejected') {
-      await useCreatorStore.getState().fetchCreators()
+
+    if ((status === 'Approved' || status === 'Rejected') && recruit) {
+      const creatorStore = useCreatorStore.getState()
+      const exists = creatorStore.creators.some(c => c.id === `c_r_${id}`)
+      if (!exists) {
+        const newCreator = {
+          id:             `c_r_${id}`,
+          initials:       recruit.initials,
+          name:           recruit.name,
+          platform:       recruit.platform,
+          niche:          recruit.niche,
+          secondaryNiche: '',
+          followers:      recruit.followers,
+          coins:          0,
+          tasksCompleted: 0,
+          status:         status === 'Approved' ? 'Active' : 'Rejected',
+          pic:            recruit.pic !== 'Unassigned' ? recruit.pic : '',
+          contact:        'WhatsApp',
+          joinedDate:     new Date().toISOString().split('T')[0],
+          avatarColor:    recruit.avatarColor,
+          persona: {
+            contentStyle: '', toneOfVoice: '', brandFitTags: [],
+            audienceAgeRange: '', audienceGender: '', audienceLocations: '',
+            engagementStyle: '', pastCollabs: [], dos: [], donts: [], internalNotes: '',
+          },
+        }
+        useCreatorStore.setState(s => ({ creators: [...s.creators, newCreator] }))
+      }
     }
   },
 }))

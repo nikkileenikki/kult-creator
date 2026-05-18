@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS tasks (
   pic           TEXT NOT NULL,
   due_date      TEXT NOT NULL,
   coins         INTEGER NOT NULL DEFAULT 0,
+  notes         TEXT NOT NULL DEFAULT '',
   FOREIGN KEY (creator_id) REFERENCES creators(id)
 );
 

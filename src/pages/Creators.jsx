@@ -1,11 +1,11 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
+import { useUIStore } from '@/store/uiStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { Search } from 'lucide-react'
 
 const TIER_BADGE  = { Platinum:'platinum', Diamond:'diamond', Gold:'gold', Silver:'silver', Bronze:'bronze' }
 const TIER_EMOJI  = { Platinum:'👑', Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
@@ -16,11 +16,11 @@ const SELECT = 'text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#
 export default function Creators() {
   const creators = useCreatorStore(s => s.creators)
   const navigate = useNavigate()
+  const search   = useUIStore(s => s.globalSearch)
 
   const [filterPlatform, setFilterPlatform] = useState('All')
   const [filterTier,     setFilterTier]     = useState('All')
   const [filterStatus,   setFilterStatus]   = useState('Active')
-  const [search,         setSearch]         = useState('')
 
   const platforms = useMemo(() => ['All', ...[...new Set(creators.map(c => c.platform))]], [creators])
 
@@ -43,17 +43,6 @@ export default function Creators() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Search */}
-          <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] text-[12px] text-white/30 hover:border-white/12 transition-all">
-            <Search size={12} className="flex-shrink-0" />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Search…"
-              className="bg-transparent outline-none text-white placeholder:text-white/20 w-28"
-            />
-          </div>
-
           {/* Tier filter */}
           <select value={filterTier} onChange={e => setFilterTier(e.target.value)} className={SELECT}>
             {TIER_ORDER.map(t => <option key={t} value={t}>{t === 'All' ? 'All Tiers' : t}</option>)}
