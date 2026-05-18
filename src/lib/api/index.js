@@ -1,6 +1,6 @@
 // Base config — swap BASE_URL and set USE_MOCK=false to hit real endpoints
-export const BASE_URL = '/api/v1'
-export const USE_MOCK = true
+export const BASE_URL = '/api'
+export const USE_MOCK = false
 
 export const delay = (ms = 400) => new Promise(res => setTimeout(res, ms))
 

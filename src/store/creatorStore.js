@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { getTier } from '../lib/tierUtils'
-import { fetchCreators, createCreator } from '../lib/api/creators'
+import { fetchCreators, createCreator, updateCreator } from '../lib/api/creators'
 
 export const useCreatorStore = create((set, get) => ({
   creators: [],
@@ -17,18 +17,19 @@ export const useCreatorStore = create((set, get) => ({
     }
   },
 
-  awardCoins: (creatorId, amount) => {
-    set(state => {
-      const creators = state.creators.map(c => {
-        if (c.id !== creatorId) return c
-        const oldTier = getTier(c.coins)
-        const newCoins = c.coins + amount
-        const newTier = getTier(newCoins)
-        const leveledUp = newTier.name !== oldTier.name
-        return { ...c, coins: newCoins, _leveledUp: leveledUp ? newTier.name : null }
-      })
-      return { creators }
-    })
+  awardCoins: async (creatorId, amount) => {
+    const creator = get().creators.find(c => c.id === creatorId)
+    if (!creator) return
+    const oldTier  = getTier(creator.coins)
+    const newCoins = creator.coins + amount
+    const newTier  = getTier(newCoins)
+    const leveledUp = newTier.name !== oldTier.name
+    set(state => ({
+      creators: state.creators.map(c =>
+        c.id === creatorId ? { ...c, coins: newCoins, _leveledUp: leveledUp ? newTier.name : null } : c
+      ),
+    }))
+    await updateCreator(creatorId, { coins: newCoins })
   },
 
   getCreatorById: (id) => get().creators.find(c => c.id === id),
