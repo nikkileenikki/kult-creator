@@ -40,7 +40,7 @@ export const useCreatorStore = create((set, get) => ({
       persona: {
         contentStyle: '', toneOfVoice: '', brandFitTags: [],
         audienceAgeRange: '', audienceGender: '', audienceLocations: '',
-        engagementStyle: '', pastCollabs: [], dos: [], donts: '', internalNotes: '',
+        engagementStyle: '', pastCollabs: [], dos: [], donts: [], internalNotes: '',
       },
     })
     set(state => ({ creators: [...state.creators, newCreator] }))

@@ -103,7 +103,7 @@ export default function Persona() {
             </div>
             <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.05em] mb-2">Brand Fit Tags</div>
             <div className="flex flex-wrap gap-1.5">
-              {persona.brandFitTags.map((tag, i) => (
+              {(persona.brandFitTags ?? []).map((tag, i) => (
                 <span key={tag} className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${TAG_STYLE[TAG_COLORS[i % TAG_COLORS.length]]}`}>{tag}</span>
               ))}
             </div>
@@ -132,7 +132,7 @@ export default function Persona() {
           <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px]">
             <div className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em] mb-3">Past Collaborations</div>
             <div className="flex flex-wrap gap-1.5">
-              {persona.pastCollabs.map((brand, i) => (
+              {(persona.pastCollabs ?? []).map((brand, i) => (
                 <span key={brand} className={`text-[11px] px-2.5 py-1 rounded-full font-medium ${TAG_STYLE[TAG_COLORS[i % TAG_COLORS.length]]}`}>{brand}</span>
               ))}
             </div>
@@ -145,7 +145,7 @@ export default function Persona() {
               <div className="bg-emerald-400/6 border border-emerald-400/15 rounded-[9px] p-3.5">
                 <div className="font-mono text-[9px] font-medium text-emerald-400 uppercase tracking-[.08em] mb-2.5">Do's</div>
                 <ul className="space-y-1.5">
-                  {persona.dos.map(d => (
+                  {(persona.dos ?? []).map(d => (
                     <li key={d} className="flex items-start gap-2 text-[12px] text-emerald-300/70 leading-snug">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 flex-shrink-0 mt-1.5" />
                       {d}
@@ -156,7 +156,7 @@ export default function Persona() {
               <div className="bg-rose-400/6 border border-rose-400/15 rounded-[9px] p-3.5">
                 <div className="font-mono text-[9px] font-medium text-rose-400 uppercase tracking-[.08em] mb-2.5">Don'ts</div>
                 <ul className="space-y-1.5">
-                  {persona.donts.map(d => (
+                  {(persona.donts ?? []).map(d => (
                     <li key={d} className="flex items-start gap-2 text-[12px] text-rose-300/70 leading-snug">
                       <span className="w-1.5 h-1.5 rounded-full bg-rose-400 flex-shrink-0 mt-1.5" />
                       {d}
