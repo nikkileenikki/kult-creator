@@ -92,6 +92,10 @@ export async function onRequestGet({ env }) {
       sql: `ALTER TABLE tasks ADD COLUMN notes TEXT NOT NULL DEFAULT ''`,
     },
     {
+      name: 'Add secondary_niche column to creators',
+      sql: `ALTER TABLE creators ADD COLUMN secondary_niche TEXT NOT NULL DEFAULT ''`,
+    },
+    {
       name: 'Add brief column to campaigns',
       sql: `ALTER TABLE campaigns ADD COLUMN brief TEXT NOT NULL DEFAULT ''`,
     },

@@ -122,6 +122,8 @@ export default function Persona() {
       showToast(`${draft.name} updated`)
       setEditing(false)
       setDraft(null)
+    } catch (e) {
+      showToast('Failed to save: ' + (e?.message ?? 'unknown error'), 'error')
     } finally {
       setSaving(false)
     }
@@ -148,7 +150,7 @@ export default function Persona() {
         <ChevronRight size={14} className="text-white/20" />
         <span className="text-white/30 text-[13px]">{creator.name}</span>
         <ChevronRight size={14} className="text-white/20" />
-        <span className="text-white text-[13px]">Persona</span>
+        <span className="text-white text-[13px]">Profile</span>
 
         <div className="ml-auto flex items-center gap-2">
           {editing ? (

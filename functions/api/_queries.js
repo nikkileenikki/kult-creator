@@ -21,6 +21,7 @@ export const creatorQ = {
 
   patch: (db, id, fields) => {
     const colMap = {
+      name: 'name', initials: 'initials',
       coins: 'coins', status: 'status', pic: 'pic', contact: 'contact',
       platform: 'platform', niche: 'niche', secondaryNiche: 'secondary_niche',
       followers: 'followers', tasksCompleted: 'tasks_completed',
