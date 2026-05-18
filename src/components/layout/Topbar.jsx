@@ -12,6 +12,7 @@ const PAGE_META = {
   '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
   '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
+  '/settings':  { cta: null,           action: null,               placeholder: 'Search…' },
 }
 
 export default function Topbar() {

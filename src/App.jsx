@@ -10,6 +10,7 @@ import Recruit from '@/pages/Recruit'
 import Tiering from '@/pages/Tiering'
 import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
+import Settings from '@/pages/Settings'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="/tiering"     element={<Tiering />} />
             <Route path="/niche"       element={<Niche />} />
             <Route path="/persona/:id" element={<Persona />} />
+            <Route path="/settings"   element={<Settings />} />
           </Routes>
         </main>
       </div>

@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
-import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS } from '@/lib/data'
+import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
@@ -92,7 +92,8 @@ export default function Persona() {
   function startEdit() {
     setDraft({
       name: creator.name, initials: creator.initials, platform: creator.platform,
-      niche: creator.niche, followers: creator.followers, status: creator.status,
+      niche: creator.niche, secondaryNiche: creator.secondaryNiche ?? '',
+      followers: creator.followers, status: creator.status,
       pic: creator.pic, contact: creator.contact, avatarColor: creator.avatarColor,
       persona: {
         contentStyle:      persona.contentStyle      ?? '',
@@ -199,7 +200,10 @@ export default function Persona() {
             ) : (
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
-                <div className="text-[12px] text-white/30 mt-1">{creator.platform} · {creator.niche}</div>
+                <div className="text-[12px] text-white/30 mt-1">
+                  {creator.platform} · {creator.niche}
+                  {creator.secondaryNiche && <span className="ml-1 opacity-60">· {creator.secondaryNiche}</span>}
+                </div>
                 <div className="flex justify-center gap-1.5 mt-2.5">
                   <Badge variant={tier.name.toLowerCase()}>
                     {tier.name === 'Platinum' ? '👑' : tier.name === 'Diamond' ? '💎' : tier.name === 'Gold' ? '🥇' : tier.name === 'Silver' ? '🥈' : '🥉'} {tier.name}
@@ -218,21 +222,22 @@ export default function Persona() {
             {editing ? (
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'Platform', key: 'platform', type: 'select', options: PLATFORMS },
-                  { label: 'Niche', key: 'niche', type: 'text' },
-                  { label: 'Status', key: 'status', type: 'select', options: ['Active','On Hold'] },
-                  { label: 'PIC', key: 'pic', type: 'select', options: PICS },
-                  { label: 'Contact', key: 'contact', type: 'select', options: CONTACT_METHODS },
+                  { label: 'Platform',        key: 'platform',       type: 'select', options: PLATFORMS },
+                  { label: 'Primary Niche',   key: 'niche',          type: 'select', options: NICHES },
+                  { label: 'Secondary Niche', key: 'secondaryNiche', type: 'select', options: NICHES, optional: true },
+                  { label: 'Status',          key: 'status',         type: 'select', options: ['Active','On Hold'] },
+                  { label: 'PIC',             key: 'pic',            type: 'select', options: PICS },
+                  { label: 'Contact',         key: 'contact',        type: 'select', options: CONTACT_METHODS },
                 ].map(f => (
                   <div key={f.key}>
-                    <label className={LABEL}>{f.label}</label>
-                    {f.type === 'select' ? (
-                      <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
-                        {f.options.map(o => <option key={o}>{o}</option>)}
-                      </select>
-                    ) : (
-                      <input value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={INPUT} />
-                    )}
+                    <label className={LABEL}>
+                      {f.label}
+                      {f.optional && <span className="normal-case font-normal text-white/20 ml-1">(optional)</span>}
+                    </label>
+                    <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
+                      {f.optional && <option value="">None</option>}
+                      {f.options.map(o => <option key={o}>{o}</option>)}
+                    </select>
                   </div>
                 ))}
                 <div>
@@ -242,13 +247,14 @@ export default function Persona() {
               </div>
             ) : (
               [
-                ['Followers', (creator.followers/1000).toFixed(0) + 'K'],
-                ['Platform',  creator.platform],
-                ['Niche',     creator.niche],
-                ['Tasks Done',creator.tasksCompleted],
-                ['Joined',    creator.joinedDate],
-                ['PIC',       creator.pic],
-                ['Contact',   creator.contact],
+                ['Followers',        (creator.followers/1000).toFixed(0) + 'K'],
+                ['Platform',         creator.platform],
+                ['Primary Niche',    creator.niche],
+                ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
+                ['Tasks Done',       creator.tasksCompleted],
+                ['Joined',           creator.joinedDate],
+                ['PIC',              creator.pic],
+                ['Contact',          creator.contact],
               ].map(([label, val]) => (
                 <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 last:border-0 text-[12px]">
                   <span className="text-white/30">{label}</span>

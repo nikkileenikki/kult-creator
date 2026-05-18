@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
@@ -24,6 +24,7 @@ export default function Sidebar() {
   const pending   = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
   const collapsed = useUIStore(s => s.sidebarCollapsed)
   const toggle    = useUIStore(s => s.toggleSidebar)
+  const navigate  = useNavigate()
 
   return (
     <aside className={cn(
@@ -112,7 +113,7 @@ export default function Sidebar() {
 
         {/* User */}
         {!collapsed ? (
-          <div className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-white/5 border border-white/7 cursor-pointer hover:border-white/12 transition-all">
+          <div onClick={() => navigate('/settings')} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-white/5 border border-white/7 cursor-pointer hover:border-white/12 transition-all">
             <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center font-syne text-[11px] font-bold text-white flex-shrink-0">NK</div>
             <div>
               <div className="text-[12px] font-medium text-white">Nikki</div>
