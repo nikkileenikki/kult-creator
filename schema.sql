@@ -17,8 +17,9 @@ CREATE TABLE IF NOT EXISTS creators (
   pic           TEXT NOT NULL,
   contact       TEXT NOT NULL,
   joined_date   TEXT NOT NULL,
-  avatar_color  TEXT NOT NULL DEFAULT 'v',
-  persona       TEXT NOT NULL DEFAULT '{}'
+  avatar_color      TEXT NOT NULL DEFAULT 'v',
+  secondary_niche   TEXT NOT NULL DEFAULT '',
+  persona           TEXT NOT NULL DEFAULT '{}'
 );
 
 -- Tasks

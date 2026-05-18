@@ -1,3 +1,9 @@
+export const NICHES = [
+  'Lifestyle & Wellness', 'Beauty', 'Skincare', 'Fashion', 'Food & Lifestyle',
+  'Tech', 'Gaming', 'Fitness', 'Travel', 'Parenting', 'Finance', 'Education',
+  'Entertainment', 'Automotive', 'Sports', 'Home & Decor', 'Pet', 'Music', 'Comedy',
+]
+
 export const PROJECTS = ['Ramadan Campaign', 'Brand Launch Q2', 'Skincare Series']
 export const PICS = ['Sarah K.', 'Lina M.']
 export const PLATFORMS = ['TikTok', 'YouTube', 'Instagram', 'X / Twitter', 'LinkedIn']
@@ -15,7 +21,7 @@ export const AVATAR_COLOR_OPTIONS = [
 export const CREATORS = [
   {
     id: '1', initials: 'SR', name: 'Siti Rania', platform: 'TikTok',
-    niche: 'Lifestyle & Wellness', followers: 520000, coins: 9200,
+    niche: 'Lifestyle & Wellness', secondaryNiche: 'Fashion', followers: 520000, coins: 9200,
     tasksCompleted: 92, status: 'Active', pic: 'Sarah K.',
     contact: 'WhatsApp', joinedDate: '2024-01-15', avatarColor: 'v',
     persona: {
@@ -34,7 +40,7 @@ export const CREATORS = [
   },
   {
     id: '2', initials: 'HZ', name: 'Hafiz Zaki', platform: 'YouTube',
-    niche: 'Tech', followers: 380000, coins: 6200,
+    niche: 'Tech', secondaryNiche: 'Gaming', followers: 380000, coins: 6200,
     tasksCompleted: 62, status: 'Active', pic: 'Lina M.',
     contact: 'Email', joinedDate: '2023-08-20', avatarColor: 'b',
     persona: {
@@ -53,7 +59,7 @@ export const CREATORS = [
   },
   {
     id: '3', initials: 'AN', name: 'Aina Nadia', platform: 'Instagram',
-    niche: 'Beauty', followers: 210000, coins: 2700,
+    niche: 'Beauty', secondaryNiche: 'Skincare', followers: 210000, coins: 2700,
     tasksCompleted: 27, status: 'Active', pic: 'Sarah K.',
     contact: 'Instagram DM', joinedDate: '2024-03-10', avatarColor: 'g',
     persona: {
@@ -72,7 +78,7 @@ export const CREATORS = [
   },
   {
     id: '4', initials: 'FH', name: 'Farah Hana', platform: 'TikTok',
-    niche: 'Food & Lifestyle', followers: 145000, coins: 1100,
+    niche: 'Food & Lifestyle', secondaryNiche: 'Entertainment', followers: 145000, coins: 1100,
     tasksCompleted: 11, status: 'On Hold', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2024-06-01', avatarColor: 'r',
     persona: {
@@ -91,7 +97,7 @@ export const CREATORS = [
   },
   {
     id: '5', initials: 'RI', name: 'Razif Idham', platform: 'YouTube',
-    niche: 'Gaming', followers: 280000, coins: 800,
+    niche: 'Gaming', secondaryNiche: 'Tech', followers: 280000, coins: 800,
     tasksCompleted: 8, status: 'Active', pic: 'Sarah K.',
     contact: 'Discord', joinedDate: '2025-01-05', avatarColor: 't',
     persona: {
@@ -110,7 +116,7 @@ export const CREATORS = [
   },
   {
     id: '6', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram',
-    niche: 'Skincare', followers: 94000, coins: 290,
+    niche: 'Skincare', secondaryNiche: 'Beauty', followers: 94000, coins: 290,
     tasksCompleted: 3, status: 'Active', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2025-11-20', avatarColor: 'i',
     persona: {

@@ -10,10 +10,10 @@ export const creatorQ = {
   create: (db, c) =>
     db.prepare(`
       INSERT INTO creators
-        (id, initials, name, platform, niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      c.id, c.initials, c.name, c.platform, c.niche,
+      c.id, c.initials, c.name, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
       c.pic, c.contact, c.joinedDate, c.avatarColor,
       JSON.stringify(c.persona ?? {}),
@@ -22,9 +22,9 @@ export const creatorQ = {
   patch: (db, id, fields) => {
     const colMap = {
       coins: 'coins', status: 'status', pic: 'pic', contact: 'contact',
-      platform: 'platform', niche: 'niche', followers: 'followers',
-      tasksCompleted: 'tasks_completed', avatarColor: 'avatar_color',
-      persona: 'persona',
+      platform: 'platform', niche: 'niche', secondaryNiche: 'secondary_niche',
+      followers: 'followers', tasksCompleted: 'tasks_completed',
+      avatarColor: 'avatar_color', persona: 'persona',
     }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
@@ -91,9 +91,9 @@ export const campaignQ = {
 
   create: (db, c) =>
     db.prepare(`
-      INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color, brief)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `).bind(c.id, c.name, c.description ?? '', c.status ?? 'Planning', c.budget ?? 0, c.startDate ?? '', c.endDate ?? '', c.color ?? '#6C5CE7', c.brief ?? '').run(),
+      INSERT INTO campaigns (id, name, description, status, budget, start_date, end_date, color)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(c.id, c.name, c.description ?? '', c.status ?? 'Planning', c.budget ?? 0, c.startDate ?? '', c.endDate ?? '', c.color ?? '#6C5CE7').run(),
 
   patch: (db, id, fields) => {
     const colMap = { name:'name', description:'description', status:'status', budget:'budget', startDate:'start_date', endDate:'end_date', color:'color', brief:'brief' }

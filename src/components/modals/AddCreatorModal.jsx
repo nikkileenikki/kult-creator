@@ -6,7 +6,7 @@ import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
-import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS } from '@/lib/data'
+import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import { cn } from '@/lib/utils'
 
@@ -14,7 +14,8 @@ const schema = z.object({
   name:        z.string().min(2, 'Name must be at least 2 characters').max(50),
   initials:    z.string().min(1, 'Required').max(3, 'Max 3 characters').toUpperCase(),
   platform:    z.string().min(1, 'Select a platform'),
-  niche:       z.string().min(1, 'Niche is required').max(50),
+  niche:          z.string().min(1, 'Niche is required'),
+  secondaryNiche: z.string().default(''),
   followers:   z.coerce.number().min(0, 'Min 0').max(100_000_000, 'Too large'),
   status:      z.enum(['Active', 'On Hold']),
   pic:         z.string().min(1, 'PIC is required'),
@@ -42,11 +43,12 @@ export default function AddCreatorModal() {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      name:        '',
-      initials:    '',
-      platform:    PLATFORMS[0],
-      niche:       '',
-      followers:   0,
+      name:           '',
+      initials:       '',
+      platform:       PLATFORMS[0],
+      niche:          '',
+      secondaryNiche: '',
+      followers:      0,
       status:      'Active',
       pic:         PICS[0],
       contact:     CONTACT_METHODS[0],
@@ -161,7 +163,7 @@ export default function AddCreatorModal() {
                   </div>
                 </div>
 
-                {/* Platform + Niche */}
+                {/* Platform + Primary Niche */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Platform</label>
@@ -171,14 +173,22 @@ export default function AddCreatorModal() {
                     {errors.platform && <p className={ERR}>{errors.platform.message}</p>}
                   </div>
                   <div>
-                    <label className={LABEL}>Niche</label>
-                    <input
-                      {...register('niche')}
-                      placeholder="e.g. Lifestyle & Wellness"
-                      className={INPUT}
-                    />
+                    <label className={LABEL}>Primary Niche</label>
+                    <select {...register('niche')} className={INPUT}>
+                      <option value="">Select niche…</option>
+                      {NICHES.map(n => <option key={n}>{n}</option>)}
+                    </select>
                     {errors.niche && <p className={ERR}>{errors.niche.message}</p>}
                   </div>
+                </div>
+
+                {/* Secondary Niche */}
+                <div>
+                  <label className={LABEL}>Secondary Niche <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                  <select {...register('secondaryNiche')} className={INPUT}>
+                    <option value="">None</option>
+                    {NICHES.map(n => <option key={n}>{n}</option>)}
+                  </select>
                 </div>
 
                 {/* Followers + Status */}

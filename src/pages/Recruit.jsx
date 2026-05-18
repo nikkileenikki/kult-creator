@@ -34,10 +34,10 @@ export default function Recruit() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(310px,1fr))] gap-3.5">
-        {requests.map(r => {
-          const isDone = r.status === 'Approved' || r.status === 'Rejected'
+        {requests.filter(r => r.status !== 'Approved' && r.status !== 'Rejected').map(r => {
+          const isDone = false
           return (
-            <div key={r.id} className={`bg-[#1E1E28] border rounded-[14px] p-[18px] transition-all ${r.status==='Approved'?'border-emerald-500/30 opacity-60':r.status==='Rejected'?'border-rose-500/20 opacity-50':'border-white/7'}`}>
+            <div key={r.id} className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px] transition-all">
               <div className="flex items-start justify-between mb-3">
                 <div className="flex items-center gap-3">
                   <Avatar initials={r.initials} color={r.avatarColor} size="md" />

@@ -21,6 +21,7 @@ export function mapCreator(row) {
     name:           row.name,
     platform:       row.platform,
     niche:          row.niche,
+    secondaryNiche: row.secondary_niche ?? '',
     followers:      row.followers,
     coins:          row.coins,
     tasksCompleted: row.tasks_completed,
@@ -82,6 +83,5 @@ export function mapCampaign(row) {
     startDate:   row.start_date ?? '',
     endDate:     row.end_date ?? '',
     color:       row.color ?? '#6C5CE7',
-    brief:       row.brief ?? '',
   }
 }
