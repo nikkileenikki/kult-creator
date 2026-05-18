@@ -83,11 +83,11 @@ export default function AddCampaignModal() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={LABEL}>Start Date</label>
-                <input type="date" {...register('startDate')} className={INPUT} />
+                <input type="date" {...register('startDate')} onWheel={e => e.currentTarget.blur()} className={INPUT} />
               </div>
               <div>
                 <label className={LABEL}>End Date</label>
-                <input type="date" {...register('endDate')} className={INPUT} />
+                <input type="date" {...register('endDate')} onWheel={e => e.currentTarget.blur()} className={INPUT} />
               </div>
             </div>
 

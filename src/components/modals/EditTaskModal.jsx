@@ -169,7 +169,7 @@ export default function EditTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Due Date</label>
-                    <input type="date" {...register('dueDate')} className={cn(INPUT, '[color-scheme:dark]')} />
+                    <input type="date" {...register('dueDate')} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]')} />
                     {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
                   </div>
                   <div>
