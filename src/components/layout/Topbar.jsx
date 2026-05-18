@@ -6,14 +6,15 @@ const PAGE_META = {
   '/':         { title: 'Dashboard',        cta: 'Add Task',    action: 'openAddTask' },
   '/projects': { title: 'Projects',         cta: 'Add Task',    action: 'openAddTask' },
   '/creators': { title: 'Creators',         cta: 'Add Creator', action: 'openAddCreator' },
+  '/niche':    { title: 'Niche',            cta: 'Add Creator', action: 'openAddCreator' },
   '/recruit':  { title: 'Recruit Requests', cta: 'Manual Add',  action: null },
   '/tiering':  { title: 'Tiering',          cta: 'Award Coins', action: null },
-  '/persona':  { title: 'Creator Persona',  cta: 'Edit Profile',action: null },
 }
 
 export default function Topbar() {
   const { pathname } = useLocation()
-  const meta         = PAGE_META[pathname] || PAGE_META['/']
+  const meta = PAGE_META[pathname]
+    ?? (pathname.startsWith('/persona/') ? { title: 'Creator Persona', cta: 'Edit Profile', action: null } : PAGE_META['/'])
   const openAddTask    = useUIStore(s => s.openAddTask)
   const openAddCreator = useUIStore(s => s.openAddCreator)
 

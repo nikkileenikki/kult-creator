@@ -61,6 +61,17 @@ export const taskQ = {
 
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, id).run(),
+
+  update: (db, id, fields) => {
+    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins' }
+    const sets = [], vals = []
+    for (const [key, col] of Object.entries(colMap)) {
+      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+    }
+    if (!sets.length) return null
+    vals.push(id)
+    return db.prepare(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+  },
 }
 
 export const recruitQ = {

@@ -9,8 +9,10 @@ import Creators from '@/pages/Creators'
 import Recruit from '@/pages/Recruit'
 import Tiering from '@/pages/Tiering'
 import Persona from '@/pages/Persona'
+import Niche from '@/pages/Niche'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
+import EditTaskModal from '@/components/modals/EditTaskModal'
 import { useUIStore } from '@/store/uiStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
@@ -61,6 +63,7 @@ export default function App() {
             <Route path="/creators" element={<Creators />} />
             <Route path="/recruit"  element={<Recruit />} />
             <Route path="/tiering"  element={<Tiering />} />
+            <Route path="/niche"       element={<Niche />} />
             <Route path="/persona/:id" element={<Persona />} />
           </Routes>
         </main>
@@ -69,6 +72,7 @@ export default function App() {
       {/* Global modals */}
       <AddTaskModal />
       <AddCreatorModal />
+      <EditTaskModal />
 
       {/* Toast */}
       <Toast />

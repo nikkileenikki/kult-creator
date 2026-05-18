@@ -1,7 +1,9 @@
 import { useState } from 'react'
 import { useTaskStore } from '@/store/taskStore'
+import { useUIStore } from '@/store/uiStore'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
+import { Pencil } from 'lucide-react'
 
 const STATUS_BADGE = { 'In Progress':'blue','Under Review':'amber','Completed':'green','Overdue':'red','Not Started':'gray' }
 const PRIORITY_DOT  = { Urgent:'bg-rose-400 shadow-[0_0_4px_rgba(248,113,113,.5)]',High:'bg-orange-400',Medium:'bg-amber-400',Low:'bg-emerald-400' }
@@ -10,7 +12,8 @@ const AV_COLORS     = ['v','b','g','r','t','i']
 const KANBAN_COLS = ['Not Started','In Progress','Under Review','Completed','Overdue']
 
 export default function Projects() {
-  const tasks = useTaskStore(s => s.tasks)
+  const tasks      = useTaskStore(s => s.tasks)
+  const openEdit   = useUIStore(s => s.openEditTask)
   const [view, setView] = useState('table')
 
   return (
@@ -50,7 +53,7 @@ export default function Projects() {
             </thead>
             <tbody>
               {tasks.map((t, i) => (
-                <tr key={t.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors cursor-pointer">
+                <tr key={t.id} onClick={() => openEdit(t.id)} className="border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors cursor-pointer group">
                   <td className="px-3.5 py-3">
                     <div className="flex items-center gap-2">
                       <Avatar initials={t.creatorName.split(' ').map(n=>n[0]).join('')} color={AV_COLORS[i % AV_COLORS.length]} size="sm" />
@@ -67,6 +70,9 @@ export default function Projects() {
                   <td className={`px-3.5 py-3 font-mono text-[11px] ${t.status==='Overdue'?'text-rose-400 font-semibold':'text-white/30'}`}>{t.dueDate}</td>
                   <td className="px-3.5 py-3"><span className="flex items-center gap-1.5 text-[12px] text-white/40"><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />{t.priority}</span></td>
                   <td className={`px-3.5 py-3 font-mono text-[12px] ${t.status==='Completed'?'text-emerald-400 font-medium':'text-white/30'}`}>{t.status==='Completed'?`+${t.coins}`:t.coins}</td>
+                  <td className="px-3.5 py-3">
+                    <Pencil size={12} className="text-white/0 group-hover:text-white/30 transition-colors" />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -85,7 +91,7 @@ export default function Projects() {
                   <span className="font-mono text-[10px] bg-white/6 border border-white/7 text-white/25 px-2 py-0.5 rounded-full">{colTasks.length}</span>
                 </div>
                 {colTasks.map((t, i) => (
-                  <div key={t.id} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
+                  <div key={t.id} onClick={() => openEdit(t.id)} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
                     <div className="font-mono text-[9px] text-violet-400 uppercase tracking-[.06em] mb-1.5">{t.project}</div>
                     <div className="text-[12px] font-medium text-white mb-1.5 leading-snug">{t.task}</div>
                     <div className="text-[11px] text-white/30 mb-2">{t.creatorName} · {t.platform}</div>

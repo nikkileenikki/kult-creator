@@ -1,11 +1,11 @@
 import { create } from 'zustand'
 import { getTier } from '../lib/tierUtils'
-import { fetchCreators, createCreator, updateCreator } from '../lib/api/creators'
+import { fetchCreators, createCreator, updateCreator as apiUpdateCreator } from '../lib/api/creators'
 
 export const useCreatorStore = create((set, get) => ({
   creators: [],
-  loading: false,
-  error: null,
+  loading:  false,
+  error:    null,
 
   fetchCreators: async () => {
     set({ loading: true, error: null })
@@ -20,16 +20,23 @@ export const useCreatorStore = create((set, get) => ({
   awardCoins: async (creatorId, amount) => {
     const creator = get().creators.find(c => c.id === creatorId)
     if (!creator) return
-    const oldTier  = getTier(creator.coins)
-    const newCoins = creator.coins + amount
-    const newTier  = getTier(newCoins)
+    const oldTier   = getTier(creator.coins)
+    const newCoins  = creator.coins + amount
+    const newTier   = getTier(newCoins)
     const leveledUp = newTier.name !== oldTier.name
     set(state => ({
       creators: state.creators.map(c =>
         c.id === creatorId ? { ...c, coins: newCoins, _leveledUp: leveledUp ? newTier.name : null } : c
       ),
     }))
-    await updateCreator(creatorId, { coins: newCoins })
+    await apiUpdateCreator(creatorId, { coins: newCoins })
+  },
+
+  updateCreator: async (id, patch) => {
+    set(state => ({
+      creators: state.creators.map(c => c.id === id ? { ...c, ...patch } : c),
+    }))
+    await apiUpdateCreator(id, patch)
   },
 
   getCreatorById: (id) => get().creators.find(c => c.id === id),

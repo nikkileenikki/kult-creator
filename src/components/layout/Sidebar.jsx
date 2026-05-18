@@ -12,7 +12,7 @@ const NAV = [
   ]},
   { section: 'Creators', items: [
     { to: '/creators', label: 'All Creators',      icon: Users },
-    { to: '/creators', label: 'Niche',             icon: User },
+    { to: '/niche',    label: 'Niche',               icon: User },
     { to: '/tiering',  label: 'Tiering',           icon: Star },
     { to: '/recruit',  label: 'Recruit Requests',  icon: UserPlus, badge: true },
   ]},

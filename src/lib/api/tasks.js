@@ -28,6 +28,14 @@ export async function createTask(payload) {
   return request('POST', '/tasks', payload)
 }
 
+export async function updateTask(taskId, data) {
+  if (USE_MOCK) {
+    await delay(300)
+    return { id: taskId, ...data }
+  }
+  return request('PATCH', `/tasks/${taskId}`, data)
+}
+
 export async function updateTaskStatus(taskId, status) {
   if (USE_MOCK) {
     await delay(200)

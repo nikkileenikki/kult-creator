@@ -1,14 +1,18 @@
 import { create } from 'zustand'
 
 export const useUIStore = create((set) => ({
-  addTaskOpen: false,
+  addTaskOpen:  false,
   addCreatorOpen: false,
-  toast: null,
+  editTaskOpen: false,
+  editTaskId:   null,
+  toast:        null,
 
-  openAddTask: () => set({ addTaskOpen: true }),
-  closeAddTask: () => set({ addTaskOpen: false }),
+  openAddTask:    () => set({ addTaskOpen: true }),
+  closeAddTask:   () => set({ addTaskOpen: false }),
   openAddCreator: () => set({ addCreatorOpen: true }),
-  closeAddCreator: () => set({ addCreatorOpen: false }),
+  closeAddCreator:() => set({ addCreatorOpen: false }),
+  openEditTask:   (id) => set({ editTaskOpen: true, editTaskId: id }),
+  closeEditTask:  () => set({ editTaskOpen: false, editTaskId: null }),
 
   showToast: (message, type = 'success') => {
     set({ toast: { message, type } })
