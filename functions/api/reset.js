@@ -1,4 +1,4 @@
-import { json, err, opts, getDB } from '../_helpers'
+import { json, err, opts, getDB } from './_helpers'
 
 export const onRequestOptions = () => opts()
 
