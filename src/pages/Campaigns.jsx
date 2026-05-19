@@ -519,7 +519,10 @@ export default function Campaigns() {
     let list = filterStatus === 'All' ? campaigns : campaigns.filter(c => c.status === filterStatus)
     if (globalSearch) {
       const q = globalSearch.toLowerCase()
-      list = list.filter(c => c.name.toLowerCase().includes(q))
+      list = list.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        (c.brandName && c.brandName.toLowerCase().includes(q))
+      )
     }
     return list
   }, [campaigns, filterStatus, globalSearch])

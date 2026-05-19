@@ -32,17 +32,19 @@ export default function Topbar() {
 
   useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const tasks = useTaskStore(s => s.tasks)
+  const tasks           = useTaskStore(s => s.tasks)
+  const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
   const alertCount = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const limit = new Date(today); limit.setDate(today.getDate() + 3)
     return tasks.filter(t => {
+      if (dismissedAlerts.has(t.id)) return false
       if (t.status === 'Overdue') return true
       if (t.status === 'Completed') return false
       const due = new Date(t.dueDate)
       return due >= today && due <= limit
     }).length
-  }, [tasks])
+  }, [tasks, dismissedAlerts])
 
   function handleCTA() {
     if (meta.action === 'openAddTask')     openAddTask()

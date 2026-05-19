@@ -9,13 +9,23 @@ export default function Brands() {
   const campaigns    = useCampaignStore(s => s.campaigns)
   const globalSearch = useUIStore(s => s.globalSearch)
 
-  const [selected, setSelected] = useState(null)
+  const [selected,        setSelected]        = useState(null)
+  const [filterIndustry,  setFilterIndustry]  = useState('All')
+
+  const industries = useMemo(() => {
+    const set = new Set(brands.map(b => b.industry).filter(Boolean))
+    return ['All', ...Array.from(set).sort()]
+  }, [brands])
 
   const filtered = useMemo(() => {
-    if (!globalSearch) return brands
-    const q = globalSearch.toLowerCase()
-    return brands.filter(b => b.name.toLowerCase().includes(q) || b.industry.toLowerCase().includes(q))
-  }, [brands, globalSearch])
+    let list = brands
+    if (filterIndustry !== 'All') list = list.filter(b => b.industry === filterIndustry)
+    if (globalSearch) {
+      const q = globalSearch.toLowerCase()
+      list = list.filter(b => b.name.toLowerCase().includes(q) || b.industry.toLowerCase().includes(q))
+    }
+    return list
+  }, [brands, filterIndustry, globalSearch])
 
   const selectedBrand    = selected ? brands.find(b => b.id === selected) : null
   const brandCampaigns   = selectedBrand ? campaigns.filter(c => c.brandId === selectedBrand.id) : []
@@ -73,9 +83,23 @@ export default function Brands() {
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
-      <div className="mb-5">
-        <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Brands</h1>
-        <p className="text-[12px] text-white/30 mt-1">{brands.length} brand{brands.length !== 1 ? 's' : ''} · {campaigns.length} campaigns total</p>
+      <div className="flex items-end justify-between mb-5">
+        <div>
+          <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Brands</h1>
+          <p className="text-[12px] text-white/30 mt-1">
+            {filtered.length}{filtered.length !== brands.length ? ` of ${brands.length}` : ''} brand{brands.length !== 1 ? 's' : ''} · {campaigns.length} campaigns total
+          </p>
+        </div>
+        {industries.length > 2 && (
+          <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
+            {industries.map(ind => (
+              <button key={ind} onClick={() => setFilterIndustry(ind)}
+                className={`px-3 py-1.5 text-[11px] font-medium rounded-md transition-all ${filterIndustry === ind ? 'bg-[#1E1E28] text-white' : 'text-white/30 hover:text-white/60'}`}>
+                {ind}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       {filtered.length === 0 ? (
