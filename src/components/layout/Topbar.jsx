@@ -65,19 +65,21 @@ export default function Topbar() {
         <span className="font-syne text-[15px] font-extrabold text-white tracking-tight whitespace-nowrap">Creator Engine</span>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-56 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
-        <Search size={13} className="flex-shrink-0 text-white/30" />
-        <input
-          value={globalSearch}
-          onChange={e => setGlobalSearch(e.target.value)}
-          placeholder={meta.placeholder}
-          className="bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 w-full"
-        />
-        {globalSearch && (
-          <button onClick={() => setGlobalSearch('')} className="text-white/25 hover:text-white/60 text-[11px] leading-none flex-shrink-0">✕</button>
-        )}
-      </div>
+      {/* Search — hidden on dashboard */}
+      {pathname !== '/' && (
+        <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-56 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
+          <Search size={13} className="flex-shrink-0 text-white/30" />
+          <input
+            value={globalSearch}
+            onChange={e => setGlobalSearch(e.target.value)}
+            placeholder={meta.placeholder}
+            className="bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 w-full"
+          />
+          {globalSearch && (
+            <button onClick={() => setGlobalSearch('')} className="text-white/25 hover:text-white/60 text-[11px] leading-none flex-shrink-0">✕</button>
+          )}
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
         {/* Notification bell */}
