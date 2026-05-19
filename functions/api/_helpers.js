@@ -83,5 +83,7 @@ export function mapCampaign(row) {
     startDate:   row.start_date ?? '',
     endDate:     row.end_date ?? '',
     color:       row.color ?? '#6C5CE7',
+    brandId:     row.brand_id ?? '',
+    brandName:   row.brand_name ?? '',
   }
 }
