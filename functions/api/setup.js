@@ -1,4 +1,5 @@
 import { encryptField } from './_crypto'
+import { hashPassword } from './_passwords'
 
 export async function onRequestGet({ env }) {
   const DB = env.DB
@@ -126,6 +127,18 @@ export async function onRequestGet({ env }) {
       name: 'Add brand_name column to campaigns',
       sql: `ALTER TABLE campaigns ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''`,
     },
+    {
+      name: 'Create users table',
+      sql: `CREATE TABLE IF NOT EXISTS users (
+        id            TEXT PRIMARY KEY,
+        username      TEXT NOT NULL UNIQUE,
+        display_name  TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        role          TEXT NOT NULL DEFAULT 'viewer',
+        permissions   TEXT NOT NULL DEFAULT '[]',
+        created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
   ]
 
   for (const step of steps) {
@@ -236,6 +249,27 @@ export async function onRequestGet({ env }) {
     results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns, brands' })
   } else {
     results.push({ step: 'Seed data', status: 'skipped', reason: `${count} creators already exist` })
+  }
+
+  // Seed default users if none exist
+  const { results: existingUsers } = await DB.prepare('SELECT COUNT(*) as count FROM users').all()
+  if ((existingUsers[0]?.count ?? 0) === 0) {
+    const defaultUsers = [
+      { id: 'u1', username: 'admin',  displayName: 'Admin',    password: 'admin123',  role: 'admin',
+        permissions: ['users.manage','contacts.view_all','creators.edit','campaigns.manage','brands.manage','recruits.approve'] },
+      { id: 'u2', username: 'sarah',  displayName: 'Sarah K.', password: 'sarah123',  role: 'pic',
+        permissions: ['contacts.view_assigned','creators.edit'] },
+      { id: 'u3', username: 'lina',   displayName: 'Lina M.',  password: 'lina123',   role: 'pic',
+        permissions: ['contacts.view_assigned','creators.edit'] },
+    ]
+    for (const u of defaultUsers) {
+      const hash = await hashPassword(u.password)
+      await DB.prepare(`INSERT OR IGNORE INTO users (id,username,display_name,password_hash,role,permissions) VALUES (?,?,?,?,?,?)`)
+        .bind(u.id, u.username, u.displayName, hash, u.role, JSON.stringify(u.permissions)).run()
+    }
+    results.push({ step: 'Seed users', status: 'ok', inserted: defaultUsers.map(u => u.username).join(', ') })
+  } else {
+    results.push({ step: 'Seed users', status: 'skipped', reason: 'users already exist' })
   }
 
   return Response.json({ success: true, results }, { status: 200 })

@@ -12,12 +12,14 @@ import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
 import Brands from '@/pages/Brands'
 import Settings from '@/pages/Settings'
+import Login from '@/pages/Login'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
 import AddBrandModal from '@/components/modals/AddBrandModal'
 import EditTaskModal from '@/components/modals/EditTaskModal'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
@@ -47,6 +49,9 @@ function Toast() {
 }
 
 export default function App() {
+  const token = useAuthStore(s => s.token)
+  const user  = useAuthStore(s => s.user)
+
   const fetchCreators  = useCreatorStore(s => s.fetchCreators)
   const fetchTasks     = useTaskStore(s => s.fetchTasks)
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
@@ -54,12 +59,17 @@ export default function App() {
   const fetchBrands    = useBrandStore(s => s.fetchBrands)
 
   useEffect(() => {
+    if (!token || !user) return
     fetchCreators()
     fetchTasks()
     fetchRecruits()
     fetchCampaigns()
     fetchBrands()
-  }, [])
+  }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!token || !user) {
+    return <Login />
+  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#0D0D10]">

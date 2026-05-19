@@ -1,13 +1,23 @@
-import { Bell, Search, ChevronDown } from 'lucide-react'
+import { Bell, Search, LogOut } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useEffect, useMemo } from 'react'
 import NotificationsPanel from './NotificationsPanel'
 
-const USERS = ['Sarah K.', 'Lina M.', 'Admin']
-const USER_INITIALS = { 'Sarah K.': 'SK', 'Lina M.': 'LM', 'Admin': 'AD' }
-const USER_COLOR = { 'Sarah K.': 'from-violet-500 to-violet-400', 'Lina M.': 'from-teal-500 to-teal-400', 'Admin': 'from-amber-500 to-amber-400' }
+const ROLE_AVATAR_COLOR = {
+  admin:   'from-amber-500 to-amber-400',
+  manager: 'from-violet-500 to-violet-400',
+  pic:     'from-blue-500 to-blue-400',
+  viewer:  'from-white/20 to-white/10',
+}
+
+function getUserInitials(displayName) {
+  if (!displayName) return '?'
+  return displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
+
 
 const PAGE_META = {
   '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
@@ -33,8 +43,8 @@ export default function Topbar() {
   const notificationsOpen   = useUIStore(s => s.notificationsOpen)
   const globalSearch        = useUIStore(s => s.globalSearch)
   const setGlobalSearch     = useUIStore(s => s.setGlobalSearch)
-  const currentUser         = useUIStore(s => s.currentUser)
-  const setCurrentUser      = useUIStore(s => s.setCurrentUser)
+  const user                = useAuthStore(s => s.user)
+  const logout              = useAuthStore(s => s.logout)
 
   useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -88,33 +98,22 @@ export default function Topbar() {
       )}
 
       <div className="ml-auto flex items-center gap-2">
-        {/* Current user selector */}
-        <div className="relative group">
-          <button className="flex items-center gap-1.5 h-[34px] px-2.5 rounded-lg bg-[#1E1E28] border border-white/7 hover:border-white/14 transition-all">
-            {currentUser ? (
-              <>
-                <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${USER_COLOR[currentUser] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0`}>
-                  {USER_INITIALS[currentUser] ?? currentUser.slice(0,2).toUpperCase()}
-                </div>
-                <span className="text-[12px] font-medium text-white/70">{currentUser}</span>
-              </>
-            ) : (
-              <span className="text-[12px] text-white/30">Select user</span>
-            )}
-            <ChevronDown size={11} className="text-white/30" />
-          </button>
-          <div className="absolute right-0 top-full mt-1 w-36 bg-[#1E1E28] border border-white/10 rounded-xl shadow-2xl py-1 z-50 hidden group-hover:block">
-            {USERS.map(u => (
-              <button key={u} onClick={() => setCurrentUser(u)}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium transition-colors hover:bg-white/5 ${currentUser === u ? 'text-violet-300' : 'text-white/60'}`}>
-                <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${USER_COLOR[u]} flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0`}>
-                  {USER_INITIALS[u]}
-                </div>
-                {u}
-              </button>
-            ))}
+        {/* Logged-in user display + logout */}
+        {user && (
+          <div className="flex items-center gap-2 h-[34px] px-2.5 rounded-lg bg-[#1E1E28] border border-white/7">
+            <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${ROLE_AVATAR_COLOR[user.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0`}>
+              {getUserInitials(user.displayName)}
+            </div>
+            <span className="text-[12px] font-medium text-white/70">{user.displayName}</span>
+            <button
+              onClick={logout}
+              title="Sign out"
+              className="ml-1 text-white/25 hover:text-white/70 transition-colors flex-shrink-0"
+            >
+              <LogOut size={13} />
+            </button>
           </div>
-        </div>
+        )}
 
         {/* Notification bell */}
         <div className="relative">

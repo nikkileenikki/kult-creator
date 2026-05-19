@@ -3,6 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
@@ -96,7 +97,7 @@ export default function Persona() {
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
-  const currentUser = useUIStore(s => s.currentUser)
+  const canViewContacts = useAuthStore(s => s.canViewContacts)
   const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)
@@ -105,7 +106,7 @@ export default function Persona() {
   const [revealed, setRevealed] = useState({ phone: false, email: false })
 
   const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
-  const canReveal = currentUser === creator?.pic || currentUser === 'Admin'
+  const canReveal = canViewContacts(creator?.pic)
 
   if (!creator) {
     return (
@@ -286,11 +287,25 @@ export default function Persona() {
                 </div>
                 <div>
                   <label className={LABEL}>Contact Number</label>
-                  <input value={d.contactNumber ?? ''} onChange={e => setField('contactNumber', e.target.value)} placeholder="+60 12-345 6789" className={INPUT} />
+                  {canReveal ? (
+                    <input value={d.contactNumber ?? ''} onChange={e => setField('contactNumber', e.target.value)} placeholder="+60 12-345 6789" className={INPUT} />
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-[#1A1A22] border border-white/[0.07] rounded-lg text-[12px] text-white/30 italic">
+                      <Lock size={11} className="flex-shrink-0 text-white/20" />
+                      Only {creator.pic} or Admin can edit contact details
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className={LABEL}>Email</label>
-                  <input type="email" value={d.email ?? ''} onChange={e => setField('email', e.target.value)} placeholder="name@email.com" className={INPUT} />
+                  {canReveal ? (
+                    <input type="email" value={d.email ?? ''} onChange={e => setField('email', e.target.value)} placeholder="name@email.com" className={INPUT} />
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-[#1A1A22] border border-white/[0.07] rounded-lg text-[12px] text-white/30 italic">
+                      <Lock size={11} className="flex-shrink-0 text-white/20" />
+                      Only {creator.pic} or Admin can edit contact details
+                    </div>
+                  )}
                 </div>
                 <div>
                   <label className={LABEL}>Platform Username</label>

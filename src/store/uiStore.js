@@ -13,7 +13,6 @@ export const useUIStore = create((set) => ({
   toast:             null,
   globalSearch:      '',
   sidebarCollapsed:  false,
-  currentUser:       localStorage.getItem('ce_current_user') || '',
 
   openAddTask:         (prefill = null) => set({ addTaskOpen: true, addTaskPrefill: prefill }),
   closeAddTask:        () => set({ addTaskOpen: false, addTaskPrefill: null }),
@@ -31,7 +30,6 @@ export const useUIStore = create((set) => ({
   dismissAllAlerts:     (ids) => set(s => ({ dismissedAlerts: new Set([...s.dismissedAlerts, ...ids]) })),
   setGlobalSearch:     (q) => set({ globalSearch: q }),
   toggleSidebar:       () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
-  setCurrentUser:      (u) => { localStorage.setItem('ce_current_user', u); set({ currentUser: u }) },
 
   showToast: (message, type = 'success') => {
     set({ toast: { message, type } })

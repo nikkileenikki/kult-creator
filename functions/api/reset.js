@@ -1,5 +1,6 @@
 import { json, err, opts, getDB } from './_helpers'
 import { encryptField } from './_crypto'
+import { hashPassword } from './_passwords'
 
 export const onRequestOptions = () => opts()
 
@@ -22,6 +23,12 @@ export async function onRequestPost({ env }) {
     `CREATE TABLE IF NOT EXISTS brands (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, industry TEXT NOT NULL DEFAULT '',
       color TEXT NOT NULL DEFAULT '#6C5CE7', website TEXT NOT NULL DEFAULT '',
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    )`,
+    `CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY, username TEXT NOT NULL UNIQUE, display_name TEXT NOT NULL,
+      password_hash TEXT NOT NULL, role TEXT NOT NULL DEFAULT 'viewer',
+      permissions TEXT NOT NULL DEFAULT '[]',
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     )`,
   ]
@@ -124,6 +131,24 @@ export async function onRequestPost({ env }) {
     await db.prepare(
       `INSERT INTO campaigns (id,name,description,status,budget,start_date,end_date,color,brand_id,brand_name) VALUES (?,?,?,?,?,?,?,?,?,?)`
     ).bind(id, name, description, status, budget, start_date, end_date, color, brand_id, brand_name).run()
+  }
+
+  // Seed default users only if table is empty (preserve accounts across resets)
+  const { results: existingUsers } = await db.prepare('SELECT COUNT(*) as count FROM users').all()
+  if ((existingUsers[0]?.count ?? 0) === 0) {
+    const defaultUsers = [
+      { id: 'u1', username: 'admin',  displayName: 'Admin',    password: 'admin123',
+        role: 'admin',   permissions: ['users.manage','contacts.view_all','creators.edit','campaigns.manage','brands.manage','recruits.approve'] },
+      { id: 'u2', username: 'sarah',  displayName: 'Sarah K.', password: 'sarah123',
+        role: 'pic',     permissions: ['contacts.view_assigned','creators.edit'] },
+      { id: 'u3', username: 'lina',   displayName: 'Lina M.',  password: 'lina123',
+        role: 'pic',     permissions: ['contacts.view_assigned','creators.edit'] },
+    ]
+    for (const u of defaultUsers) {
+      const hash = await hashPassword(u.password)
+      await db.prepare(`INSERT OR IGNORE INTO users (id,username,display_name,password_hash,role,permissions) VALUES (?,?,?,?,?,?)`)
+        .bind(u.id, u.username, u.displayName, hash, u.role, JSON.stringify(u.permissions)).run()
+    }
   }
 
   return json({ success: true, message: 'All tables truncated and reseeded with demo data' })
