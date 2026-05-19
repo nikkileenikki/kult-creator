@@ -10,6 +10,7 @@ import Recruit from '@/pages/Recruit'
 import Tiering from '@/pages/Tiering'
 import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
+import Brands from '@/pages/Brands'
 import Settings from '@/pages/Settings'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
@@ -20,6 +21,7 @@ import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
+import { useBrandStore } from '@/store/brandStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -48,29 +50,32 @@ export default function App() {
   const fetchTasks     = useTaskStore(s => s.fetchTasks)
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
   const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns)
+  const fetchBrands    = useBrandStore(s => s.fetchBrands)
 
   useEffect(() => {
     fetchCreators()
     fetchTasks()
     fetchRecruits()
     fetchCampaigns()
+    fetchBrands()
   }, [])
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#0D0D10]">
-      <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden">
-        <Topbar />
+    <div className="flex flex-col h-screen overflow-hidden bg-[#0D0D10]">
+      <Topbar />
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar />
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
             <Route path="/"            element={<Dashboard />} />
             <Route path="/campaigns"   element={<Campaigns />} />
             <Route path="/creators"    element={<Creators />} />
+            <Route path="/brands"      element={<Brands />} />
             <Route path="/recruit"     element={<Recruit />} />
             <Route path="/tiering"     element={<Tiering />} />
             <Route path="/niche"       element={<Niche />} />
             <Route path="/persona/:id" element={<Persona />} />
-            <Route path="/settings"   element={<Settings />} />
+            <Route path="/settings"    element={<Settings />} />
           </Routes>
         </main>
       </div>
