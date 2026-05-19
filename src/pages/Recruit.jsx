@@ -1,3 +1,4 @@
+import { useMemo } from 'react'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
 import Badge from '@/components/shared/Badge'
@@ -9,7 +10,15 @@ export default function Recruit() {
   const requests     = useRecruitStore(s => s.requests)
   const updateStatus = useRecruitStore(s => s.updateStatus)
   const showToast    = useUIStore(s => s.showToast)
+  const globalSearch = useUIStore(s => s.globalSearch)
   const pending      = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+
+  const displayed = useMemo(() => {
+    const active = requests.filter(r => r.status !== 'Approved' && r.status !== 'Rejected')
+    if (!globalSearch) return active
+    const q = globalSearch.toLowerCase()
+    return active.filter(r => r.name.toLowerCase().includes(q) || r.niche.toLowerCase().includes(q))
+  }, [requests, globalSearch])
 
   async function handleApprove(id) {
     await updateStatus(id, 'Approved')
@@ -34,7 +43,7 @@ export default function Recruit() {
       </div>
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(310px,1fr))] gap-3.5">
-        {requests.filter(r => r.status !== 'Approved' && r.status !== 'Rejected').map(r => {
+        {displayed.map(r => {
           const isDone = false
           return (
             <div key={r.id} className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px] transition-all">

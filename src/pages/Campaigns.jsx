@@ -487,18 +487,24 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function Campaigns() {
-  const campaigns  = useCampaignStore(s => s.campaigns)
-  const tasks      = useTaskStore(s => s.tasks)
-  const openEdit   = useUIStore(s => s.openEditTask)
-  const openAddTask = useUIStore(s => s.openAddTask)
-  const [selected, setSelected]     = useState(null)
+  const campaigns    = useCampaignStore(s => s.campaigns)
+  const tasks        = useTaskStore(s => s.tasks)
+  const openEdit     = useUIStore(s => s.openEditTask)
+  const openAddTask  = useUIStore(s => s.openAddTask)
+  const globalSearch = useUIStore(s => s.globalSearch)
+  const [selected, setSelected]         = useState(null)
   const [filterStatus, setFilterStatus] = useState('All')
 
   const campaign = campaigns.find(c => c.id === selected)
 
-  const filteredCampaigns = filterStatus === 'All'
-    ? campaigns
-    : campaigns.filter(c => c.status === filterStatus)
+  const filteredCampaigns = useMemo(() => {
+    let list = filterStatus === 'All' ? campaigns : campaigns.filter(c => c.status === filterStatus)
+    if (globalSearch) {
+      const q = globalSearch.toLowerCase()
+      list = list.filter(c => c.name.toLowerCase().includes(q))
+    }
+    return list
+  }, [campaigns, filterStatus, globalSearch])
 
   if (selected && campaign) {
     return (

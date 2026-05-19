@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
+import { NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
@@ -21,6 +22,7 @@ export default function Creators() {
   const [filterPlatform, setFilterPlatform] = useState('All')
   const [filterTier,     setFilterTier]     = useState('All')
   const [filterStatus,   setFilterStatus]   = useState('Active')
+  const [filterNiche,    setFilterNiche]    = useState('All')
 
   const platforms = useMemo(() => ['All', ...[...new Set(creators.map(c => c.platform))]], [creators])
 
@@ -28,9 +30,10 @@ export default function Creators() {
     if (filterStatus !== 'All' && c.status !== filterStatus) return false
     if (filterPlatform !== 'All' && c.platform !== filterPlatform) return false
     if (filterTier !== 'All' && getTier(c.coins).name !== filterTier) return false
+    if (filterNiche !== 'All' && c.niche !== filterNiche && c.secondaryNiche !== filterNiche) return false
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
-  }), [creators, filterPlatform, filterTier, filterStatus, search])
+  }), [creators, filterPlatform, filterTier, filterStatus, filterNiche, search])
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
@@ -43,6 +46,12 @@ export default function Creators() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Niche filter */}
+          <select value={filterNiche} onChange={e => setFilterNiche(e.target.value)} className={SELECT}>
+            <option value="All">All Niches</option>
+            {NICHES.map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+
           {/* Tier filter */}
           <select value={filterTier} onChange={e => setFilterTier(e.target.value)} className={SELECT}>
             {TIER_ORDER.map(t => <option key={t} value={t}>{t === 'All' ? 'All Tiers' : t}</option>)}

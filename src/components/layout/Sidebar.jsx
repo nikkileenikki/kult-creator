@@ -10,9 +10,9 @@ const NAV = [
   { section: 'Overview', items: [
     { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
     { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
+    { to: '/creators',  label: 'Creators',         icon: Users },
   ]},
   { section: 'Creators', items: [
-    { to: '/creators',  label: 'All Creators',     icon: Users },
     { to: '/niche',     label: 'Niche',             icon: User },
     { to: '/tiering',   label: 'Tiering',           icon: Star },
     { to: '/recruit',   label: 'Recruit Requests',  icon: UserPlus, badge: true },

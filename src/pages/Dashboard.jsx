@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
+import { useUIStore } from '@/store/uiStore'
 import { getTier } from '@/lib/tierUtils'
 import { fetchDashboardMetrics, fetchTierDistribution, fetchActivityFeed } from '@/lib/api/analytics'
 import MetricsGrid from '@/components/dashboard/MetricsGrid'
@@ -48,11 +49,20 @@ function CampaignProgressCard({ campaign, tasks, onClick }) {
 }
 
 export default function Dashboard() {
-  const creators  = useCreatorStore(s => s.creators)
-  const tasks     = useTaskStore(s => s.tasks)
-  const requests  = useRecruitStore(s => s.requests)
-  const campaigns = useCampaignStore(s => s.campaigns)
-  const navigate  = useNavigate()
+  const creators     = useCreatorStore(s => s.creators)
+  const tasks        = useTaskStore(s => s.tasks)
+  const requests     = useRecruitStore(s => s.requests)
+  const campaigns    = useCampaignStore(s => s.campaigns)
+  const globalSearch = useUIStore(s => s.globalSearch)
+  const navigate     = useNavigate()
+
+  const filteredTasks = useMemo(() => {
+    if (!globalSearch) return tasks
+    const q = globalSearch.toLowerCase()
+    return tasks.filter(t =>
+      t.task.toLowerCase().includes(q) || t.creatorName.toLowerCase().includes(q)
+    )
+  }, [tasks, globalSearch])
 
   const [metrics, setMetrics]       = useState(null)
   const [tierCounts, setTierCounts] = useState([])
@@ -108,7 +118,7 @@ export default function Dashboard() {
       )}
 
       <div className="grid grid-cols-[1fr_300px] gap-4">
-        <RecentTasksTable tasks={tasks} />
+        <RecentTasksTable tasks={filteredTasks} />
 
         <div className="flex flex-col gap-4">
           <TierSnapshot tierCounts={tierCounts.length ? tierCounts : ['Platinum','Diamond','Gold','Silver','Bronze'].map(name => ({

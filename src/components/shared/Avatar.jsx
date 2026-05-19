@@ -11,6 +11,7 @@ const AVATAR_COLORS = {
 }
 
 const SIZES = {
+  xs: 'w-5 h-5 text-[8px]',
   sm: 'w-7 h-7 text-[10px]',
   md: 'w-9 h-9 text-[13px]',
   lg: 'w-12 h-12 text-[16px]',

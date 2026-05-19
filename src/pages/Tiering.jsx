@@ -1,4 +1,6 @@
+import { useMemo } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
+import { useUIStore } from '@/store/uiStore'
 import { getTier, TIERS } from '@/lib/tierUtils'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
@@ -10,9 +12,17 @@ const TIER_COUNT_COLOR = { Platinum:'text-purple-300', Diamond:'text-blue-300', 
 const TIER_BORDER = { Platinum:'border-purple-400/25', Diamond:'border-blue-400/20', Gold:'border-amber-400/20', Silver:'border-white/7', Bronze:'border-white/7' }
 
 export default function Tiering() {
-  const creators = useCreatorStore(s => s.creators)
-  const sorted = [...creators].sort((a, b) => b.coins - a.coins)
-  const maxCoins = sorted[0]?.coins || 1
+  const creators     = useCreatorStore(s => s.creators)
+  const globalSearch = useUIStore(s => s.globalSearch)
+
+  const sorted = useMemo(() => {
+    const list = [...creators].sort((a, b) => b.coins - a.coins)
+    if (!globalSearch) return list
+    const q = globalSearch.toLowerCase()
+    return list.filter(c => c.name.toLowerCase().includes(q))
+  }, [creators, globalSearch])
+
+  const maxCoins = [...creators].sort((a, b) => b.coins - a.coins)[0]?.coins || 1
 
   const tierCounts = TIERS.map(t => ({
     ...t,
