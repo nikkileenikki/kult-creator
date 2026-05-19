@@ -8,7 +8,7 @@ import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
@@ -70,19 +70,42 @@ const PRIORITY_COLOR = {
   Low:    'text-emerald-400',
 }
 
+const MASK = '••••••••••'
+
+function MaskedField({ value, revealed, onToggle, canReveal }) {
+  if (!value) return <span className="text-white/20 italic text-[12px]">Not set</span>
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`font-medium text-[12px] ${revealed ? 'text-white' : 'text-white/40 tracking-widest'}`}>
+        {revealed ? value : MASK}
+      </span>
+      {canReveal ? (
+        <button type="button" onClick={onToggle} className="text-white/25 hover:text-white/70 transition-colors flex-shrink-0">
+          {revealed ? <EyeOff size={12} /> : <Eye size={12} />}
+        </button>
+      ) : (
+        <Lock size={11} className="text-white/20 flex-shrink-0" title="Only the assigned PIC can reveal this field" />
+      )}
+    </div>
+  )
+}
+
 export default function Persona() {
   const { id }     = useParams()
   const navigate   = useNavigate()
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
+  const currentUser = useUIStore(s => s.currentUser)
   const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(null)
   const [saving, setSaving]   = useState(false)
+  const [revealed, setRevealed] = useState({ phone: false, email: false })
 
   const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
+  const canReveal = currentUser === creator?.pic || currentUser === 'Admin'
 
   if (!creator) {
     return (
@@ -279,26 +302,56 @@ export default function Persona() {
                 </div>
               </div>
             ) : (
-              [
-                ['Followers',           (creator.followers/1000).toFixed(0) + 'K'],
-                ['Platform',            creator.platform],
-                ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
-                ['Primary Niche',       creator.niche],
-                ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
-                ['Tasks Done',       creator.tasksCompleted],
-                ['Joined',           creator.joinedDate],
-                ['PIC',              creator.pic],
-                ['Contact',          creator.contact],
-                ...(creator.contactNumber ? [['Phone', creator.contactNumber]] : []),
-                ...(creator.email ? [['Email', creator.email]] : []),
-                ...(creator.platformUsername ? [['Username', creator.platformUsername]] : []),
-                ...(creator.dateOfBirth ? [['Date of Birth', creator.dateOfBirth]] : []),
-              ].map(([label, val]) => (
-                <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 last:border-0 text-[12px]">
-                  <span className="text-white/30">{label}</span>
-                  <span className={`font-medium ${label === 'Contact' ? 'text-violet-400 cursor-pointer' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
-                </div>
-              ))
+              <div>
+                {[
+                  ['Followers',      (creator.followers/1000).toFixed(0) + 'K'],
+                  ['Platform',       creator.platform],
+                  ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
+                  ['Primary Niche',  creator.niche],
+                  ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
+                  ['Tasks Done',     creator.tasksCompleted],
+                  ['Joined',         creator.joinedDate],
+                  ['PIC',            creator.pic],
+                  ['Contact',        creator.contact],
+                  ...(creator.platformUsername ? [['Username', creator.platformUsername]] : []),
+                  ...(creator.dateOfBirth ? [['Date of Birth', creator.dateOfBirth]] : []),
+                ].map(([label, val]) => (
+                  <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 text-[12px]">
+                    <span className="text-white/30">{label}</span>
+                    <span className={`font-medium ${label === 'Contact' ? 'text-violet-400' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
+                  </div>
+                ))}
+                {(creator.contactNumber || creator.email) && (
+                  <div className="mx-3 my-2 px-3 py-2 bg-white/[.025] border border-white/7 rounded-lg space-y-2">
+                    <div className="font-mono text-[9px] font-medium text-white/20 uppercase tracking-wider mb-2">Private Contact Info</div>
+                    {creator.contactNumber && (
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="text-white/30">Phone</span>
+                        <MaskedField
+                          value={creator.contactNumber}
+                          revealed={revealed.phone}
+                          onToggle={() => setRevealed(r => ({ ...r, phone: !r.phone }))}
+                          canReveal={canReveal}
+                        />
+                      </div>
+                    )}
+                    {creator.email && (
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="text-white/30">Email</span>
+                        <MaskedField
+                          value={creator.email}
+                          revealed={revealed.email}
+                          onToggle={() => setRevealed(r => ({ ...r, email: !r.email }))}
+                          canReveal={canReveal}
+                        />
+                      </div>
+                    )}
+                    {!canReveal && (
+                      <div className="text-[10px] text-white/20 italic mt-1">Only {creator.pic} or Admin can reveal</div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
