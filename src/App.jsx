@@ -12,6 +12,8 @@ import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
 import Brands from '@/pages/Brands'
 import Settings from '@/pages/Settings'
+import Users from '@/pages/Users'
+import NewUser from '@/pages/NewUser'
 import Login from '@/pages/Login'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
@@ -87,6 +89,8 @@ export default function App() {
             <Route path="/niche"       element={<Niche />} />
             <Route path="/persona/:id" element={<Persona />} />
             <Route path="/settings"    element={<Settings />} />
+            <Route path="/users"       element={<Users />} />
+            <Route path="/users/new"   element={<NewUser />} />
           </Routes>
         </main>
       </div>

@@ -28,6 +28,8 @@ const PAGE_META = {
   '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
   '/settings':  { cta: null,           action: null,               placeholder: 'Search…' },
+  '/users':     { cta: null,           action: null,               placeholder: 'Search users…' },
+  '/users/new': { cta: null,           action: null,               placeholder: 'Search…' },
 }
 
 export default function Topbar() {

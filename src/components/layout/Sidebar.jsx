@@ -2,11 +2,24 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import {
-  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase,
+  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase, ShieldCheck,
 } from 'lucide-react'
 
-const NAV = [
+const ROLE_AVATAR_COLOR = {
+  admin:   'from-amber-500 to-amber-400',
+  manager: 'from-violet-500 to-violet-400',
+  pic:     'from-blue-500 to-blue-400',
+  viewer:  'from-white/20 to-white/10',
+}
+
+function getUserInitials(displayName) {
+  if (!displayName) return '?'
+  return displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
+
+const NAV_BASE = [
   { section: 'Overview', items: [
     { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
     { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
@@ -21,11 +34,19 @@ const NAV = [
 ]
 
 export default function Sidebar() {
-  const requests  = useRecruitStore(s => s.requests)
-  const pending   = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
-  const collapsed = useUIStore(s => s.sidebarCollapsed)
-  const toggle    = useUIStore(s => s.toggleSidebar)
-  const navigate  = useNavigate()
+  const requests       = useRecruitStore(s => s.requests)
+  const pending        = requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+  const collapsed      = useUIStore(s => s.sidebarCollapsed)
+  const toggle         = useUIStore(s => s.toggleSidebar)
+  const navigate       = useNavigate()
+  const authUser       = useAuthStore(s => s.user)
+  const can            = useAuthStore(s => s.can)
+
+  const NAV = can('users.manage')
+    ? [...NAV_BASE, { section: 'Admin', items: [
+        { to: '/users', label: 'Users', icon: ShieldCheck },
+      ]}]
+    : NAV_BASE
 
   return (
     <aside className={cn(
@@ -97,16 +118,23 @@ export default function Sidebar() {
         {/* User */}
         {!collapsed ? (
           <div onClick={() => navigate('/settings')} className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg bg-white/5 border border-white/7 cursor-pointer hover:border-white/12 transition-all">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center font-syne text-[11px] font-bold text-white flex-shrink-0">NK</div>
-            <div>
-              <div className="text-[12px] font-medium text-white">Nikki</div>
-              <div className="text-[10px] text-white/30">Campaign Manager</div>
+            <div className={`w-7 h-7 rounded-full bg-gradient-to-br ${ROLE_AVATAR_COLOR[authUser?.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center font-syne text-[11px] font-bold text-white flex-shrink-0`}>
+              {getUserInitials(authUser?.displayName)}
             </div>
-            <Settings size={13} className="ml-auto text-white/20" />
+            <div className="min-w-0">
+              <div className="text-[12px] font-medium text-white truncate">{authUser?.displayName ?? '—'}</div>
+              <div className="text-[10px] text-white/30 capitalize">{authUser?.role ?? ''}</div>
+            </div>
+            <Settings size={13} className="ml-auto flex-shrink-0 text-white/20" />
           </div>
         ) : (
           <div className="flex justify-center py-1">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center font-syne text-[11px] font-bold text-white cursor-pointer" title="Nikki">NK</div>
+            <div
+              className={`w-7 h-7 rounded-full bg-gradient-to-br ${ROLE_AVATAR_COLOR[authUser?.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center font-syne text-[11px] font-bold text-white cursor-pointer`}
+              title={authUser?.displayName ?? ''}
+            >
+              {getUserInitials(authUser?.displayName)}
+            </div>
           </div>
         )}
       </div>
