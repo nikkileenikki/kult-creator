@@ -20,16 +20,17 @@ export const useCreatorStore = create((set, get) => ({
   awardCoins: async (creatorId, amount) => {
     const creator = get().creators.find(c => c.id === creatorId)
     if (!creator) return
-    const oldTier   = getTier(creator.coins)
-    const newCoins  = creator.coins + amount
-    const newTier   = getTier(newCoins)
-    const leveledUp = newTier.name !== oldTier.name
+    const oldTier           = getTier(creator.coins)
+    const newCoins          = creator.coins + amount
+    const newTier           = getTier(newCoins)
+    const leveledUp         = newTier.name !== oldTier.name
+    const newTasksCompleted = (creator.tasksCompleted ?? 0) + 1
     set(state => ({
       creators: state.creators.map(c =>
-        c.id === creatorId ? { ...c, coins: newCoins, _leveledUp: leveledUp ? newTier.name : null } : c
+        c.id === creatorId ? { ...c, coins: newCoins, tasksCompleted: newTasksCompleted, _leveledUp: leveledUp ? newTier.name : null } : c
       ),
     }))
-    await apiUpdateCreator(creatorId, { coins: newCoins })
+    await apiUpdateCreator(creatorId, { coins: newCoins, tasksCompleted: newTasksCompleted })
   },
 
   updateCreator: async (id, patch) => {

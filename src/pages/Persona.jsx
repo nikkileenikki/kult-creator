@@ -1,13 +1,14 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
+import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
@@ -62,16 +63,30 @@ function TagInput({ items = [], onChange, placeholder }) {
   )
 }
 
+const PRIORITY_COLOR = {
+  Urgent: 'text-rose-400',
+  High:   'text-amber-400',
+  Medium: 'text-blue-400',
+  Low:    'text-emerald-400',
+}
+
 export default function Persona() {
   const { id }     = useParams()
   const navigate   = useNavigate()
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
+  const { tasks, fetchTasks } = useTaskStore()
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(null)
   const [saving, setSaving]   = useState(false)
+
+  useEffect(() => {
+    if (id) fetchTasks({ creatorId: id })
+  }, [id])
+
+  const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
 
   if (!creator) {
     return (
@@ -373,6 +388,35 @@ export default function Persona() {
               ? <textarea value={dp.internalNotes ?? ''} onChange={e => setPersonaField('internalNotes', e.target.value)} rows={4} className={cn(INPUT, 'resize-none font-mono text-[12px]')} placeholder="Add internal notes…" />
               : <div className="bg-[#16161C] border border-white/7 rounded-[9px] p-3.5 font-mono text-[12px] text-white/40 leading-relaxed">
                   {persona.internalNotes || <span className="italic text-white/20">No notes</span>}
+                </div>
+            }
+          </div>
+
+          {/* Completed tasks */}
+          <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px]">
+            <div className="flex items-center justify-between mb-3">
+              <div className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em]">Completed Tasks</div>
+              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5">
+                {completedTasks.length}
+              </span>
+            </div>
+            {completedTasks.length === 0
+              ? <div className="text-[12px] text-white/20 italic">No completed tasks yet.</div>
+              : <div className="space-y-2">
+                  {completedTasks.map(t => (
+                    <div key={t.id} className="flex items-center gap-3 bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
+                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[13px] text-white truncate">{t.task}</div>
+                        <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
+                        <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
+                        <span className="text-[11px] text-white/25">{t.dueDate}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
             }
           </div>
