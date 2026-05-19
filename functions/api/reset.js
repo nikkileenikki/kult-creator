@@ -1,4 +1,5 @@
 import { json, err, opts, getDB } from './_helpers'
+import { encryptField } from './_crypto'
 
 export const onRequestOptions = () => opts()
 
@@ -53,9 +54,11 @@ export async function onRequestPost({ env }) {
     ['6','NZ','Nur Zulaikha', 'Instagram', 'Skincare',            'Beauty',         94000, 290, 3,'Active', 'Lina M.', 'WhatsApp',    '2025-11-20','i','+60 13-456 7890','nur.zulaikha@gmail.com',  '@nurzulaikha.skin',  '2002-05-09'],
   ]
   for (const [id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, contact_number, email, platform_username, date_of_birth] of creatorsData) {
+    const enc_contact_number = await encryptField(contact_number, env)
+    const enc_email          = await encryptField(email, env)
     await db.prepare(
       `INSERT INTO creators (id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona,contact_number,email,platform_username,date_of_birth) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-    ).bind(id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,personas[id],contact_number,email,platform_username,date_of_birth).run()
+    ).bind(id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,personas[id],enc_contact_number,enc_email,platform_username,date_of_birth).run()
   }
 
   // Seed tasks

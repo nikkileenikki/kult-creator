@@ -1,3 +1,5 @@
+import { encryptField } from './_crypto'
+
 export async function onRequestGet({ env }) {
   const DB = env.DB
   if (!DB) {
@@ -150,18 +152,20 @@ export async function onRequestGet({ env }) {
     }
 
     const creatorsData = [
-      ['1','SR','Siti Rania','TikTok','Lifestyle & Wellness',520000,9200,92,'Active','Sarah K.','WhatsApp','2024-01-15','v'],
-      ['2','HZ','Hafiz Zaki','YouTube','Tech',380000,6200,62,'Active','Lina M.','Email','2023-08-20','b'],
-      ['3','AN','Aina Nadia','Instagram','Beauty',210000,2700,27,'Active','Sarah K.','Instagram DM','2024-03-10','g'],
-      ['4','FH','Farah Hana','TikTok','Food & Lifestyle',145000,1100,11,'On Hold','Lina M.','WhatsApp','2024-06-01','r'],
-      ['5','RI','Razif Idham','YouTube','Gaming',280000,800,8,'Active','Sarah K.','Discord','2025-01-05','t'],
-      ['6','NZ','Nur Zulaikha','Instagram','Skincare',94000,290,3,'Active','Lina M.','WhatsApp','2025-11-20','i'],
+      ['1','SR','Siti Rania',   'TikTok',    'Lifestyle & Wellness','Fashion',       520000,9200,92,'Active', 'Sarah K.','WhatsApp',    '2024-01-15','v','+60 12-345 6789','siti.rania@gmail.com',   '@sitirania',        '1998-03-22'],
+      ['2','HZ','Hafiz Zaki',   'YouTube',   'Tech',                'Gaming',        380000,6200,62,'Active', 'Lina M.', 'Email',       '2023-08-20','b','+60 11-234 5678','hafiz.zaki@gmail.com',   '@hafizzaki',        '1995-07-14'],
+      ['3','AN','Aina Nadia',   'Instagram', 'Beauty',              'Skincare',      210000,2700,27,'Active', 'Sarah K.','Instagram DM','2024-03-10','g','+60 10-987 6543','aina.nadia@gmail.com',   '@ainanadia',        '2001-11-05'],
+      ['4','FH','Farah Hana',   'TikTok',    'Food & Lifestyle',    'Entertainment', 145000,1100,11,'On Hold','Lina M.', 'WhatsApp',    '2024-06-01','r','+60 17-654 3210','farah.hana@gmail.com',   '@farahhana.my',     '1999-08-30'],
+      ['5','RI','Razif Idham',  'YouTube',   'Gaming',              'Tech',          280000, 800, 8,'Active', 'Sarah K.','Discord',     '2025-01-05','t','+60 16-888 9900','razif.idham@gmail.com',  '@razifidham',       '2000-02-18'],
+      ['6','NZ','Nur Zulaikha', 'Instagram', 'Skincare',            'Beauty',         94000, 290, 3,'Active', 'Lina M.', 'WhatsApp',    '2025-11-20','i','+60 13-456 7890','nur.zulaikha@gmail.com', '@nurzulaikha.skin', '2002-05-09'],
     ]
 
-    for (const [id, initials, name, platform, niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color] of creatorsData) {
+    for (const [id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, contact_number, email, platform_username, date_of_birth] of creatorsData) {
+      const enc_contact_number = await encryptField(contact_number, env)
+      const enc_email          = await encryptField(email, env)
       await DB.prepare(
-        `INSERT OR IGNORE INTO creators (id,initials,name,platform,niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-      ).bind(id, initials, name, platform, niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona[id]).run()
+        `INSERT OR IGNORE INTO creators (id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona,contact_number,email,platform_username,date_of_birth) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona[id],enc_contact_number,enc_email,platform_username,date_of_birth).run()
     }
 
     const tasksData = [
