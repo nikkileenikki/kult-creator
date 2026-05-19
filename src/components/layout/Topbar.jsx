@@ -51,8 +51,8 @@ export default function Topbar() {
 
   return (
     <header className="h-[58px] bg-[#111116] border-b border-white/7 flex items-center px-5 gap-4 flex-shrink-0 w-full z-10">
-      {/* Logo */}
-      <div className="flex items-center gap-2.5 pr-5 border-r border-white/7 flex-shrink-0">
+      {/* Logo — fixed width matches sidebar (20px header-left-pad + 208px = 228px) */}
+      <div className="flex items-center gap-2.5 pr-5 border-r border-white/7 flex-shrink-0 w-[208px]">
         <div className="w-7 h-7 rounded-[8px] bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center shadow-[0_0_12px_rgba(108,92,231,.4)]">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
