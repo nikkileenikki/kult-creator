@@ -41,3 +41,4 @@ src/
 ├── store/          # Zustand stores
 └── lib/            # Data, utilities, tier logic
 ```
+
