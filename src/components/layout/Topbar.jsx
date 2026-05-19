@@ -9,7 +9,7 @@ const PAGE_META = {
   '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
   '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…' },
   '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
-  '/brands':    { cta: null,           action: null,               placeholder: 'Search brands…' },
+  '/brands':    { cta: 'New Brand',    action: 'openAddBrand',    placeholder: 'Search brands…' },
   '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…' },
   '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
@@ -24,6 +24,7 @@ export default function Topbar() {
   const openAddTask         = useUIStore(s => s.openAddTask)
   const openAddCreator      = useUIStore(s => s.openAddCreator)
   const openAddCampaign     = useUIStore(s => s.openAddCampaign)
+  const openAddBrand        = useUIStore(s => s.openAddBrand)
   const toggleNotifications = useUIStore(s => s.toggleNotifications)
   const notificationsOpen   = useUIStore(s => s.notificationsOpen)
   const globalSearch        = useUIStore(s => s.globalSearch)
@@ -47,6 +48,7 @@ export default function Topbar() {
     if (meta.action === 'openAddTask')     openAddTask()
     if (meta.action === 'openAddCreator')  openAddCreator()
     if (meta.action === 'openAddCampaign') openAddCampaign()
+    if (meta.action === 'openAddBrand')    openAddBrand()
   }
 
   return (

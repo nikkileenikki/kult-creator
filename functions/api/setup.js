@@ -99,6 +99,25 @@ export async function onRequestGet({ env }) {
       name: 'Add brief column to campaigns',
       sql: `ALTER TABLE campaigns ADD COLUMN brief TEXT NOT NULL DEFAULT ''`,
     },
+    {
+      name: 'Create brands table',
+      sql: `CREATE TABLE IF NOT EXISTS brands (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL,
+        industry   TEXT NOT NULL DEFAULT '',
+        color      TEXT NOT NULL DEFAULT '#6C5CE7',
+        website    TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
+    {
+      name: 'Add brand_id column to campaigns',
+      sql: `ALTER TABLE campaigns ADD COLUMN brand_id TEXT NOT NULL DEFAULT ''`,
+    },
+    {
+      name: 'Add brand_name column to campaigns',
+      sql: `ALTER TABLE campaigns ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''`,
+    },
   ]
 
   for (const step of steps) {
@@ -180,19 +199,31 @@ export async function onRequestGet({ env }) {
       ).bind(id, color, text, time).run()
     }
 
-    const campaignsData = [
-      ['camp1', 'Ramadan Campaign',  'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7'],
-      ['camp2', 'Brand Launch Q2',   'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2'],
-      ['camp3', 'Skincare Series',   'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706'],
+    const brandsData = [
+      ['brand1', 'Wardah',    'Beauty & Skincare', '#8B5CF6', 'wardah.com'],
+      ['brand2', 'Shopee',    'E-commerce',        '#EE4D2D', 'shopee.my'],
+      ['brand3', 'Nestlé MY', 'FMCG',              '#009FE3', 'nestle.com.my'],
     ]
 
-    for (const [id, name, description, status, budget, start_date, end_date, color] of campaignsData) {
+    for (const [id, name, industry, color, website] of brandsData) {
       await DB.prepare(
-        `INSERT OR IGNORE INTO campaigns (id,name,description,status,budget,start_date,end_date,color) VALUES (?,?,?,?,?,?,?,?)`
-      ).bind(id, name, description, status, budget, start_date, end_date, color).run()
+        `INSERT OR IGNORE INTO brands (id,name,industry,color,website) VALUES (?,?,?,?,?)`
+      ).bind(id, name, industry, color, website).run()
     }
 
-    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns' })
+    const campaignsData = [
+      ['camp1', 'Ramadan Campaign',  'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7', 'brand1', 'Wardah'],
+      ['camp2', 'Brand Launch Q2',   'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2', 'brand2', 'Shopee'],
+      ['camp3', 'Skincare Series',   'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706', 'brand1', 'Wardah'],
+    ]
+
+    for (const [id, name, description, status, budget, start_date, end_date, color, brand_id, brand_name] of campaignsData) {
+      await DB.prepare(
+        `INSERT OR IGNORE INTO campaigns (id,name,description,status,budget,start_date,end_date,color,brand_id,brand_name) VALUES (?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id, name, description, status, budget, start_date, end_date, color, brand_id, brand_name).run()
+    }
+
+    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns, brands' })
   } else {
     results.push({ step: 'Seed data', status: 'skipped', reason: `${count} creators already exist` })
   }

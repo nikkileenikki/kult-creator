@@ -15,6 +15,7 @@ import Settings from '@/pages/Settings'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
+import AddBrandModal from '@/components/modals/AddBrandModal'
 import EditTaskModal from '@/components/modals/EditTaskModal'
 import { useUIStore } from '@/store/uiStore'
 import { useCreatorStore } from '@/store/creatorStore'
@@ -84,6 +85,7 @@ export default function App() {
       <AddTaskModal />
       <AddCreatorModal />
       <AddCampaignModal />
+      <AddBrandModal />
       <EditTaskModal />
 
       {/* Toast */}
