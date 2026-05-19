@@ -16,8 +16,8 @@ export default function Login() {
     try {
       const { token, user } = await request('POST', '/auth/login', { username, password })
       login(token, user)
-    } catch {
-      setError('Invalid username or password')
+    } catch (e) {
+      setError(e.message ?? 'Invalid username or password')
     } finally {
       setLoading(false)
     }

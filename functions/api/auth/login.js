@@ -11,7 +11,17 @@ export async function onRequestPost({ request, env }) {
   try { body = await request.json() } catch { return err('Invalid JSON', 400) }
   const { username, password } = body ?? {}
   if (!username || !password) return err('Username and password required', 400)
-  const user = await db.prepare('SELECT * FROM users WHERE username = ?').bind(username.trim().toLowerCase()).first()
+
+  let user
+  try {
+    user = await db.prepare('SELECT * FROM users WHERE username = ?').bind(username.trim().toLowerCase()).first()
+  } catch (e) {
+    if (e.message?.includes('no such table')) {
+      return err('Users table not found — please visit /api/setup to initialise the database', 503)
+    }
+    return err('Database error: ' + e.message, 500)
+  }
+
   if (!user) return err('Invalid credentials', 401)
   const ok = await verifyPassword(password, user.password_hash)
   if (!ok) return err('Invalid credentials', 401)
