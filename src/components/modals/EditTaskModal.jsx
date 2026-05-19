@@ -141,11 +141,18 @@ export default function EditTaskModal() {
                   </div>
                   <div>
                     <label className={LABEL}>Status</label>
-                    <select {...register('status')} className={INPUT}>
-                      {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
+                    {wasCompleted ? (
+                      <div className={cn(INPUT, 'flex items-center justify-between opacity-60 cursor-not-allowed select-none')}>
+                        <span className="text-emerald-400 font-medium">Completed</span>
+                        <span className="text-[10px] text-white/30 font-mono uppercase tracking-wide">Locked</span>
+                      </div>
+                    ) : (
+                      <select {...register('status')} className={INPUT}>
+                        {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+                    )}
                   </div>
                 </div>
 

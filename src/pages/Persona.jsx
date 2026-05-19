@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
@@ -76,15 +76,11 @@ export default function Persona() {
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
-  const { tasks, fetchTasks } = useTaskStore()
+  const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(null)
   const [saving, setSaving]   = useState(false)
-
-  useEffect(() => {
-    if (id) fetchTasks({ creatorId: id })
-  }, [id])
 
   const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
 

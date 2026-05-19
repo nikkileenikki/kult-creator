@@ -196,9 +196,12 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 
   async function handleBulkUpdate(field, value) {
     if (!value) return
-    await Promise.all([...selectedIds].map(id => updateTask(id, { [field]: value })))
+    const eligible = field === 'status'
+      ? [...selectedIds].filter(id => tasks.find(t => t.id === id)?.status !== 'Completed')
+      : [...selectedIds]
+    await Promise.all(eligible.map(id => updateTask(id, { [field]: value })))
     setSelectedIds(new Set())
-    showToast(`Updated ${selectedIds.size} tasks`)
+    showToast(`Updated ${eligible.length} task${eligible.length !== 1 ? 's' : ''}`)
   }
 
   function switchView(v) {
