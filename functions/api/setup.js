@@ -99,6 +99,12 @@ export async function onRequestGet({ env }) {
       name: 'Add brief column to campaigns',
       sql: `ALTER TABLE campaigns ADD COLUMN brief TEXT NOT NULL DEFAULT ''`,
     },
+    { name: 'Add contact_number to creators',    sql: `ALTER TABLE creators ADD COLUMN contact_number    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add email to creators',             sql: `ALTER TABLE creators ADD COLUMN email             TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add platform_username to creators', sql: `ALTER TABLE creators ADD COLUMN platform_username TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add date_of_birth to creators',     sql: `ALTER TABLE creators ADD COLUMN date_of_birth     TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add rating to tasks',               sql: `ALTER TABLE tasks    ADD COLUMN rating             INTEGER NOT NULL DEFAULT 0` },
+    { name: 'Add review to tasks',               sql: `ALTER TABLE tasks    ADD COLUMN review             TEXT NOT NULL DEFAULT ''` },
     {
       name: 'Create brands table',
       sql: `CREATE TABLE IF NOT EXISTS brands (

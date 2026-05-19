@@ -8,7 +8,7 @@ import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2 } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
@@ -107,6 +107,8 @@ export default function Persona() {
       niche: creator.niche, secondaryNiche: creator.secondaryNiche ?? '',
       followers: creator.followers, status: creator.status,
       pic: creator.pic, contact: creator.contact, avatarColor: creator.avatarColor,
+      contactNumber: creator.contactNumber ?? '', email: creator.email ?? '',
+      platformUsername: creator.platformUsername ?? '', dateOfBirth: creator.dateOfBirth ?? '',
       persona: {
         contentStyle:      persona.contentStyle      ?? '',
         toneOfVoice:       persona.toneOfVoice       ?? '',
@@ -259,6 +261,22 @@ export default function Persona() {
                   <label className={LABEL}>Followers</label>
                   <input type="number" value={d.followers ?? ''} onChange={e => setField('followers', Number(e.target.value))} className={INPUT} />
                 </div>
+                <div>
+                  <label className={LABEL}>Contact Number</label>
+                  <input value={d.contactNumber ?? ''} onChange={e => setField('contactNumber', e.target.value)} placeholder="+60 12-345 6789" className={INPUT} />
+                </div>
+                <div>
+                  <label className={LABEL}>Email</label>
+                  <input type="email" value={d.email ?? ''} onChange={e => setField('email', e.target.value)} placeholder="name@email.com" className={INPUT} />
+                </div>
+                <div>
+                  <label className={LABEL}>Platform Username</label>
+                  <input value={d.platformUsername ?? ''} onChange={e => setField('platformUsername', e.target.value)} placeholder="@username" className={INPUT} />
+                </div>
+                <div>
+                  <label className={LABEL}>Date of Birth</label>
+                  <input type="date" value={d.dateOfBirth ?? ''} onChange={e => setField('dateOfBirth', e.target.value)} className={cn(INPUT, '[color-scheme:dark]')} />
+                </div>
               </div>
             ) : (
               [
@@ -271,6 +289,10 @@ export default function Persona() {
                 ['Joined',           creator.joinedDate],
                 ['PIC',              creator.pic],
                 ['Contact',          creator.contact],
+                ...(creator.contactNumber ? [['Phone', creator.contactNumber]] : []),
+                ...(creator.email ? [['Email', creator.email]] : []),
+                ...(creator.platformUsername ? [['Username', creator.platformUsername]] : []),
+                ...(creator.dateOfBirth ? [['Date of Birth', creator.dateOfBirth]] : []),
               ].map(([label, val]) => (
                 <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 last:border-0 text-[12px]">
                   <span className="text-white/30">{label}</span>
@@ -403,17 +425,31 @@ export default function Persona() {
               ? <div className="text-[12px] text-white/20 italic">No completed tasks yet.</div>
               : <div className="space-y-2">
                   {completedTasks.map(t => (
-                    <div key={t.id} className="flex items-center gap-3 bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
-                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] text-white truncate">{t.task}</div>
-                        <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                    <div key={t.id} className="bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] text-white truncate">{t.task}</div>
+                          <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {t.rating > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              {[1,2,3,4,5].map(n => (
+                                <Star key={n} size={10} className={n <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />
+                              ))}
+                            </div>
+                          )}
+                          <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
+                          <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
+                          <span className="text-[11px] text-white/25">{t.dueDate}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
-                        <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
-                        <span className="text-[11px] text-white/25">{t.dueDate}</span>
-                      </div>
+                      {t.review && (
+                        <div className="mt-2 ml-[22px] text-[11px] text-white/35 italic border-l border-white/7 pl-2.5">
+                          {t.review}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

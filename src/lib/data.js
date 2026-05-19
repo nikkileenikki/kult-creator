@@ -35,6 +35,7 @@ export const CREATORS = [
     niche: 'Lifestyle & Wellness', secondaryNiche: 'Fashion', followers: 520000, coins: 9200,
     tasksCompleted: 92, status: 'Active', pic: 'Sarah K.',
     contact: 'WhatsApp', joinedDate: '2024-01-15', avatarColor: 'v',
+    contactNumber: '+60 12-345 6789', email: 'siti.rania@gmail.com', platformUsername: '@sitirania', dateOfBirth: '1998-03-22',
     persona: {
       contentStyle: 'Aesthetic & Inspirational',
       toneOfVoice: 'Soft-spoken, Warm, Relatable',
@@ -54,6 +55,7 @@ export const CREATORS = [
     niche: 'Tech', secondaryNiche: 'Gaming', followers: 380000, coins: 6200,
     tasksCompleted: 62, status: 'Active', pic: 'Lina M.',
     contact: 'Email', joinedDate: '2023-08-20', avatarColor: 'b',
+    contactNumber: '+60 11-234 5678', email: 'hafiz.zaki@gmail.com', platformUsername: '@hafizzaki', dateOfBirth: '1995-07-14',
     persona: {
       contentStyle: 'Educational & In-depth',
       toneOfVoice: 'Professional, Analytical, Witty',
@@ -73,6 +75,7 @@ export const CREATORS = [
     niche: 'Beauty', secondaryNiche: 'Skincare', followers: 210000, coins: 2700,
     tasksCompleted: 27, status: 'Active', pic: 'Sarah K.',
     contact: 'Instagram DM', joinedDate: '2024-03-10', avatarColor: 'g',
+    contactNumber: '+60 10-987 6543', email: 'aina.nadia@gmail.com', platformUsername: '@ainanadia', dateOfBirth: '2001-11-05',
     persona: {
       contentStyle: 'Aesthetic & Tutorial-driven',
       toneOfVoice: 'Bubbly, Friendly, Encouraging',
@@ -92,6 +95,7 @@ export const CREATORS = [
     niche: 'Food & Lifestyle', secondaryNiche: 'Entertainment', followers: 145000, coins: 1100,
     tasksCompleted: 11, status: 'On Hold', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2024-06-01', avatarColor: 'r',
+    contactNumber: '+60 17-654 3210', email: 'farah.hana@gmail.com', platformUsername: '@farahhana.my', dateOfBirth: '1999-08-30',
     persona: {
       contentStyle: 'Raw & Authentic',
       toneOfVoice: 'Casual, Humorous, Relatable',
@@ -111,6 +115,7 @@ export const CREATORS = [
     niche: 'Gaming', secondaryNiche: 'Tech', followers: 280000, coins: 800,
     tasksCompleted: 8, status: 'Active', pic: 'Sarah K.',
     contact: 'Discord', joinedDate: '2025-01-05', avatarColor: 't',
+    contactNumber: '+60 16-888 9900', email: 'razif.idham@gmail.com', platformUsername: '@razifidham', dateOfBirth: '2000-02-18',
     persona: {
       contentStyle: 'Entertaining & Community-driven',
       toneOfVoice: 'Energetic, Gamer slang, Inclusive',
@@ -130,6 +135,7 @@ export const CREATORS = [
     niche: 'Skincare', secondaryNiche: 'Beauty', followers: 94000, coins: 290,
     tasksCompleted: 3, status: 'Active', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2025-11-20', avatarColor: 'i',
+    contactNumber: '+60 13-456 7890', email: 'nur.zulaikha@gmail.com', platformUsername: '@nurzulaikha.skin', dateOfBirth: '2002-05-09',
     persona: {
       contentStyle: 'Educational & Clean',
       toneOfVoice: 'Calm, Trustworthy, Informative',
@@ -149,7 +155,7 @@ export const CREATORS = [
 export const TASKS = [
   { id: 't1', creatorId: '1', creatorName: 'Siti Rania', platform: 'TikTok', task: 'Film Lifestyle Reel', project: 'Ramadan Campaign', status: 'In Progress', pic: 'Sarah K.', dueDate: '2026-04-18', priority: 'High', coins: 100 },
   { id: 't2', creatorId: '2', creatorName: 'Hafiz Zaki', platform: 'YouTube', task: 'Submit Draft Caption', project: 'Brand Launch Q2', status: 'Under Review', pic: 'Lina M.', dueDate: '2026-04-16', priority: 'Medium', coins: 100 },
-  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100 },
+  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100, rating: 5, review: 'Delivered on time, great quality reel. Engagement was above average.' },
   { id: 't4', creatorId: '4', creatorName: 'Farah Hana', platform: 'TikTok', task: 'Record TikTok GRWM', project: 'Ramadan Campaign', status: 'Overdue', pic: 'Lina M.', dueDate: '2026-04-10', priority: 'Urgent', coins: 100 },
   { id: 't5', creatorId: '5', creatorName: 'Razif Idham', platform: 'YouTube', task: 'Brand Mention in Vlog', project: 'Brand Launch Q2', status: 'Not Started', pic: 'Sarah K.', dueDate: '2026-04-25', priority: 'Medium', coins: 100 },
   { id: 't6', creatorId: '6', creatorName: 'Nur Zulaikha', platform: 'Instagram', task: 'Skincare GRWM Video', project: 'Skincare Series', status: 'In Progress', pic: 'Lina M.', dueDate: '2026-04-20', priority: 'High', coins: 100 },

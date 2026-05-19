@@ -10,13 +10,14 @@ export const creatorQ = {
   create: (db, c) =>
     db.prepare(`
       INSERT INTO creators
-        (id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona, contact_number, email, platform_username, date_of_birth)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       c.id, c.initials, c.name, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
       c.pic, c.contact, c.joinedDate, c.avatarColor,
       JSON.stringify(c.persona ?? {}),
+      c.contactNumber ?? '', c.email ?? '', c.platformUsername ?? '', c.dateOfBirth ?? '',
     ).run(),
 
   fullUpdate: (db, id, c) =>
@@ -24,13 +25,15 @@ export const creatorQ = {
       UPDATE creators SET
         name = ?, initials = ?, platform = ?, niche = ?, secondary_niche = ?,
         followers = ?, coins = ?, tasks_completed = ?, status = ?,
-        pic = ?, contact = ?, avatar_color = ?, persona = ?
+        pic = ?, contact = ?, avatar_color = ?, persona = ?,
+        contact_number = ?, email = ?, platform_username = ?, date_of_birth = ?
       WHERE id = ?
     `).bind(
       c.name, c.initials, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
       c.pic, c.contact, c.avatarColor,
       typeof c.persona === 'string' ? c.persona : JSON.stringify(c.persona ?? {}),
+      c.contactNumber ?? '', c.email ?? '', c.platformUsername ?? '', c.dateOfBirth ?? '',
       id,
     ).run(),
 }
@@ -59,7 +62,7 @@ export const taskQ = {
     db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, id).run(),
 
   update: (db, id, fields) => {
-    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes' }
+    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
       if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }

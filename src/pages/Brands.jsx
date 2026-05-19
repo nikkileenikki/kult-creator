@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useBrandStore } from '@/store/brandStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
 import { ChevronRight } from 'lucide-react'
 
 export default function Brands() {
+  const navigate     = useNavigate()
   const brands       = useBrandStore(s => s.brands)
   const campaigns    = useCampaignStore(s => s.campaigns)
   const globalSearch = useUIStore(s => s.globalSearch)
@@ -61,7 +63,7 @@ export default function Brands() {
         ) : (
           <div className="space-y-2">
             {brandCampaigns.map(c => (
-              <div key={c.id} className="flex items-center gap-4 bg-[#1E1E28] border border-white/7 rounded-[12px] px-4 py-3.5">
+              <div key={c.id} onClick={() => navigate('/campaigns', { state: { campaignId: c.id } })} className="flex items-center gap-4 bg-[#1E1E28] border border-white/7 rounded-[12px] px-4 py-3.5 cursor-pointer hover:border-violet-500/40 hover:-translate-y-0.5 transition-all">
                 <div className="w-2 h-8 rounded-full flex-shrink-0" style={{ background: c.color }} />
                 <div className="flex-1 min-w-0">
                   <div className="font-syne text-[14px] font-bold text-white">{c.name}</div>

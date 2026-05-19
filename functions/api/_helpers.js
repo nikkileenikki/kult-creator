@@ -16,21 +16,25 @@ function tryParse(str, fallback) {
 export function mapCreator(row) {
   if (!row) return null
   return {
-    id:             row.id,
-    initials:       row.initials,
-    name:           row.name,
-    platform:       row.platform,
-    niche:          row.niche,
-    secondaryNiche: row.secondary_niche ?? '',
-    followers:      row.followers,
-    coins:          row.coins,
-    tasksCompleted: row.tasks_completed,
-    status:         row.status,
-    pic:            row.pic,
-    contact:        row.contact,
-    joinedDate:     row.joined_date,
-    avatarColor:    row.avatar_color,
-    persona:        tryParse(row.persona, {}),
+    id:               row.id,
+    initials:         row.initials,
+    name:             row.name,
+    platform:         row.platform,
+    niche:            row.niche,
+    secondaryNiche:   row.secondary_niche   ?? '',
+    followers:        row.followers,
+    coins:            row.coins,
+    tasksCompleted:   row.tasks_completed,
+    status:           row.status,
+    pic:              row.pic,
+    contact:          row.contact,
+    joinedDate:       row.joined_date,
+    avatarColor:      row.avatar_color,
+    persona:          tryParse(row.persona, {}),
+    contactNumber:    row.contact_number    ?? '',
+    email:            row.email             ?? '',
+    platformUsername: row.platform_username ?? '',
+    dateOfBirth:      row.date_of_birth     ?? '',
   }
 }
 
@@ -48,7 +52,9 @@ export function mapTask(row) {
     pic:         row.pic,
     dueDate:     row.due_date,
     coins:       row.coins,
-    notes:       row.notes ?? '',
+    notes:       row.notes  ?? '',
+    rating:      row.rating ?? 0,
+    review:      row.review ?? '',
   }
 }
 

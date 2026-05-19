@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Coins } from 'lucide-react'
+import { X, Coins, Star } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useCreatorStore } from '@/store/creatorStore'
@@ -21,6 +21,8 @@ const schema = z.object({
   dueDate:   z.string().min(1, 'Due date is required'),
   coins:     z.coerce.number().min(0).max(10000),
   notes:     z.string().default(''),
+  rating:    z.coerce.number().min(0).max(5).default(0),
+  review:    z.string().default(''),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -42,6 +44,7 @@ export default function EditTaskModal() {
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm({ resolver: zodResolver(schema) })
 
@@ -56,13 +59,17 @@ export default function EditTaskModal() {
       dueDate:   task.dueDate,
       coins:     task.coins,
       notes:     task.notes ?? '',
+      rating:    task.rating ?? 0,
+      review:    task.review ?? '',
     })
   }, [task, reset])
 
   const watchStatus    = watch('status')
   const watchCreatorId = watch('creatorId')
+  const watchRating    = watch('rating') ?? 0
   const wasCompleted   = task?.status === 'Completed'
   const willComplete   = watchStatus === 'Completed' && !wasCompleted
+  const showReview     = wasCompleted || willComplete
 
   const selectedCreator    = creators.find(c => c.id === watchCreatorId)
   const displayCreatorName = selectedCreator?.name ?? task?.creatorName ?? 'Unassigned'
@@ -196,6 +203,43 @@ export default function EditTaskModal() {
                     className={cn(INPUT, 'resize-none')}
                   />
                 </div>
+
+                {/* Rating + Review (shown for completed tasks) */}
+                {showReview && (
+                  <div className="space-y-3 px-3 py-3.5 bg-amber-500/5 border border-amber-500/15 rounded-lg">
+                    <div className="font-mono text-[10px] font-medium text-amber-400/70 uppercase tracking-wider">Performance Review</div>
+                    <div>
+                      <label className={LABEL}>Rating</label>
+                      <div className="flex gap-1.5 mt-1">
+                        {[1,2,3,4,5].map(n => (
+                          <button
+                            key={n}
+                            type="button"
+                            onClick={() => setValue('rating', watchRating === n ? 0 : n, { shouldValidate: true })}
+                            className="transition-all"
+                          >
+                            <Star
+                              size={22}
+                              className={n <= watchRating ? 'text-amber-400 fill-amber-400' : 'text-white/15'}
+                            />
+                          </button>
+                        ))}
+                        {watchRating > 0 && (
+                          <span className="ml-1 self-center text-[12px] text-amber-400/60 font-mono">{watchRating}/5</span>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <label className={LABEL}>Review Notes</label>
+                      <textarea
+                        {...register('review')}
+                        rows={2}
+                        placeholder="Notes on performance, quality, timeliness…"
+                        className={cn(INPUT, 'resize-none')}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 {/* Coin award notice */}
                 {willComplete && (

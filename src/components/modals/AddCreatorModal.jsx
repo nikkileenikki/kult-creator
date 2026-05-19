@@ -22,6 +22,10 @@ const schema = z.object({
   pic:               z.string().min(1, 'PIC is required'),
   contact:           z.string().min(1, 'Select a contact method'),
   avatarColor:       z.string().min(1),
+  contactNumber:     z.string().default(''),
+  email:             z.string().default(''),
+  platformUsername:  z.string().default(''),
+  dateOfBirth:       z.string().default(''),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -55,6 +59,10 @@ export default function AddCreatorModal() {
       pic:               PICS[0],
       contact:           CONTACT_METHODS[0],
       avatarColor:       'v',
+      contactNumber:     '',
+      email:             '',
+      platformUsername:  '',
+      dateOfBirth:       '',
     },
   })
 
@@ -238,6 +246,28 @@ export default function AddCreatorModal() {
                     <select {...register('contact')} className={INPUT}>
                       {CONTACT_METHODS.map(c => <option key={c}>{c}</option>)}
                     </select>
+                  </div>
+                </div>
+
+                {/* Contact details */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={LABEL}>Contact Number <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('contactNumber')} placeholder="e.g. +60 12-345 6789" className={INPUT} />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Email <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('email')} type="email" placeholder="e.g. name@email.com" className={INPUT} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={LABEL}>Platform Username <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('platformUsername')} placeholder="e.g. @username" className={INPUT} />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Date of Birth <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input type="date" {...register('dateOfBirth')} className={cn(INPUT, '[color-scheme:dark]')} />
                   </div>
                 </div>
 
