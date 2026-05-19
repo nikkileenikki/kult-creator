@@ -3,6 +3,7 @@ import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
+import { useBrandStore } from '@/store/brandStore'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 import { Pencil, ChevronRight, Check, X } from 'lucide-react'
@@ -148,7 +149,10 @@ function CampaignCard({ campaign, tasks, onClick }) {
 
         <div className="flex items-center justify-between text-[11px]">
           <span className="text-white/25 font-mono">{campaign.startDate || '—'} → {campaign.endDate || '—'}</span>
-          {campaign.budget > 0 && <span className="text-emerald-400/70 font-mono font-medium">RM {campaign.budget.toLocaleString()}</span>}
+          <div className="flex items-center gap-2">
+            {campaign.brandName && <span className="text-violet-400/70 text-[10px] truncate max-w-[80px]">{campaign.brandName}</span>}
+            {campaign.budget > 0 && <span className="text-emerald-400/70 font-mono font-medium">RM {campaign.budget.toLocaleString()}</span>}
+          </div>
         </div>
       </div>
     </div>
@@ -161,6 +165,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
   const updateCampaign = useCampaignStore(s => s.updateCampaign)
   const updateTask     = useTaskStore(s => s.updateTask)
   const showToast      = useUIStore(s => s.showToast)
+  const brands         = useBrandStore(s => s.brands)
 
   const [editing,     setEditing]     = useState(false)
   const [draft,       setDraft]       = useState(null)
@@ -179,6 +184,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
       name: campaign.name, description: campaign.description ?? '', status: campaign.status,
       budget: campaign.budget ?? 0, startDate: campaign.startDate ?? '', endDate: campaign.endDate ?? '',
       color: campaign.color, brief: campaign.brief ?? '',
+      brandId: campaign.brandId ?? '', brandName: campaign.brandName ?? '',
     })
     setEditing(true)
   }
@@ -187,7 +193,9 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
   async function saveEdit() {
     setSaving(true)
     try {
-      await updateCampaign(campaign.id, draft)
+      const brand = brands.find(b => b.id === draft.brandId)
+      const patch = { ...draft, brandName: brand?.name ?? '' }
+      await updateCampaign(campaign.id, patch)
       showToast(`${draft.name} updated`)
       setEditing(false)
       setDraft(null)
@@ -264,9 +272,18 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                   </select>
                 </div>
               </div>
-              <div>
-                <label className={LABEL}>Description</label>
-                <input value={draft.description} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} className={INPUT} placeholder="Campaign description…" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className={LABEL}>Description</label>
+                  <input value={draft.description} onChange={e => setDraft(d => ({ ...d, description: e.target.value }))} className={INPUT} placeholder="Campaign description…" />
+                </div>
+                <div>
+                  <label className={LABEL}>Brand <span className="normal-case font-normal text-white/20">(optional)</span></label>
+                  <select value={draft.brandId} onChange={e => setDraft(d => ({ ...d, brandId: e.target.value }))} className={INPUT}>
+                    <option value="">No brand</option>
+                    {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                  </select>
+                </div>
               </div>
               <div>
                 <label className={LABEL}>Campaign Brief</label>
@@ -313,6 +330,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                   </div>
                   {campaign.description && <p className="text-[13px] text-white/40 mb-3">{campaign.description}</p>}
                   <div className="flex items-center gap-5 text-[12px]">
+                    {campaign.brandName && <span className="text-violet-400 font-medium">{campaign.brandName}</span>}
                     {campaign.budget > 0 && <span className="text-emerald-400 font-mono font-medium">RM {campaign.budget.toLocaleString()} budget</span>}
                     {campaign.startDate && <span className="text-white/30 font-mono">{campaign.startDate} → {campaign.endDate || '—'}</span>}
                   </div>

@@ -102,7 +102,8 @@ export default function Persona() {
 
   function startEdit() {
     setDraft({
-      name: creator.name, initials: creator.initials, platform: creator.platform,
+      name: creator.name, initials: creator.initials,
+      platform: creator.platform, secondaryPlatform: creator.secondaryPlatform ?? '',
       niche: creator.niche, secondaryNiche: creator.secondaryNiche ?? '',
       followers: creator.followers, status: creator.status,
       pic: creator.pic, contact: creator.contact, avatarColor: creator.avatarColor,
@@ -214,8 +215,8 @@ export default function Persona() {
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
                 <div className="text-[12px] text-white/30 mt-1">
-                  {creator.platform} · {creator.niche}
-                  {creator.secondaryNiche && <span className="ml-1 opacity-60">· {creator.secondaryNiche}</span>}
+                  {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {creator.niche}
+                  {creator.secondaryNiche && <span className="opacity-60"> · {creator.secondaryNiche}</span>}
                 </div>
                 <div className="flex justify-center gap-1.5 mt-2.5">
                   <Badge variant={tier.name.toLowerCase()}>
@@ -235,12 +236,13 @@ export default function Persona() {
             {editing ? (
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'Platform',        key: 'platform',       type: 'select', options: PLATFORMS },
-                  { label: 'Primary Niche',   key: 'niche',          type: 'select', options: NICHES },
-                  { label: 'Secondary Niche', key: 'secondaryNiche', type: 'select', options: NICHES, optional: true },
-                  { label: 'Status',          key: 'status',         type: 'select', options: ['Active','On Hold'] },
-                  { label: 'PIC',             key: 'pic',            type: 'select', options: PICS },
-                  { label: 'Contact',         key: 'contact',        type: 'select', options: CONTACT_METHODS },
+                  { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
+                  { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
+                  { label: 'Primary Niche',      key: 'niche',             type: 'select', options: NICHES },
+                  { label: 'Secondary Niche',    key: 'secondaryNiche',    type: 'select', options: NICHES, optional: true },
+                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold'] },
+                  { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
+                  { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
                 ].map(f => (
                   <div key={f.key}>
                     <label className={LABEL}>
@@ -260,9 +262,10 @@ export default function Persona() {
               </div>
             ) : (
               [
-                ['Followers',        (creator.followers/1000).toFixed(0) + 'K'],
-                ['Platform',         creator.platform],
-                ['Primary Niche',    creator.niche],
+                ['Followers',           (creator.followers/1000).toFixed(0) + 'K'],
+                ['Platform',            creator.platform],
+                ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
+                ['Primary Niche',       creator.niche],
                 ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
                 ['Tasks Done',       creator.tasksCompleted],
                 ['Joined',           creator.joinedDate],

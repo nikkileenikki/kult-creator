@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
 import {
-  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight,
+  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase,
 } from 'lucide-react'
 
 const NAV = [
@@ -11,6 +11,7 @@ const NAV = [
     { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
     { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
     { to: '/creators',  label: 'Creators',         icon: Users },
+    { to: '/brands',    label: 'Brands',            icon: Briefcase },
   ]},
   { section: 'Creators', items: [
     { to: '/niche',     label: 'Niche',             icon: User },
@@ -33,24 +34,6 @@ export default function Sidebar() {
     )}>
       {/* glow */}
       <div className="absolute -bottom-16 -left-16 w-48 h-48 rounded-full bg-violet-600/10 blur-2xl pointer-events-none" />
-
-      {/* Logo */}
-      <div className={cn(
-        'px-4 py-5 flex items-center gap-2.5 border-b border-white/7 flex-shrink-0',
-        collapsed && 'justify-center px-0',
-      )}>
-        <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center shadow-[0_0_16px_rgba(108,92,231,.4)] flex-shrink-0">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
-          </svg>
-        </div>
-        {!collapsed && (
-          <>
-            <span className="font-syne text-[16px] font-extrabold text-white tracking-tight">CreatorOS</span>
-            <span className="ml-auto font-mono text-[9px] text-white/20">v2.0</span>
-          </>
-        )}
-      </div>
 
       {/* Nav */}
       <div className="flex-1 overflow-y-auto px-2.5 py-2.5">

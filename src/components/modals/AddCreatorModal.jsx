@@ -11,16 +11,17 @@ import Avatar from '@/components/shared/Avatar'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
-  name:        z.string().min(2, 'Name must be at least 2 characters').max(50),
-  initials:    z.string().min(1, 'Required').max(3, 'Max 3 characters').toUpperCase(),
-  platform:    z.string().min(1, 'Select a platform'),
-  niche:          z.string().min(1, 'Niche is required'),
-  secondaryNiche: z.string().default(''),
-  followers:   z.coerce.number().min(0, 'Min 0').max(100_000_000, 'Too large'),
-  status:      z.enum(['Active', 'On Hold']),
-  pic:         z.string().min(1, 'PIC is required'),
-  contact:     z.string().min(1, 'Select a contact method'),
-  avatarColor: z.string().min(1),
+  name:              z.string().min(2, 'Name must be at least 2 characters').max(50),
+  initials:          z.string().min(1, 'Required').max(3, 'Max 3 characters').toUpperCase(),
+  platform:          z.string().min(1, 'Select a platform'),
+  secondaryPlatform: z.string().default(''),
+  niche:             z.string().min(1, 'Niche is required'),
+  secondaryNiche:    z.string().default(''),
+  followers:         z.coerce.number().min(0, 'Min 0').max(100_000_000, 'Too large'),
+  status:            z.enum(['Active', 'On Hold']),
+  pic:               z.string().min(1, 'PIC is required'),
+  contact:           z.string().min(1, 'Select a contact method'),
+  avatarColor:       z.string().min(1),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -43,16 +44,17 @@ export default function AddCreatorModal() {
   } = useForm({
     resolver: zodResolver(schema),
     defaultValues: {
-      name:           '',
-      initials:       '',
-      platform:       PLATFORMS[0],
-      niche:          '',
-      secondaryNiche: '',
-      followers:      0,
-      status:      'Active',
-      pic:         PICS[0],
-      contact:     CONTACT_METHODS[0],
-      avatarColor: 'v',
+      name:              '',
+      initials:          '',
+      platform:          PLATFORMS[0],
+      secondaryPlatform: '',
+      niche:             '',
+      secondaryNiche:    '',
+      followers:         0,
+      status:            'Active',
+      pic:               PICS[0],
+      contact:           CONTACT_METHODS[0],
+      avatarColor:       'v',
     },
   })
 
@@ -163,15 +165,26 @@ export default function AddCreatorModal() {
                   </div>
                 </div>
 
-                {/* Platform + Primary Niche */}
+                {/* Platform + Secondary Platform */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className={LABEL}>Platform</label>
+                    <label className={LABEL}>Primary Platform</label>
                     <select {...register('platform')} className={INPUT}>
                       {PLATFORMS.map(p => <option key={p}>{p}</option>)}
                     </select>
                     {errors.platform && <p className={ERR}>{errors.platform.message}</p>}
                   </div>
+                  <div>
+                    <label className={LABEL}>Secondary Platform <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <select {...register('secondaryPlatform')} className={INPUT}>
+                      <option value="">None</option>
+                      {PLATFORMS.map(p => <option key={p}>{p}</option>)}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Primary + Secondary Niche */}
+                <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Primary Niche</label>
                     <select {...register('niche')} className={INPUT}>
@@ -180,15 +193,13 @@ export default function AddCreatorModal() {
                     </select>
                     {errors.niche && <p className={ERR}>{errors.niche.message}</p>}
                   </div>
-                </div>
-
-                {/* Secondary Niche */}
-                <div>
-                  <label className={LABEL}>Secondary Niche <span className="normal-case text-white/20 font-normal">(optional)</span></label>
-                  <select {...register('secondaryNiche')} className={INPUT}>
-                    <option value="">None</option>
-                    {NICHES.map(n => <option key={n}>{n}</option>)}
-                  </select>
+                  <div>
+                    <label className={LABEL}>Secondary Niche <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <select {...register('secondaryNiche')} className={INPUT}>
+                      <option value="">None</option>
+                      {NICHES.map(n => <option key={n}>{n}</option>)}
+                    </select>
+                  </div>
                 </div>
 
                 {/* Followers + Status */}

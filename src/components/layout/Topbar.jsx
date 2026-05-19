@@ -9,7 +9,8 @@ const PAGE_META = {
   '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
   '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…' },
   '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
-  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
+  '/brands':    { cta: null,           action: null,               placeholder: 'Search brands…' },
+  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…' },
   '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
   '/settings':  { cta: null,           action: null,               placeholder: 'Search…' },
@@ -28,7 +29,6 @@ export default function Topbar() {
   const globalSearch        = useUIStore(s => s.globalSearch)
   const setGlobalSearch     = useUIStore(s => s.setGlobalSearch)
 
-  // Clear search when navigating
   useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const tasks = useTaskStore(s => s.tasks)
@@ -50,8 +50,19 @@ export default function Topbar() {
   }
 
   return (
-    <header className="h-[58px] bg-[#111116] border-b border-white/7 flex items-center px-6 gap-4 flex-shrink-0">
-      <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-60 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
+    <header className="h-[58px] bg-[#111116] border-b border-white/7 flex items-center px-5 gap-4 flex-shrink-0 w-full z-10">
+      {/* Logo */}
+      <div className="flex items-center gap-2.5 pr-5 border-r border-white/7 flex-shrink-0">
+        <div className="w-7 h-7 rounded-[8px] bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center shadow-[0_0_12px_rgba(108,92,231,.4)]">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <span className="font-syne text-[15px] font-extrabold text-white tracking-tight whitespace-nowrap">Creator Engine</span>
+      </div>
+
+      {/* Search */}
+      <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-56 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
         <Search size={13} className="flex-shrink-0 text-white/30" />
         <input
           value={globalSearch}

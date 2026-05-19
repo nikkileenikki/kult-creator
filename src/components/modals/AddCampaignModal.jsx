@@ -6,6 +6,7 @@ import { z } from 'zod'
 import { X } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useCampaignStore } from '@/store/campaignStore'
+import { useBrandStore } from '@/store/brandStore'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
@@ -16,6 +17,7 @@ const schema = z.object({
   startDate:   z.string().default(''),
   endDate:     z.string().default(''),
   color:       z.string().default('#6C5CE7'),
+  brandId:     z.string().default(''),
 })
 
 const COLORS = ['#6C5CE7','#0891B2','#D97706','#059669','#DC2626','#7C3AED','#DB2777','#EA580C']
@@ -27,10 +29,11 @@ export default function AddCampaignModal() {
   const close       = useUIStore(s => s.closeAddCampaign)
   const showToast   = useUIStore(s => s.showToast)
   const addCampaign = useCampaignStore(s => s.addCampaign)
+  const brands      = useBrandStore(s => s.brands)
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset, watch, setValue } = useForm({
     resolver: zodResolver(schema),
-    defaultValues: { name:'', description:'', status:'Planning', budget:0, startDate:'', endDate:'', color:'#6C5CE7' },
+    defaultValues: { name:'', description:'', status:'Planning', budget:0, startDate:'', endDate:'', color:'#6C5CE7', brandId:'' },
   })
 
   const selectedColor = watch('color')
@@ -38,7 +41,8 @@ export default function AddCampaignModal() {
   useEffect(() => { if (!open) reset() }, [open])
 
   async function onSubmit(data) {
-    await addCampaign(data)
+    const brand = brands.find(b => b.id === data.brandId)
+    await addCampaign({ ...data, brandName: brand?.name ?? '' })
     showToast(`${data.name} campaign created`)
     close()
   }
@@ -56,10 +60,19 @@ export default function AddCampaignModal() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="px-6 py-5 space-y-4">
-            <div>
-              <label className={LABEL}>Campaign Name *</label>
-              <input {...register('name')} placeholder="e.g. Ramadan 2026" className={INPUT} />
-              {errors.name && <p className="text-rose-400 text-[11px] mt-1">{errors.name.message}</p>}
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className={LABEL}>Campaign Name *</label>
+                <input {...register('name')} placeholder="e.g. Ramadan 2026" className={INPUT} />
+                {errors.name && <p className="text-rose-400 text-[11px] mt-1">{errors.name.message}</p>}
+              </div>
+              <div>
+                <label className={LABEL}>Brand <span className="normal-case font-normal text-white/20">(optional)</span></label>
+                <select {...register('brandId')} className={INPUT}>
+                  <option value="">No brand</option>
+                  {brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}
+                </select>
+              </div>
             </div>
 
             <div>

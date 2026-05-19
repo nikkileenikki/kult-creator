@@ -4,6 +4,17 @@ export const NICHES = [
   'Entertainment', 'Automotive', 'Sports', 'Home & Decor', 'Pet', 'Music', 'Comedy',
 ]
 
+export const BRAND_INDUSTRIES = [
+  'Beauty & Skincare', 'E-commerce', 'FMCG', 'Tech', 'Gaming', 'F&B',
+  'Fashion', 'Health & Wellness', 'Retail', 'Finance', 'Automotive', 'Other',
+]
+
+export const BRANDS = [
+  { id: 'brand1', name: 'Wardah',    industry: 'Beauty & Skincare', color: '#8B5CF6', website: 'wardah.com' },
+  { id: 'brand2', name: 'Shopee',    industry: 'E-commerce',        color: '#EE4D2D', website: 'shopee.my' },
+  { id: 'brand3', name: 'Nestlé MY', industry: 'FMCG',              color: '#009FE3', website: 'nestle.com.my' },
+]
+
 export const PROJECTS = ['Ramadan Campaign', 'Brand Launch Q2', 'Skincare Series']
 export const PICS = ['Sarah K.', 'Lina M.']
 export const PLATFORMS = ['TikTok', 'YouTube', 'Instagram', 'X / Twitter', 'LinkedIn']
@@ -20,7 +31,7 @@ export const AVATAR_COLOR_OPTIONS = [
 
 export const CREATORS = [
   {
-    id: '1', initials: 'SR', name: 'Siti Rania', platform: 'TikTok',
+    id: '1', initials: 'SR', name: 'Siti Rania', platform: 'TikTok', secondaryPlatform: 'Instagram',
     niche: 'Lifestyle & Wellness', secondaryNiche: 'Fashion', followers: 520000, coins: 9200,
     tasksCompleted: 92, status: 'Active', pic: 'Sarah K.',
     contact: 'WhatsApp', joinedDate: '2024-01-15', avatarColor: 'v',
@@ -39,7 +50,7 @@ export const CREATORS = [
     },
   },
   {
-    id: '2', initials: 'HZ', name: 'Hafiz Zaki', platform: 'YouTube',
+    id: '2', initials: 'HZ', name: 'Hafiz Zaki', platform: 'YouTube', secondaryPlatform: 'Instagram',
     niche: 'Tech', secondaryNiche: 'Gaming', followers: 380000, coins: 6200,
     tasksCompleted: 62, status: 'Active', pic: 'Lina M.',
     contact: 'Email', joinedDate: '2023-08-20', avatarColor: 'b',
@@ -58,7 +69,7 @@ export const CREATORS = [
     },
   },
   {
-    id: '3', initials: 'AN', name: 'Aina Nadia', platform: 'Instagram',
+    id: '3', initials: 'AN', name: 'Aina Nadia', platform: 'Instagram', secondaryPlatform: 'TikTok',
     niche: 'Beauty', secondaryNiche: 'Skincare', followers: 210000, coins: 2700,
     tasksCompleted: 27, status: 'Active', pic: 'Sarah K.',
     contact: 'Instagram DM', joinedDate: '2024-03-10', avatarColor: 'g',
@@ -77,7 +88,7 @@ export const CREATORS = [
     },
   },
   {
-    id: '4', initials: 'FH', name: 'Farah Hana', platform: 'TikTok',
+    id: '4', initials: 'FH', name: 'Farah Hana', platform: 'TikTok', secondaryPlatform: '',
     niche: 'Food & Lifestyle', secondaryNiche: 'Entertainment', followers: 145000, coins: 1100,
     tasksCompleted: 11, status: 'On Hold', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2024-06-01', avatarColor: 'r',
@@ -96,7 +107,7 @@ export const CREATORS = [
     },
   },
   {
-    id: '5', initials: 'RI', name: 'Razif Idham', platform: 'YouTube',
+    id: '5', initials: 'RI', name: 'Razif Idham', platform: 'YouTube', secondaryPlatform: 'TikTok',
     niche: 'Gaming', secondaryNiche: 'Tech', followers: 280000, coins: 800,
     tasksCompleted: 8, status: 'Active', pic: 'Sarah K.',
     contact: 'Discord', joinedDate: '2025-01-05', avatarColor: 't',
@@ -115,7 +126,7 @@ export const CREATORS = [
     },
   },
   {
-    id: '6', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram',
+    id: '6', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram', secondaryPlatform: '',
     niche: 'Skincare', secondaryNiche: 'Beauty', followers: 94000, coins: 290,
     tasksCompleted: 3, status: 'Active', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2025-11-20', avatarColor: 'i',
@@ -142,6 +153,12 @@ export const TASKS = [
   { id: 't4', creatorId: '4', creatorName: 'Farah Hana', platform: 'TikTok', task: 'Record TikTok GRWM', project: 'Ramadan Campaign', status: 'Overdue', pic: 'Lina M.', dueDate: '2026-04-10', priority: 'Urgent', coins: 100 },
   { id: 't5', creatorId: '5', creatorName: 'Razif Idham', platform: 'YouTube', task: 'Brand Mention in Vlog', project: 'Brand Launch Q2', status: 'Not Started', pic: 'Sarah K.', dueDate: '2026-04-25', priority: 'Medium', coins: 100 },
   { id: 't6', creatorId: '6', creatorName: 'Nur Zulaikha', platform: 'Instagram', task: 'Skincare GRWM Video', project: 'Skincare Series', status: 'In Progress', pic: 'Lina M.', dueDate: '2026-04-20', priority: 'High', coins: 100 },
+]
+
+export const CAMPAIGNS = [
+  { id: 'camp1', name: 'Ramadan Campaign', description: 'Eid season promotion across social platforms', status: 'Active',   budget: 15000, startDate: '2025-02-15', endDate: '2025-04-05', color: '#6C5CE7', brandId: 'brand1', brandName: 'Wardah' },
+  { id: 'camp2', name: 'Brand Launch Q2',  description: 'New product line launch with key creators',    status: 'Active',   budget: 25000, startDate: '2025-04-01', endDate: '2025-06-30', color: '#0891B2', brandId: 'brand2', brandName: 'Shopee' },
+  { id: 'camp3', name: 'Skincare Series',  description: 'Ongoing skincare content series',              status: 'Planning', budget: 8000,  startDate: '2025-05-01', endDate: '2025-07-31', color: '#D97706', brandId: 'brand1', brandName: 'Wardah' },
 ]
 
 export const RECRUIT_REQUESTS = [
