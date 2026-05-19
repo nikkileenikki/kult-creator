@@ -69,9 +69,9 @@ export async function onRequestPost({ env }) {
 
   // Seed recruits
   const recruitsData = [
-    ['r1','RI','Razif Idham', 'YouTube',  280000, 8.2, 'Gaming', '["YouTube","Gaming","Tech"]',             '2026-04-13','Link in Bio','Unassigned','Specialises in mobile gaming content. Portfolio includes Samsung and Razer collabs. Strong community engagement with regular live streams.','Pending',      't'],
-    ['r2','NZ','Nur Zulaikha','Instagram', 94000,12.0, 'Skincare','["Instagram","Skincare","Halal Beauty"]','2026-04-11','Referral',   'Lina M.',  'Focuses on halal and clean beauty. Audience predominantly female 20–30. Very high story engagement. Strong skincare product reviews.',       'Under Review', 'i'],
-    ['r3','AM','Aqil Mukhriz','TikTok',    51000, 9.2, 'Fitness','["TikTok","Fitness","Wellness"]',         '2026-04-14','Referral',   'Unassigned','Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.','Pending',      'g'],
+    ['r1','HS','Hanis Sofea', 'TikTok',    78000,11.4, 'Fashion',        '["TikTok","Fashion","Modest Wear"]',  '2026-04-13','Link in Bio','Unassigned','Modest fashion creator known for outfit styling videos. Strong Gen-Z audience. Previous collabs with local modest wear brands and Zalora MY.','Pending',      'v'],
+    ['r2','DA','Danial Amir', 'Instagram',  42000, 9.8, 'Food & Lifestyle','["Instagram","Food","Lifestyle"]',  '2026-04-11','Referral',   'Lina M.',  'Food and lifestyle creator based in KL. Specialises in restaurant reviews and recipe reels. High save rate on food content. Very consistent posting schedule.','Under Review','r'],
+    ['r3','AM','Aqil Mukhriz','TikTok',    51000, 9.2, 'Fitness',        '["TikTok","Fitness","Wellness"]',     '2026-04-14','Referral',   'Unassigned','Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.','Pending',      'g'],
   ]
   for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color] of recruitsData) {
     await db.prepare(

@@ -163,20 +163,20 @@ export const CAMPAIGNS = [
 
 export const RECRUIT_REQUESTS = [
   {
-    id: 'r1', initials: 'RI', name: 'Razif Idham', platform: 'YouTube',
-    followers: 280000, engagementRate: 8.2, niche: 'Gaming',
-    tags: ['YouTube', 'Gaming', 'Tech'], appliedDate: '2026-04-13',
+    id: 'r1', initials: 'HS', name: 'Hanis Sofea', platform: 'TikTok',
+    followers: 78000, engagementRate: 11.4, niche: 'Fashion',
+    tags: ['TikTok', 'Fashion', 'Modest Wear'], appliedDate: '2026-04-13',
     source: 'Link in Bio', pic: 'Unassigned',
-    description: 'Specialises in mobile gaming content. Portfolio includes Samsung and Razer collabs. Strong community engagement with regular live streams.',
-    status: 'Pending', avatarColor: 't',
+    description: 'Modest fashion creator known for outfit styling videos. Strong Gen-Z audience. Previous collabs with local modest wear brands and Zalora MY.',
+    status: 'Pending', avatarColor: 'v',
   },
   {
-    id: 'r2', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram',
-    followers: 94000, engagementRate: 12, niche: 'Skincare',
-    tags: ['Instagram', 'Skincare', 'Halal Beauty'], appliedDate: '2026-04-11',
+    id: 'r2', initials: 'DA', name: 'Danial Amir', platform: 'Instagram',
+    followers: 42000, engagementRate: 9.8, niche: 'Food & Lifestyle',
+    tags: ['Instagram', 'Food', 'Lifestyle'], appliedDate: '2026-04-11',
     source: 'Referral', pic: 'Lina M.',
-    description: 'Focuses on halal and clean beauty. Audience predominantly female 20–30. Very high story engagement. Strong skincare product reviews.',
-    status: 'Under Review', avatarColor: 'i',
+    description: 'Food and lifestyle creator based in KL. Specialises in restaurant reviews and recipe reels. High save rate on food content. Very consistent posting schedule.',
+    status: 'Under Review', avatarColor: 'r',
   },
   {
     id: 'r3', initials: 'AM', name: 'Aqil Mukhriz', platform: 'TikTok',
