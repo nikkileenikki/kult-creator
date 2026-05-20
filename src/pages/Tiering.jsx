@@ -62,7 +62,7 @@ export default function Tiering() {
             const tier = getTier(c.coins)
             const rankColors = ['text-amber-300','text-gray-300','text-rose-300']
             return (
-              <div key={c.id} onClick={() => navigate(`/persona/${c.id}`)} className="flex items-center gap-3 px-4 py-3 border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors cursor-pointer">
+              <div key={c.id} onClick={() => navigate(`/creator/${c.id}`)} className="flex items-center gap-3 px-4 py-3 border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors cursor-pointer">
                 <span className={`font-syne text-[14px] font-extrabold w-6 text-center flex-shrink-0 ${rankColors[i] || 'text-white/25'}`}>#{i+1}</span>
                 <Avatar initials={c.initials} color={c.avatarColor} size="sm" />
                 <div className="flex-1">

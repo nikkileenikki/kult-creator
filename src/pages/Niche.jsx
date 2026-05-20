@@ -44,7 +44,7 @@ export default function Niche() {
             {selectedNiche.list.map(c => (
               <div
                 key={c.id}
-                onClick={() => navigate(`/persona/${c.id}`)}
+                onClick={() => navigate(`/creator/${c.id}`)}
                 className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-4 cursor-pointer hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,.3)] transition-all"
               >
                 <div className="flex items-center gap-3">

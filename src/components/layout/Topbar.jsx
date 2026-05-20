@@ -35,7 +35,7 @@ const PAGE_META = {
 export default function Topbar() {
   const { pathname } = useLocation()
   const meta = PAGE_META[pathname]
-    ?? (pathname.startsWith('/persona/') ? { cta: null, action: null, placeholder: 'Search profile…' } : PAGE_META['/'])
+    ?? (pathname.startsWith('/creator/') ? { cta: null, action: null, placeholder: 'Search profile…' } : PAGE_META['/'])
 
   const openAddTask         = useUIStore(s => s.openAddTask)
   const openAddCreator      = useUIStore(s => s.openAddCreator)

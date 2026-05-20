@@ -87,7 +87,7 @@ export default function App() {
             <Route path="/recruit"     element={<Recruit />} />
             <Route path="/tiering"     element={<Tiering />} />
             <Route path="/niche"       element={<Niche />} />
-            <Route path="/persona/:id" element={<Persona />} />
+            <Route path="/creator/:id" element={<Persona />} />
             <Route path="/settings"    element={<Settings />} />
             <Route path="/users"       element={<Users />} />
             <Route path="/users/new"   element={<NewUser />} />
