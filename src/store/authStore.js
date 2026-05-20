@@ -33,7 +33,8 @@ export const useAuthStore = create((set, get) => ({
     const { user } = get()
     if (!user) return false
     if (user.permissions?.includes('contacts.view_all')) return true
-    if (user.permissions?.includes('contacts.view_assigned')) return user.displayName === creatorPic
+    if (user.permissions?.includes('contacts.view_assigned'))
+      return user.displayName?.trim().toLowerCase() === creatorPic?.trim().toLowerCase()
     return false
   },
 }))

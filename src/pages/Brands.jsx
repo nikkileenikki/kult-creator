@@ -49,7 +49,14 @@ export default function Brands() {
             <div className="font-syne text-[20px] font-extrabold text-white">{selectedBrand.name}</div>
             <div className="text-[12px] text-white/30 mt-0.5">
               {selectedBrand.industry}
-              {selectedBrand.website && <span className="ml-2 text-violet-400">· {selectedBrand.website}</span>}
+              {selectedBrand.website && (
+                <a href={selectedBrand.website.startsWith('http') ? selectedBrand.website : `https://${selectedBrand.website}`}
+                  target="_blank" rel="noopener noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="ml-2 text-violet-400 hover:text-violet-300 hover:underline transition-colors">
+                  · {selectedBrand.website}
+                </a>
+              )}
             </div>
           </div>
           <div className="ml-auto text-center">
@@ -137,7 +144,12 @@ export default function Brands() {
                       <div className="text-[9px] text-white/25 uppercase tracking-wide">campaigns</div>
                     </div>
                     {brand.website && (
-                      <span className="text-[11px] text-white/25 truncate ml-3">{brand.website}</span>
+                      <a href={brand.website.startsWith('http') ? brand.website : `https://${brand.website}`}
+                        target="_blank" rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="text-[11px] text-white/25 hover:text-violet-400 truncate ml-3 transition-colors">
+                        {brand.website}
+                      </a>
                     )}
                   </div>
                 </div>

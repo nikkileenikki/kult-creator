@@ -4,12 +4,24 @@ import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
+import { useAuthStore } from '@/store/authStore'
 import { getTier } from '@/lib/tierUtils'
 import { fetchDashboardMetrics, fetchTierDistribution, fetchActivityFeed } from '@/lib/api/analytics'
 import MetricsGrid from '@/components/dashboard/MetricsGrid'
 import RecentTasksTable from '@/components/dashboard/RecentTasksTable'
 import TierSnapshot from '@/components/dashboard/TierSnapshot'
 import ActivityFeed from '@/components/dashboard/ActivityFeed'
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+function getMonthYear() {
+  return new Date().toLocaleString('en-MY', { month: 'long', year: 'numeric' })
+}
 
 function CampaignProgressCard({ campaign, tasks, onClick }) {
   const done     = tasks.filter(t => t.status === 'Completed').length
@@ -53,6 +65,7 @@ export default function Dashboard() {
   const requests     = useRecruitStore(s => s.requests)
   const campaigns    = useCampaignStore(s => s.campaigns)
   const navigate     = useNavigate()
+  const authUser     = useAuthStore(s => s.user)
 
   const [metrics, setMetrics]       = useState(null)
   const [tierCounts, setTierCounts] = useState([])
@@ -70,9 +83,9 @@ export default function Dashboard() {
     <div className="animate-[fadeUp_.3s_ease]">
       <div className="flex items-end justify-between mb-5">
         <div>
-          <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Good morning, Nikki 👋</h1>
+          <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">{getGreeting()}, {authUser?.displayName?.split(' ')[0] ?? 'there'} 👋</h1>
           <p className="text-[12px] text-white/30 mt-1">
-            May 2026 · Ramadan Campaign active · {pendingRecruits} pending recruit requests
+            {getMonthYear()} · {pendingRecruits} pending recruit request{pendingRecruits !== 1 ? 's' : ''}
           </p>
         </div>
       </div>

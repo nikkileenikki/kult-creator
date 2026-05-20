@@ -15,7 +15,7 @@ export async function request(method, path, body) {
   })
   if (res.status === 401 && path !== '/auth/login') {
     localStorage.removeItem('ce_auth_token')
-    window.location.reload()
+    window.location.href = '/'
     throw new Error('Session expired')
   }
   if (!res.ok) {

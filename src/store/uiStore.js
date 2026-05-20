@@ -1,5 +1,14 @@
 import { create } from 'zustand'
 
+function loadDismissed() {
+  try { return new Set(JSON.parse(localStorage.getItem('ce_dismissed_alerts') ?? '[]')) }
+  catch { return new Set() }
+}
+
+function saveDismissed(s) {
+  try { localStorage.setItem('ce_dismissed_alerts', JSON.stringify([...s])) } catch {}
+}
+
 export const useUIStore = create((set) => ({
   addTaskOpen:       false,
   addTaskPrefill:    null,
@@ -9,7 +18,7 @@ export const useUIStore = create((set) => ({
   editTaskOpen:      false,
   editTaskId:        null,
   notificationsOpen: false,
-  dismissedAlerts:   new Set(),
+  dismissedAlerts:   loadDismissed(),
   toast:             null,
   globalSearch:      '',
   sidebarCollapsed:  false,
@@ -26,8 +35,16 @@ export const useUIStore = create((set) => ({
   closeEditTask:       () => set({ editTaskOpen: false, editTaskId: null }),
   toggleNotifications:  () => set(s => ({ notificationsOpen: !s.notificationsOpen })),
   closeNotifications:   () => set({ notificationsOpen: false }),
-  dismissAlert:         (id) => set(s => ({ dismissedAlerts: new Set([...s.dismissedAlerts, id]) })),
-  dismissAllAlerts:     (ids) => set(s => ({ dismissedAlerts: new Set([...s.dismissedAlerts, ...ids]) })),
+  dismissAlert: (id) => set(s => {
+    const next = new Set([...s.dismissedAlerts, id])
+    saveDismissed(next)
+    return { dismissedAlerts: next }
+  }),
+  dismissAllAlerts: (ids) => set(s => {
+    const next = new Set([...s.dismissedAlerts, ...ids])
+    saveDismissed(next)
+    return { dismissedAlerts: next }
+  }),
   setGlobalSearch:     (q) => set({ globalSearch: q }),
   toggleSidebar:       () => set(s => ({ sidebarCollapsed: !s.sidebarCollapsed })),
 
