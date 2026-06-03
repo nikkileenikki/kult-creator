@@ -1,7 +1,6 @@
-import { json, err, getDB } from './_helpers'
+import { getDB } from './_helpers'
 import { recruitQ } from './_queries'
 
-// Public CORS — allow any origin since this is an embeddable registration form
 const CORS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
@@ -12,12 +11,28 @@ const opts = () => new Response(null, { status: 204, headers: CORS })
 const pub  = (data, status = 200) => Response.json(data, { status, headers: CORS })
 const fail = (msg, status = 400)  => Response.json({ error: msg }, { status, headers: CORS })
 
+const FOLLOWER_RANGES = {
+  'under 10k':    5_000,
+  '10k-50k':     25_000,
+  '50k-100k':    75_000,
+  '100k-500k':  250_000,
+  '500k+':      500_000,
+}
+
+const CONTENT_CATEGORIES = [
+  'Beauty/Skincare', 'Makeup', 'Fashion', 'Lifestyle',
+  'Educational', 'Reviews/Recommendations', 'Others',
+]
+
+const COLLAB_PREFERENCES = [
+  'Gifted products', 'Affiliated/commission-based',
+  'Long-term partnership', 'Paid campaign',
+]
+
 const AVATAR_COLORS = [
   '#6C5CE7','#0891B2','#D97706','#059669','#DC2626',
   '#7C3AED','#DB2777','#EA580C','#0284C7','#65A30D',
 ]
-
-const PLATFORMS = ['Instagram','TikTok','YouTube','Twitter/X','Facebook','Pinterest','LinkedIn']
 
 function getInitials(name) {
   return name.trim().split(/\s+/).map(w => w[0].toUpperCase()).join('').slice(0, 2)
@@ -31,6 +46,11 @@ function randomColor() {
   return AVATAR_COLORS[Math.floor(Math.random() * AVATAR_COLORS.length)]
 }
 
+function normaliseUsername(val) {
+  if (!val) return ''
+  return val.trim().startsWith('@') ? val.trim() : `@${val.trim()}`
+}
+
 export const onRequestOptions = () => opts()
 
 export async function onRequestPost({ request, env }) {
@@ -42,48 +62,74 @@ export async function onRequestPost({ request, env }) {
 
   const {
     name,
-    platform,
-    platformUsername = '',
-    followers,
-    engagementRate,
-    niche,
-    tags,
-    description = '',
-    email = '',
+    email,
+    contactNumber     = '',
+    tiktokUsername    = '',
+    followerCount,
+    liveExperience,
+    primaryContentCategory,
+    collaborationPreference,
+    consent1,
+    consent2,
   } = body ?? {}
 
-  // Required field validation
-  if (!name?.trim())             return fail('name is required')
-  if (!platform?.trim())         return fail('platform is required')
-  if (!PLATFORMS.includes(platform)) return fail(`platform must be one of: ${PLATFORMS.join(', ')}`)
-  if (followers == null || isNaN(Number(followers)) || Number(followers) < 0)
-    return fail('followers must be a non-negative number')
-  if (!niche?.trim())            return fail('niche is required')
+  // ── Required field validation ──────────────────────────────────────────────
+  if (!name?.trim())
+    return fail('name is required')
+  if (!email?.trim())
+    return fail('email is required')
+  if (!followerCount || !FOLLOWER_RANGES[followerCount])
+    return fail(`followerCount must be one of: ${Object.keys(FOLLOWER_RANGES).join(', ')}`)
+  if (liveExperience !== 'Yes' && liveExperience !== 'No')
+    return fail('liveExperience must be "Yes" or "No"')
 
-  // Normalise tags — accept array or comma-separated string
-  let tagList = []
-  if (Array.isArray(tags))       tagList = tags.map(t => String(t).trim()).filter(Boolean)
-  else if (typeof tags === 'string') tagList = tags.split(',').map(t => t.trim()).filter(Boolean)
+  // primaryContentCategory — accept single string or array, at least one required
+  const categories = Array.isArray(primaryContentCategory)
+    ? primaryContentCategory
+    : primaryContentCategory ? [primaryContentCategory] : []
+  const invalidCats = categories.filter(c => !CONTENT_CATEGORIES.includes(c))
+  if (categories.length === 0)
+    return fail('at least one primaryContentCategory is required')
+  if (invalidCats.length)
+    return fail(`invalid category: ${invalidCats.join(', ')}. Valid: ${CONTENT_CATEGORIES.join(', ')}`)
 
-  // Build description — append email if provided so it's visible in the dashboard
-  const descParts = []
-  if (description?.trim()) descParts.push(description.trim())
-  if (email?.trim())        descParts.push(`Contact: ${email.trim()}`)
-  if (platformUsername?.trim()) descParts.push(`@${platformUsername.trim()} on ${platform}`)
+  // collaborationPreference — accept single string or array, at least one required
+  const collabPrefs = Array.isArray(collaborationPreference)
+    ? collaborationPreference
+    : collaborationPreference ? [collaborationPreference] : []
+  const invalidPrefs = collabPrefs.filter(p => !COLLAB_PREFERENCES.includes(p))
+  if (collabPrefs.length === 0)
+    return fail('at least one collaborationPreference is required')
+  if (invalidPrefs.length)
+    return fail(`invalid preference: ${invalidPrefs.join(', ')}. Valid: ${COLLAB_PREFERENCES.join(', ')}`)
+
+  // Both consents must be explicitly true
+  if (consent1 !== true)
+    return fail('consent1 is required')
+  if (consent2 !== true)
+    return fail('consent2 is required')
+
+  // ── Build description visible in the dashboard ─────────────────────────────
+  const descLines = []
+  if (email?.trim())                descLines.push(`Email: ${email.trim()}`)
+  if (contactNumber?.trim())        descLines.push(`Contact: ${contactNumber.trim()}`)
+  if (tiktokUsername?.trim())       descLines.push(`TikTok: ${normaliseUsername(tiktokUsername)}`)
+  descLines.push(`Live experience: ${liveExperience}`)
+  descLines.push(`Collab preference: ${collabPrefs.join(', ')}`)
 
   const recruit = {
     id:             randomId(),
     initials:       getInitials(name),
     name:           name.trim(),
-    platform,
-    followers:      Number(followers),
-    engagementRate: engagementRate != null ? Number(engagementRate) : 0,
-    niche:          niche.trim(),
-    tags:           tagList,
+    platform:       'TikTok',
+    followers:      FOLLOWER_RANGES[followerCount],
+    engagementRate: 0,
+    niche:          categories.join(', '),
+    tags:           collabPrefs,
     appliedDate:    new Date().toISOString().split('T')[0],
     source:         'Registration Form',
     pic:            'Unassigned',
-    description:    descParts.join(' · '),
+    description:    descLines.join(' · '),
     status:         'Pending',
     avatarColor:    randomColor(),
   }
@@ -91,9 +137,13 @@ export async function onRequestPost({ request, env }) {
   try {
     await recruitQ.create(db, recruit)
   } catch (e) {
-    if (e.message?.includes('no such table')) return fail('Database not initialised — visit /api/setup', 503)
+    if (e.message?.includes('no such table'))
+      return fail('Database not initialised — visit /api/setup', 503)
     return fail('Database error: ' + e.message, 500)
   }
 
-  return pub({ success: true, id: recruit.id, message: 'Application received. We will review it shortly.' }, 201)
+  return pub(
+    { success: true, id: recruit.id, message: 'Application received. We will review it shortly.' },
+    201,
+  )
 }
