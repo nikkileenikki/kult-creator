@@ -77,6 +77,17 @@ export const recruitQ = {
   list: (db) =>
     db.prepare('SELECT * FROM recruit_requests ORDER BY applied_date DESC').all(),
 
+  create: (db, r) =>
+    db.prepare(`
+      INSERT INTO recruit_requests
+        (id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      r.id, r.initials, r.name, r.platform, r.followers, r.engagementRate ?? 0,
+      r.niche, JSON.stringify(r.tags ?? []), r.appliedDate, r.source,
+      r.pic ?? 'Unassigned', r.description ?? '', r.status ?? 'Pending', r.avatarColor,
+    ).run(),
+
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE recruit_requests SET status = ? WHERE id = ?').bind(status, id).run(),
 }
