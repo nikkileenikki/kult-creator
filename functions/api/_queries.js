@@ -80,12 +80,17 @@ export const recruitQ = {
   create: (db, r) =>
     db.prepare(`
       INSERT INTO recruit_requests
-        (id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, initials, name, platform, followers, engagement_rate, niche, tags,
+         applied_date, source, pic, description, status, avatar_color,
+         email, contact_number, tiktok_username, follower_range, live_experience, collab_preference)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       r.id, r.initials, r.name, r.platform, r.followers, r.engagementRate ?? 0,
       r.niche, JSON.stringify(r.tags ?? []), r.appliedDate, r.source,
       r.pic ?? 'Unassigned', r.description ?? '', r.status ?? 'Pending', r.avatarColor,
+      r.email ?? '', r.contactNumber ?? '', r.tiktokUsername ?? '',
+      r.followerRange ?? '', r.liveExperience ?? '',
+      JSON.stringify(r.collabPreference ?? []),
     ).run(),
 
   updateStatus: (db, id, status) =>

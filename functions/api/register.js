@@ -109,29 +109,27 @@ export async function onRequestPost({ request, env }) {
   if (consent2 !== true)
     return fail('consent2 is required')
 
-  // ── Build description visible in the dashboard ─────────────────────────────
-  const descLines = []
-  if (email?.trim())                descLines.push(`Email: ${email.trim()}`)
-  if (contactNumber?.trim())        descLines.push(`Contact: ${contactNumber.trim()}`)
-  if (tiktokUsername?.trim())       descLines.push(`TikTok: ${normaliseUsername(tiktokUsername)}`)
-  descLines.push(`Live experience: ${liveExperience}`)
-  descLines.push(`Collab preference: ${collabPrefs.join(', ')}`)
-
   const recruit = {
-    id:             randomId(),
-    initials:       getInitials(name),
-    name:           name.trim(),
-    platform:       'TikTok',
-    followers:      FOLLOWER_RANGES[followerCount],
-    engagementRate: 0,
-    niche:          categories.join(', '),
-    tags:           collabPrefs,
-    appliedDate:    new Date().toISOString().split('T')[0],
-    source:         'Registration Form',
-    pic:            'Unassigned',
-    description:    descLines.join(' · '),
-    status:         'Pending',
-    avatarColor:    randomColor(),
+    id:               randomId(),
+    initials:         getInitials(name),
+    name:             name.trim(),
+    platform:         'TikTok',
+    followers:        FOLLOWER_RANGES[followerCount],
+    engagementRate:   0,
+    niche:            categories.join(', '),
+    tags:             categories,
+    appliedDate:      new Date().toISOString().split('T')[0],
+    source:           'Registration Form',
+    pic:              'Unassigned',
+    description:      '',
+    status:           'Pending',
+    avatarColor:      randomColor(),
+    email:            email.trim(),
+    contactNumber:    contactNumber.trim(),
+    tiktokUsername:   normaliseUsername(tiktokUsername),
+    followerRange:    followerCount,
+    liveExperience:   liveExperience,
+    collabPreference: collabPrefs,
   }
 
   try {

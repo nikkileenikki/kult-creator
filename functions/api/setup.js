@@ -139,6 +139,12 @@ export async function onRequestGet({ env }) {
         created_at    TEXT NOT NULL DEFAULT (datetime('now'))
       )`,
     },
+    { name: 'Add email to recruit_requests',             sql: `ALTER TABLE recruit_requests ADD COLUMN email             TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add contact_number to recruit_requests',    sql: `ALTER TABLE recruit_requests ADD COLUMN contact_number    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add tiktok_username to recruit_requests',   sql: `ALTER TABLE recruit_requests ADD COLUMN tiktok_username   TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add follower_range to recruit_requests',    sql: `ALTER TABLE recruit_requests ADD COLUMN follower_range    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add live_experience to recruit_requests',   sql: `ALTER TABLE recruit_requests ADD COLUMN live_experience   TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add collab_preference to recruit_requests', sql: `ALTER TABLE recruit_requests ADD COLUMN collab_preference TEXT NOT NULL DEFAULT '[]'` },
   ]
 
   for (const step of steps) {
