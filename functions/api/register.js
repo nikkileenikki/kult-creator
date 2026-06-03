@@ -65,13 +65,18 @@ export async function onRequestPost({ request, env }) {
     email,
     contactNumber     = '',
     tiktokUsername    = '',
+    videoLink         = '',
     followerCount,
     liveExperience,
     primaryContentCategory,
     collaborationPreference,
     consent1,
     consent2,
+    website,          // honeypot — must be empty
   } = body ?? {}
+
+  // ── Honeypot check — bots fill hidden fields, humans don't ────────────────
+  if (website) return pub({ success: true, message: 'Application received.' }, 201)
 
   // ── Required field validation ──────────────────────────────────────────────
   if (!name?.trim())
@@ -130,6 +135,7 @@ export async function onRequestPost({ request, env }) {
     followerRange:    followerCount,
     liveExperience:   liveExperience,
     collabPreference: collabPrefs,
+    videoLink:        videoLink.trim(),
   }
 
   try {

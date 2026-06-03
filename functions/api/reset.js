@@ -37,6 +37,7 @@ export async function onRequestPost({ env }) {
     `ALTER TABLE recruit_requests ADD COLUMN follower_range    TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE recruit_requests ADD COLUMN live_experience   TEXT NOT NULL DEFAULT ''`,
     `ALTER TABLE recruit_requests ADD COLUMN collab_preference TEXT NOT NULL DEFAULT '[]'`,
+    `ALTER TABLE recruit_requests ADD COLUMN video_link        TEXT NOT NULL DEFAULT ''`,
   ]
   for (const sql of migrations) {
     try { await db.prepare(sql).run() } catch (_) { /* already exists */ }

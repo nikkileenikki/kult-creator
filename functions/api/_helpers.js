@@ -81,6 +81,7 @@ export function mapRecruit(row) {
     followerRange:     row.follower_range    ?? '',
     liveExperience:    row.live_experience   ?? '',
     collabPreference:  tryParse(row.collab_preference, []),
+    videoLink:         row.video_link ?? '',
   }
 }
 

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
-import { Mail, Phone, Video } from 'lucide-react'
+import { Mail, Phone, Video, ExternalLink } from 'lucide-react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 
@@ -83,7 +83,7 @@ export default function Recruit() {
               </div>
 
               {/* Contact info — only for form submissions */}
-              {isFormSubmission && (r.email || r.contactNumber) && (
+              {isFormSubmission && (r.email || r.contactNumber || r.videoLink) && (
                 <div className="flex flex-col gap-1.5 bg-white/[.03] border border-white/7 rounded-lg px-3 py-2.5">
                   {r.email && (
                     <a href={`mailto:${r.email}`} className="flex items-center gap-2 text-[12px] text-white/60 hover:text-white transition-colors">
@@ -96,6 +96,16 @@ export default function Recruit() {
                       <Phone size={12} className="text-white/25 flex-shrink-0" />
                       {r.contactNumber}
                     </div>
+                  )}
+                  {r.videoLink && (
+                    <a
+                      href={r.videoLink.startsWith('http') ? r.videoLink : `https://${r.videoLink}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center gap-2 text-[12px] text-violet-400/80 hover:text-violet-300 transition-colors truncate"
+                    >
+                      <ExternalLink size={12} className="flex-shrink-0" />
+                      {r.videoLink}
+                    </a>
                   )}
                 </div>
               )}
