@@ -172,12 +172,12 @@ export async function onRequestGet({ env }) {
     }
 
     const creatorsData = [
-      ['1','SR','Siti Rania',   'TikTok',    'Lifestyle & Wellness','Fashion',       520000,9200,92,'Active', 'Sarah K.','WhatsApp',    '2024-01-15','v','+60 12-345 6789','siti.rania@gmail.com',   '@sitirania',        '1998-03-22'],
-      ['2','HZ','Hafiz Zaki',   'YouTube',   'Tech',                'Gaming',        380000,6200,62,'Active', 'Lina M.', 'Email',       '2023-08-20','b','+60 11-234 5678','hafiz.zaki@gmail.com',   '@hafizzaki',        '1995-07-14'],
-      ['3','AN','Aina Nadia',   'Instagram', 'Beauty',              'Skincare',      210000,2700,27,'Active', 'Sarah K.','Instagram DM','2024-03-10','g','+60 10-987 6543','aina.nadia@gmail.com',   '@ainanadia',        '2001-11-05'],
-      ['4','FH','Farah Hana',   'TikTok',    'Food & Lifestyle',    'Entertainment', 145000,1100,11,'On Hold','Lina M.', 'WhatsApp',    '2024-06-01','r','+60 17-654 3210','farah.hana@gmail.com',   '@farahhana.my',     '1999-08-30'],
-      ['5','RI','Razif Idham',  'YouTube',   'Gaming',              'Tech',          280000, 800, 8,'Active', 'Sarah K.','Discord',     '2025-01-05','t','+60 16-888 9900','razif.idham@gmail.com',  '@razifidham',       '2000-02-18'],
-      ['6','NZ','Nur Zulaikha', 'Instagram', 'Skincare',            'Beauty',         94000, 290, 3,'Active', 'Lina M.', 'WhatsApp',    '2025-11-20','i','+60 13-456 7890','nur.zulaikha@gmail.com', '@nurzulaikha.skin', '2002-05-09'],
+      ['1','SR','Siti Rania',   'TikTok',    'Lifestyle & Wellness, Fashion','', 520000,9200,92,'Active', 'Sarah K.','WhatsApp',    '2024-01-15','v','+60 12-345 6789','siti.rania@gmail.com',   '@sitirania',        '1998-03-22'],
+      ['2','HZ','Hafiz Zaki',   'YouTube',   'Tech, Gaming',              '',  380000,6200,62,'Active', 'Lina M.', 'Email',       '2023-08-20','b','+60 11-234 5678','hafiz.zaki@gmail.com',   '@hafizzaki',        '1995-07-14'],
+      ['3','AN','Aina Nadia',   'Instagram', 'Beauty, Skincare',           '',  210000,2700,27,'Active', 'Sarah K.','Instagram DM','2024-03-10','g','+60 10-987 6543','aina.nadia@gmail.com',   '@ainanadia',        '2001-11-05'],
+      ['4','FH','Farah Hana',   'TikTok',    'Food & Lifestyle, Entertainment','',145000,1100,11,'On Hold','Lina M.', 'WhatsApp',    '2024-06-01','r','+60 17-654 3210','farah.hana@gmail.com',   '@farahhana.my',     '1999-08-30'],
+      ['5','RI','Razif Idham',  'YouTube',   'Gaming, Tech',               '',  280000, 800, 8,'Active', 'Sarah K.','Discord',     '2025-01-05','t','+60 16-888 9900','razif.idham@gmail.com',  '@razifidham',       '2000-02-18'],
+      ['6','NZ','Nur Zulaikha', 'Instagram', 'Skincare, Beauty',           '',   94000, 290, 3,'Active', 'Lina M.', 'WhatsApp',    '2025-11-20','i','+60 13-456 7890','nur.zulaikha@gmail.com', '@nurzulaikha.skin', '2002-05-09'],
     ]
 
     for (const [id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, contact_number, email, platform_username, date_of_birth] of creatorsData) {
@@ -204,15 +204,15 @@ export async function onRequestGet({ env }) {
     }
 
     const recruitsData = [
-      ['r1','HS','Hanis Sofea','TikTok',78000,11.4,'Fashion','["TikTok","Fashion","Modest Wear"]','2026-04-13','Link in Bio','Unassigned','Modest fashion creator known for outfit styling videos. Strong Gen-Z audience. Previous collabs with local modest wear brands and Zalora MY.','Pending','v'],
-      ['r2','DA','Danial Amir','Instagram',42000,9.8,'Food & Lifestyle','["Instagram","Food","Lifestyle"]','2026-04-11','Referral','Lina M.','Food and lifestyle creator based in KL. Specialises in restaurant reviews and recipe reels. High save rate on food content. Very consistent posting schedule.','Under Review','r'],
-      ['r3','AM','Aqil Mukhriz','TikTok',51000,9.2,'Fitness','["TikTok","Fitness","Wellness"]','2026-04-14','Referral','Unassigned','Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.','Pending','g'],
+      ['r1','HS','Hanis Sofea', 'TikTok',   78000,11.4,'Fashion, Lifestyle',  '["Fashion","Lifestyle"]',     '2026-04-13','Registration Form','Unassigned','','Pending',      'v','hanis.sofea@gmail.com', '+60 11-456 7890','@hanissofea',        '50k-100k','Yes','["Gifted products","Paid campaign"]',                       'tiktok.com/@hanissofea/video/7380124956'],
+      ['r2','DA','Danial Amir', 'TikTok',   42000, 9.8,'Food & Lifestyle',    '["Food & Lifestyle"]',        '2026-04-11','Registration Form','Unassigned','','Under Review','r','danial.amir@gmail.com', '+60 12-789 0123','@danial.amir',        '10k-50k', 'No','["Affiliated/commission-based","Long-term partnership"]',   'tiktok.com/@danial.amir/video/6942038571'],
+      ['r3','AM','Aqil Mukhriz','TikTok',   51000, 9.2,'Fitness, Lifestyle',  '["Fitness","Lifestyle"]',     '2026-04-14','Registration Form','Unassigned','','Pending',      'g','aqil.mukhriz@gmail.com','+60 19-234 5678','@aqilmukhriz',        '50k-100k','Yes','["Gifted products","Affiliated/commission-based"]',          'tiktok.com/@aqilmukhriz/video/8015623490'],
     ]
 
-    for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color] of recruitsData) {
+    for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color, email, contact_number, tiktok_username, follower_range, live_experience, collab_preference, video_link] of recruitsData) {
       await DB.prepare(
-        `INSERT OR IGNORE INTO recruit_requests (id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-      ).bind(id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color).run()
+        `INSERT OR IGNORE INTO recruit_requests (id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color,email,contact_number,tiktok_username,follower_range,live_experience,collab_preference,video_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color,email,contact_number,tiktok_username,follower_range,live_experience,collab_preference,video_link).run()
     }
 
     const activityData = [
