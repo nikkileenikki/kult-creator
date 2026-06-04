@@ -83,15 +83,23 @@ export async function onRequestPost({ request, env }) {
     return fail('name is required')
   if (!email?.trim())
     return fail('email is required')
-  if (!followerCount || !FOLLOWER_RANGES[followerCount])
+
+  // followerCount: trim before lookup
+  const followerKey = followerCount?.toString().trim()
+  if (!followerKey || !FOLLOWER_RANGES[followerKey])
     return fail(`followerCount must be one of: ${Object.keys(FOLLOWER_RANGES).join(', ')}`)
-  if (liveExperience !== 'Yes' && liveExperience !== 'No')
+
+  // liveExperience: trim + normalise case
+  const liveExp = liveExperience?.toString().trim()
+  const liveExpNorm = liveExp === 'yes' ? 'Yes' : liveExp === 'no' ? 'No' : liveExp
+  if (liveExpNorm !== 'Yes' && liveExpNorm !== 'No')
     return fail('liveExperience must be "Yes" or "No"')
 
   // primaryContentCategory — accept single string or array, at least one required
-  const categories = Array.isArray(primaryContentCategory)
+  const categories = (Array.isArray(primaryContentCategory)
     ? primaryContentCategory
     : primaryContentCategory ? [primaryContentCategory] : []
+  ).map(c => c?.toString().trim()).filter(Boolean)
   const invalidCats = categories.filter(c => !CONTENT_CATEGORIES.includes(c))
   if (categories.length === 0)
     return fail('at least one primaryContentCategory is required')
@@ -99,19 +107,21 @@ export async function onRequestPost({ request, env }) {
     return fail(`invalid category: ${invalidCats.join(', ')}. Valid: ${CONTENT_CATEGORIES.join(', ')}`)
 
   // collaborationPreference — accept single string or array, at least one required
-  const collabPrefs = Array.isArray(collaborationPreference)
+  const collabPrefs = (Array.isArray(collaborationPreference)
     ? collaborationPreference
     : collaborationPreference ? [collaborationPreference] : []
+  ).map(p => p?.toString().trim()).filter(Boolean)
   const invalidPrefs = collabPrefs.filter(p => !COLLAB_PREFERENCES.includes(p))
   if (collabPrefs.length === 0)
     return fail('at least one collaborationPreference is required')
   if (invalidPrefs.length)
     return fail(`invalid preference: ${invalidPrefs.join(', ')}. Valid: ${COLLAB_PREFERENCES.join(', ')}`)
 
-  // Both consents must be explicitly true
-  if (consent1 !== true)
+  // Consents — accept boolean true, string "true", or number 1
+  const isTruthy = v => v === true || v === 'true' || v === 1 || v === '1'
+  if (!isTruthy(consent1))
     return fail('consent1 is required')
-  if (consent2 !== true)
+  if (!isTruthy(consent2))
     return fail('consent2 is required')
 
   const recruit = {
@@ -119,7 +129,7 @@ export async function onRequestPost({ request, env }) {
     initials:         getInitials(name),
     name:             name.trim(),
     platform:         'TikTok',
-    followers:        FOLLOWER_RANGES[followerCount],
+    followers:        FOLLOWER_RANGES[followerKey],
     engagementRate:   0,
     niche:            categories.join(', '),
     tags:             categories,
@@ -130,10 +140,10 @@ export async function onRequestPost({ request, env }) {
     status:           'Pending',
     avatarColor:      randomColor(),
     email:            email.trim(),
-    contactNumber:    contactNumber.trim(),
+    contactNumber:    contactNumber?.toString().trim() ?? '',
     tiktokUsername:   normaliseUsername(tiktokUsername),
-    followerRange:    followerCount,
-    liveExperience:   liveExperience,
+    followerRange:    followerKey,
+    liveExperience:   liveExpNorm,
     collabPreference: collabPrefs,
     videoLink:        videoLink.trim(),
   }
