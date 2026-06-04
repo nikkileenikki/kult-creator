@@ -12,7 +12,10 @@ export default function Niche() {
   const [selected, setSelected] = useState(null)
 
   const nicheStats = useMemo(() => NICHES.map(niche => {
-    const list = creators.filter(c => c.niche === niche || c.secondaryNiche === niche)
+    const list = creators.filter(c => {
+      const niches = [c.niche, c.secondaryNiche].filter(Boolean).flatMap(n => n.split(', ').map(s => s.trim()))
+      return niches.includes(niche)
+    })
     const totalFollowers = list.reduce((s, c) => s + c.followers, 0)
     const platforms = [...new Set(list.map(c => c.platform))]
     return { niche, list, totalFollowers, platforms }

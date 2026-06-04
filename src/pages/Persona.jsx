@@ -128,7 +128,7 @@ export default function Persona() {
     setDraft({
       name: creator.name, initials: creator.initials,
       platform: creator.platform, secondaryPlatform: creator.secondaryPlatform ?? '',
-      niche: creator.niche, secondaryNiche: creator.secondaryNiche ?? '',
+      niche: [creator.niche, creator.secondaryNiche].filter(Boolean).join(', '), secondaryNiche: '',
       followers: creator.followers, status: creator.status,
       pic: creator.pic, contact: creator.contact, avatarColor: creator.avatarColor,
       contactNumber: creator.contactNumber ?? '', email: creator.email ?? '',
@@ -241,8 +241,7 @@ export default function Persona() {
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
                 <div className="text-[12px] text-white/30 mt-1">
-                  {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {creator.niche}
-                  {creator.secondaryNiche && <span className="opacity-60"> · {creator.secondaryNiche}</span>}
+                  {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {[creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')}
                 </div>
                 <div className="flex justify-center gap-1.5 mt-2.5">
                   <Badge variant={tier.name.toLowerCase()}>
@@ -264,8 +263,7 @@ export default function Persona() {
                 {[
                   { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
                   { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
-                  { label: 'Primary Niche',      key: 'niche',             type: 'select', options: NICHES },
-                  { label: 'Secondary Niche',    key: 'secondaryNiche',    type: 'select', options: NICHES, optional: true },
+                  { label: 'Niches',             key: 'niche',             type: 'multi',  options: NICHES },
                   { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold'] },
                   { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
                   { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
@@ -275,10 +273,32 @@ export default function Persona() {
                       {f.label}
                       {f.optional && <span className="normal-case font-normal text-white/20 ml-1">(optional)</span>}
                     </label>
-                    <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
-                      {f.optional && <option value="">None</option>}
-                      {f.options.map(o => <option key={o}>{o}</option>)}
-                    </select>
+                    {f.type === 'multi' ? (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {f.options.map(o => {
+                          const vals = (d[f.key] ?? '').split(', ').filter(Boolean)
+                          const on = vals.includes(o)
+                          return (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => {
+                                const next = on ? vals.filter(x => x !== o) : [...vals, o]
+                                setField(f.key, next.join(', '))
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${on ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/40 hover:border-white/20'}`}
+                            >
+                              {o}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
+                        {f.optional && <option value="">None</option>}
+                        {f.options.map(o => <option key={o}>{o}</option>)}
+                      </select>
+                    )}
                   </div>
                 ))}
                 <div>
@@ -322,8 +342,7 @@ export default function Persona() {
                   ['Followers',      (creator.followers/1000).toFixed(0) + 'K'],
                   ['Platform',       creator.platform],
                   ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
-                  ['Primary Niche',  creator.niche],
-                  ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
+                  ['Niches', [creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')],
                   ['Tasks Done',     creator.tasksCompleted],
                   ['Joined',         creator.joinedDate],
                   ['PIC',            creator.pic],
@@ -331,9 +350,17 @@ export default function Persona() {
                   ...(creator.platformUsername ? [['Username', creator.platformUsername]] : []),
                   ...(creator.dateOfBirth ? [['Date of Birth', creator.dateOfBirth]] : []),
                 ].map(([label, val]) => (
-                  <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 text-[12px]">
+                  <div key={label} className={`flex px-4 py-2.5 border-b border-white/7 text-[12px] ${label === 'Niches' ? 'flex-col gap-1.5' : 'justify-between items-center'}`}>
                     <span className="text-white/30">{label}</span>
-                    <span className={`font-medium ${label === 'Contact' ? 'text-violet-400' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
+                    {label === 'Niches' ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {String(val).split(', ').filter(Boolean).map(n => (
+                          <span key={n} className="text-[11px] px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-medium">{n}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className={`font-medium ${label === 'Contact' ? 'text-violet-400' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
+                    )}
                   </div>
                 ))}
                 {(creator.contactNumber || creator.email) && (

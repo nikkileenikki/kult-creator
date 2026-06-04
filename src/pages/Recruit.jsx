@@ -128,7 +128,7 @@ function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
           {/* Content categories */}
           {categories.length > 0 && (
             <div className="px-6 py-4 border-b border-white/7">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Content Category</div>
+              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Niche</div>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map(cat => (
                   <span key={cat} className="text-[12px] px-3 py-1 rounded-full bg-white/5 border border-white/7 text-white/60 font-medium">
