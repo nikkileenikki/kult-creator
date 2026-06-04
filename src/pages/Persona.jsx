@@ -208,6 +208,19 @@ export default function Persona() {
         </div>
       </div>
 
+      {/* Rejection banner */}
+      {creator.status === 'Rejected' && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-rose-500/8 border border-rose-500/20 flex items-start gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 flex-shrink-0" />
+          <div>
+            <div className="text-[11px] font-semibold text-rose-400/80 uppercase tracking-wider mb-0.5">Application Rejected</div>
+            <div className="text-[13px] text-rose-300/70">
+              {persona.rejectionReason || <span className="italic text-rose-300/30">No reason recorded</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-[270px_1fr] gap-4">
 
         {/* Sidebar */}

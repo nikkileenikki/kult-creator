@@ -55,6 +55,7 @@ export const useRecruitStore = create((set, get) => ({
             contentStyle: '', toneOfVoice: '', brandFitTags: [],
             audienceAgeRange: '', audienceGender: '', audienceLocations: '',
             engagementStyle: '', pastCollabs: [], dos: [], donts: [], internalNotes: '',
+            ...(status === 'Rejected' && rejectionReason ? { rejectionReason } : {}),
           },
         }
         useCreatorStore.setState(s => ({ creators: [...s.creators, newCreator] }))

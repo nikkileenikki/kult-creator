@@ -33,7 +33,9 @@ export async function onRequestPatch({ params, request, env }) {
         contact:        'WhatsApp',
         joinedDate:     new Date().toISOString().split('T')[0],
         avatarColor:    recruit.avatar_color,
-        persona:        {},
+        persona:        status === 'Rejected' && recruit.description
+          ? { rejectionReason: recruit.description }
+          : {},
       })
     }
   }
