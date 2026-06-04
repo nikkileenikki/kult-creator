@@ -84,10 +84,15 @@ export async function onRequestPost({ request, env }) {
   if (!email?.trim())
     return fail('email is required')
 
-  // followerCount: trim before lookup
+  // followerCount: normalise casing, K→k, en/em dash → hyphen, collapse spaces
   const followerKey = followerCount?.toString().trim()
+    .toLowerCase()
+    .replace(/\s*[–—]+\s*/g, '-')  // en/em dash with surrounding spaces → hyphen
+    .replace(/\s+/g, ' ')          // collapse internal spaces
+    .trim()
   if (!followerKey || !FOLLOWER_RANGES[followerKey])
-    return fail(`followerCount must be one of: ${Object.keys(FOLLOWER_RANGES).join(', ')}`)
+    return fail(`followerCount must be one of: ${Object.keys(FOLLOWER_RANGES).join(', ')}. Received: "${followerCount}"`)
+
 
   // liveExperience: trim + normalise case
   const liveExp = liveExperience?.toString().trim()
