@@ -20,17 +20,22 @@ export const useRecruitStore = create((set, get) => ({
   pendingCount: () =>
     get().requests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length,
 
-  updateStatus: async (id, status) => {
+  updateStatus: async (id, status, extra = {}) => {
+    const { pic, rejectionReason } = extra
     const recruit = get().requests.find(r => r.id === id)
     set(state => ({
-      requests: state.requests.map(r => r.id === id ? { ...r, status } : r),
+      requests: state.requests.map(r => r.id === id
+        ? { ...r, status, ...(pic ? { pic } : {}), ...(rejectionReason ? { rejectionReason } : {}) }
+        : r
+      ),
     }))
-    await apiUpdateStatus(id, status)
+    await apiUpdateStatus(id, { status, pic, rejectionReason })
 
     if ((status === 'Approved' || status === 'Rejected') && recruit) {
       const creatorStore = useCreatorStore.getState()
       const exists = creatorStore.creators.some(c => c.id === `c_r_${id}`)
       if (!exists) {
+        const effectivePic = pic || (recruit.pic !== 'Unassigned' ? recruit.pic : '')
         const newCreator = {
           id:             `c_r_${id}`,
           initials:       recruit.initials,
@@ -42,7 +47,7 @@ export const useRecruitStore = create((set, get) => ({
           coins:          0,
           tasksCompleted: 0,
           status:         status === 'Approved' ? 'Active' : 'Rejected',
-          pic:            recruit.pic !== 'Unassigned' ? recruit.pic : '',
+          pic:            effectivePic,
           contact:        'WhatsApp',
           joinedDate:     new Date().toISOString().split('T')[0],
           avatarColor:    recruit.avatarColor,

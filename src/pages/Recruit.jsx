@@ -1,9 +1,10 @@
-import { useMemo, useState, useEffect, useRef } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
-import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar, MapPin, Tag } from 'lucide-react'
+import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar } from 'lucide-react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
+import { PICS } from '@/lib/data'
 
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
@@ -26,161 +27,217 @@ function Row({ icon: Icon, label, children }) {
   )
 }
 
-function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
-  const panelRef = useRef(null)
+function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
+  const [step, setStep]                     = useState(null)  // null | 'approve' | 'reject' | 'review'
+  const [selectedPic, setSelectedPic]       = useState(PICS[0])
+  const [rejectionReason, setRejectionReason] = useState('')
+  const [reviewer, setReviewer]             = useState(PICS[0])
 
   useEffect(() => {
-    function handleKey(e) { if (e.key === 'Escape') onClose() }
+    function handleKey(e) {
+      if (e.key === 'Escape') { if (step) setStep(null); else onClose() }
+    }
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
-  }, [onClose])
+  }, [onClose, step])
 
-  const isFormSubmission = r.source === 'Registration Form'
   const categories  = r.niche ? r.niche.split(', ').filter(Boolean) : []
   const collabPrefs = r.collabPreference?.length ? r.collabPreference : (r.tags ?? [])
 
   return (
     <>
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 z-[80] bg-black/40 backdrop-blur-[2px]"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 z-[80] bg-black/50 backdrop-blur-[2px]" onClick={onClose} />
 
-      {/* Panel */}
-      <div
-        ref={panelRef}
-        className="fixed right-0 top-0 h-full z-[81] w-[420px] bg-[#111116] border-l border-white/7 flex flex-col shadow-2xl animate-[slideInRight_.2s_ease]"
-      >
-        {/* Panel header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-white/7 flex-shrink-0">
-          <div className="flex items-center gap-3">
-            <Avatar initials={r.initials} color={r.avatarColor} size="md" />
-            <div>
-              <div className="font-syne text-[16px] font-bold text-white">{r.name}</div>
-              {r.tiktokUsername && (
-                <div className="text-[12px] text-violet-400/80 mt-0.5">{r.tiktokUsername}</div>
-              )}
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Badge variant={STATUS_BADGE[r.status]}>{r.status}</Badge>
-            <button
-              onClick={onClose}
-              className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
-            >
-              <X size={14} />
-            </button>
-          </div>
-        </div>
+      <div className="fixed left-1/2 top-1/2 z-[81] -translate-x-1/2 -translate-y-1/2 w-full max-w-[780px] px-4 animate-modal-content">
+        <div className="bg-[#111116] border border-white/7 rounded-2xl shadow-2xl flex flex-col max-h-[85vh]">
 
-        {/* Scrollable body */}
-        <div className="flex-1 overflow-y-auto">
-
-          {/* Contact */}
-          <div className="px-6 py-4 border-b border-white/7">
-            <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Contact</div>
-            <div className="space-y-3">
-              {r.email && (
-                <Row icon={Mail} label="Email">
-                  <a href={`mailto:${r.email}`} className="hover:text-white transition-colors">{r.email}</a>
-                </Row>
-              )}
-              {r.contactNumber && (
-                <Row icon={Phone} label="Contact Number">
-                  {r.contactNumber}
-                </Row>
-              )}
-              {r.tiktokUsername && (
-                <Row icon={AtSign} label="TikTok Username">
-                  {r.tiktokUsername}
-                </Row>
-              )}
-              {r.videoLink && (
-                <Row icon={ExternalLink} label="Video Sample">
-                  <a
-                    href={r.videoLink.startsWith('http') ? r.videoLink : `https://${r.videoLink}`}
-                    target="_blank" rel="noopener noreferrer"
-                    className="text-violet-400/80 hover:text-violet-300 transition-colors break-all"
-                  >
-                    {r.videoLink}
-                  </a>
-                </Row>
-              )}
-            </div>
-          </div>
-
-          {/* Creator Info */}
-          <div className="px-6 py-4 border-b border-white/7">
-            <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Creator Info</div>
-            <div className="grid grid-cols-2 gap-3">
-              <Row icon={Users} label="Follow Count">
-                {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`}
-              </Row>
-              <Row icon={Video} label="Live Experience">
-                <span className={r.liveExperience === 'Yes' ? 'text-emerald-400' : r.liveExperience ? 'text-white/40' : 'text-white/20'}>
-                  {r.liveExperience || '—'}
-                </span>
-              </Row>
-            </div>
-          </div>
-
-          {/* Content categories */}
-          {categories.length > 0 && (
-            <div className="px-6 py-4 border-b border-white/7">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Niche</div>
-              <div className="flex flex-wrap gap-1.5">
-                {categories.map(cat => (
-                  <span key={cat} className="text-[12px] px-3 py-1 rounded-full bg-white/5 border border-white/7 text-white/60 font-medium">
-                    {cat}
+          {/* Header */}
+          <div className="flex items-center justify-between px-6 py-5 border-b border-white/7 flex-shrink-0">
+            <div className="flex items-center gap-4">
+              <Avatar initials={r.initials} color={r.avatarColor} size="lg" />
+              <div>
+                <div className="font-syne text-[18px] font-bold text-white">{r.name}</div>
+                <div className="flex items-center gap-2 mt-0.5 flex-wrap">
+                  {r.tiktokUsername && <span className="text-[13px] text-violet-400/80">{r.tiktokUsername}</span>}
+                  {r.tiktokUsername && <span className="text-white/15">·</span>}
+                  <span className="text-[13px] text-white/40">
+                    {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`} followers
                   </span>
-                ))}
+                </div>
               </div>
             </div>
-          )}
+            <div className="flex items-center gap-2">
+              <Badge variant={STATUS_BADGE[r.status]}>{r.status}</Badge>
+              <button onClick={onClose} className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all">
+                <X size={14} />
+              </button>
+            </div>
+          </div>
 
-          {/* Collab preferences */}
-          {collabPrefs.length > 0 && (
-            <div className="px-6 py-4 border-b border-white/7">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Collaboration Preference</div>
-              <div className="flex flex-wrap gap-1.5">
-                {collabPrefs.map(pref => (
-                  <span key={pref} className={`text-[12px] px-3 py-1 rounded-full border font-medium ${COLLAB_COLOR[pref] ?? 'bg-white/5 border-white/7 text-white/40'}`}>
-                    {pref}
-                  </span>
-                ))}
+          {/* Body — 2 columns */}
+          <div className="flex-1 overflow-y-auto min-h-0">
+            <div className="grid grid-cols-2 divide-x divide-white/[0.05]">
+
+              {/* Left: Contact + date */}
+              <div className="px-6 py-5 space-y-4">
+                <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider">Contact</div>
+                {r.email && (
+                  <Row icon={Mail} label="Email">
+                    <a href={`mailto:${r.email}`} className="hover:text-white transition-colors">{r.email}</a>
+                  </Row>
+                )}
+                {r.contactNumber && (
+                  <Row icon={Phone} label="Contact Number">{r.contactNumber}</Row>
+                )}
+                {r.tiktokUsername && (
+                  <Row icon={AtSign} label="TikTok Username">{r.tiktokUsername}</Row>
+                )}
+                {r.videoLink && (
+                  <Row icon={ExternalLink} label="Video Sample">
+                    <a
+                      href={r.videoLink.startsWith('http') ? r.videoLink : `https://${r.videoLink}`}
+                      target="_blank" rel="noopener noreferrer"
+                      className="text-violet-400/80 hover:text-violet-300 transition-colors break-all"
+                    >
+                      {r.videoLink}
+                    </a>
+                  </Row>
+                )}
+                <div className="pt-1 border-t border-white/[0.05]">
+                  <Row icon={Calendar} label="Applied Date">{r.appliedDate}</Row>
+                </div>
+              </div>
+
+              {/* Right: Creator info, niche, collab */}
+              <div className="px-6 py-5 space-y-5">
+                <div>
+                  <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Creator Info</div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Row icon={Users} label="Follow Count">
+                      {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`}
+                    </Row>
+                    <Row icon={Video} label="Live Experience">
+                      <span className={r.liveExperience === 'Yes' ? 'text-emerald-400' : r.liveExperience ? 'text-white/40' : 'text-white/20'}>
+                        {r.liveExperience || '—'}
+                      </span>
+                    </Row>
+                  </div>
+                </div>
+
+                {categories.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">Niche</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {categories.map(cat => (
+                        <span key={cat} className="text-[12px] px-3 py-1 rounded-full bg-white/5 border border-white/7 text-white/60 font-medium">{cat}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {collabPrefs.length > 0 && (
+                  <div>
+                    <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">Collaboration Preference</div>
+                    <div className="flex flex-wrap gap-1.5">
+                      {collabPrefs.map(pref => (
+                        <span key={pref} className={`text-[12px] px-3 py-1 rounded-full border font-medium ${COLLAB_COLOR[pref] ?? 'bg-white/5 border-white/7 text-white/40'}`}>
+                          {pref}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          )}
-
-          {/* Applied date */}
-          <div className="px-6 py-4">
-            <Row icon={Calendar} label="Applied Date">{r.appliedDate}</Row>
           </div>
-        </div>
 
-        {/* Actions footer */}
-        <div className="flex-shrink-0 border-t border-white/7 px-6 py-4 flex gap-2">
-          <button
-            onClick={() => onApprove(r.id)}
-            className="flex-1 bg-emerald-400/12 text-emerald-400 border border-emerald-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/20 transition-all"
-          >
-            ✓ Approve
-          </button>
-          <button
-            onClick={() => onReject(r.id)}
-            className="flex-1 bg-rose-400/12 text-rose-400 border border-rose-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-rose-400/20 transition-all"
-          >
-            ✕ Reject
-          </button>
-          {r.status === 'Pending' && (
-            <button
-              onClick={() => onReview(r.id)}
-              className="flex-1 bg-blue-400/12 text-blue-400 border border-blue-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-blue-400/20 transition-all"
-            >
-              ⟳ Review
-            </button>
-          )}
+          {/* Footer: default actions or step UI */}
+          <div className="flex-shrink-0 border-t border-white/7 px-6 py-4">
+
+            {!step && (
+              <div className="flex gap-2">
+                <button onClick={() => setStep('approve')} className="flex-1 bg-emerald-400/12 text-emerald-400 border border-emerald-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/20 transition-all">
+                  ✓ Approve
+                </button>
+                <button onClick={() => setStep('reject')} className="flex-1 bg-rose-400/12 text-rose-400 border border-rose-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-rose-400/20 transition-all">
+                  ✕ Reject
+                </button>
+                {r.status === 'Pending' && (
+                  <button onClick={() => setStep('review')} className="flex-1 bg-blue-400/12 text-blue-400 border border-blue-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-blue-400/20 transition-all">
+                    ⟳ Under Review
+                  </button>
+                )}
+              </div>
+            )}
+
+            {step === 'approve' && (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Assign PIC</div>
+                  <div className="flex gap-2">
+                    {PICS.map(p => (
+                      <button key={p} type="button" onClick={() => setSelectedPic(p)}
+                        className={`flex-1 py-2 rounded-lg text-[13px] font-semibold border transition-all ${selectedPic === p ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/50 hover:border-white/20'}`}>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setStep(null)} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
+                  <button onClick={() => onApprove(r.id, selectedPic)} className="flex-1 bg-emerald-400/15 text-emerald-400 border border-emerald-400/25 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/25 transition-all">
+                    ✓ Confirm Approve — assign to {selectedPic}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 'reject' && (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
+                    Reason for rejection <span className="font-normal normal-case text-white/20">(optional)</span>
+                  </div>
+                  <textarea
+                    value={rejectionReason}
+                    onChange={e => setRejectionReason(e.target.value)}
+                    placeholder="e.g. Engagement rate too low, niche mismatch…"
+                    rows={2}
+                    className="w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-rose-500/40 focus:ring-1 focus:ring-rose-500/15 transition-all resize-none"
+                  />
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setStep(null)} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
+                  <button onClick={() => onReject(r.id, rejectionReason)} className="flex-1 bg-rose-400/15 text-rose-400 border border-rose-400/25 py-2 rounded-lg text-[13px] font-semibold hover:bg-rose-400/25 transition-all">
+                    ✕ Confirm Reject
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {step === 'review' && (
+              <div className="space-y-3">
+                <div>
+                  <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Assign reviewer</div>
+                  <div className="flex gap-2">
+                    {PICS.map(p => (
+                      <button key={p} type="button" onClick={() => setReviewer(p)}
+                        className={`flex-1 py-2 rounded-lg text-[13px] font-semibold border transition-all ${reviewer === p ? 'bg-blue-500/20 border-blue-500/40 text-blue-300' : 'bg-white/5 border-white/7 text-white/50 hover:border-white/20'}`}>
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => setStep(null)} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
+                  <button onClick={() => onReview(r.id, reviewer)} className="flex-1 bg-blue-400/15 text-blue-400 border border-blue-400/25 py-2 rounded-lg text-[13px] font-semibold hover:bg-blue-400/25 transition-all">
+                    ⟳ Confirm — reviewing by {reviewer}
+                  </button>
+                </div>
+              </div>
+            )}
+
+          </div>
         </div>
       </div>
     </>
@@ -209,21 +266,21 @@ export default function Recruit() {
     )
   }, [requests, globalSearch])
 
-  async function handleApprove(id) {
-    await updateStatus(id, 'Approved')
-    showToast('Creator approved and added to All Creators')
+  async function handleApprove(id, pic) {
+    await updateStatus(id, 'Approved', { pic })
+    showToast(`Creator approved — assigned to ${pic}`)
     setSelectedId(null)
   }
 
-  async function handleReject(id) {
-    await updateStatus(id, 'Rejected')
+  async function handleReject(id, rejectionReason) {
+    await updateStatus(id, 'Rejected', { rejectionReason })
     showToast('Creator rejected and archived', 'error')
     setSelectedId(null)
   }
 
-  async function handleReview(id) {
-    await updateStatus(id, 'Under Review')
-    showToast('Moved to Under Review')
+  async function handleReview(id, reviewer) {
+    await updateStatus(id, 'Under Review', { pic: reviewer })
+    showToast(`Moved to Under Review — reviewing by ${reviewer}`)
   }
 
   return (
@@ -240,9 +297,7 @@ export default function Recruit() {
 
       <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-3.5">
         {displayed.map(r => {
-          const isFormSubmission = r.source === 'Registration Form'
           const categories  = r.niche ? r.niche.split(', ').filter(Boolean) : []
-          const collabPrefs = r.collabPreference?.length ? r.collabPreference : (r.tags ?? [])
           const isSelected  = selectedId === r.id
 
           return (
@@ -258,9 +313,7 @@ export default function Recruit() {
                   <div>
                     <div className="font-syne text-[15px] font-bold text-white">{r.name}</div>
                     <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      {r.tiktokUsername && (
-                        <span className="text-[12px] text-violet-400/80">{r.tiktokUsername}</span>
-                      )}
+                      {r.tiktokUsername && <span className="text-[12px] text-violet-400/80">{r.tiktokUsername}</span>}
                       {r.tiktokUsername && <span className="text-white/15">·</span>}
                       <span className="text-[12px] text-white/30">
                         {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`} followers
@@ -295,7 +348,7 @@ export default function Recruit() {
                 )}
               </div>
 
-              {/* Categories */}
+              {/* Niche chips */}
               {categories.length > 0 && (
                 <div className="px-[18px] pb-3 flex flex-wrap gap-1.5">
                   {categories.map(cat => (
@@ -306,7 +359,13 @@ export default function Recruit() {
 
               {/* Footer */}
               <div className="mt-auto border-t border-white/[0.05] px-[18px] py-2.5 flex items-center justify-between text-[11px] text-white/25">
-                <span>{r.appliedDate} · {r.source}</span>
+                <span>
+                  {r.appliedDate}
+                  {r.status === 'Under Review' && r.pic && r.pic !== 'Unassigned'
+                    ? <span className="text-blue-400/70"> · Reviewing: {r.pic.split(' ')[0]}</span>
+                    : null
+                  }
+                </span>
                 {r.liveExperience && (
                   <span className={`flex items-center gap-1 ${r.liveExperience === 'Yes' ? 'text-emerald-400/70' : 'text-white/20'}`}>
                     <Video size={10} />
@@ -319,9 +378,8 @@ export default function Recruit() {
         })}
       </div>
 
-      {/* Profile panel */}
       {selected && (
-        <ProfilePanel
+        <ProfileModal
           recruit={selected}
           onClose={() => setSelectedId(null)}
           onApprove={handleApprove}

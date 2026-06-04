@@ -6,10 +6,14 @@ export const onRequestOptions = () => opts()
 export async function onRequestPatch({ params, request, env }) {
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
-  const { status } = await request.json()
+  const body = await request.json()
+  const { status, pic, rejectionReason } = body
   if (!status) return err('status is required')
 
-  await recruitQ.updateStatus(db, params.id, status)
+  const patch = { status }
+  if (pic) patch.pic = pic
+  if (rejectionReason !== undefined) patch.rejectionReason = rejectionReason
+  await recruitQ.patch(db, params.id, patch)
 
   if (status === 'Approved' || status === 'Rejected') {
     const recruit = await db.prepare('SELECT * FROM recruit_requests WHERE id = ?').bind(params.id).first()

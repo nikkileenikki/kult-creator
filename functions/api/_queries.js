@@ -96,6 +96,17 @@ export const recruitQ = {
 
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE recruit_requests SET status = ? WHERE id = ?').bind(status, id).run(),
+
+  patch: (db, id, fields) => {
+    const colMap = { status: 'status', pic: 'pic', rejectionReason: 'description' }
+    const sets = [], vals = []
+    for (const [key, col] of Object.entries(colMap)) {
+      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+    }
+    if (!sets.length) return null
+    vals.push(id)
+    return db.prepare(`UPDATE recruit_requests SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+  },
 }
 
 export const brandQ = {

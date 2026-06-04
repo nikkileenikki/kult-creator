@@ -13,10 +13,10 @@ export async function fetchRecruits() {
   return request('GET', '/recruits')
 }
 
-export async function updateRecruitStatus(id, status) {
+export async function updateRecruitStatus(id, payload) {
   if (USE_MOCK) {
     await delay(200)
-    return { id, status }
+    return { id, ...payload }
   }
-  return request('PATCH', `/recruits/${id}/status`, { status })
+  return request('PATCH', `/recruits/${id}/status`, payload)
 }
