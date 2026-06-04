@@ -20,20 +20,23 @@ export async function onRequestPatch({ params, request, env }) {
     const existing = await db.prepare('SELECT id FROM creators WHERE id = ?').bind(`c_r_${params.id}`).first()
     if (!existing && recruit) {
       await creatorQ.create(db, {
-        id:             `c_r_${params.id}`,
-        initials:       recruit.initials,
-        name:           recruit.name,
-        platform:       recruit.platform,
-        niche:          recruit.niche,
-        followers:      recruit.followers,
-        coins:          0,
-        tasksCompleted: 0,
-        status:         status === 'Approved' ? 'Active' : 'Rejected',
-        pic:            recruit.pic !== 'Unassigned' ? recruit.pic : '',
-        contact:        'WhatsApp',
-        joinedDate:     new Date().toISOString().split('T')[0],
-        avatarColor:    recruit.avatar_color,
-        persona:        status === 'Rejected' && recruit.description
+        id:               `c_r_${params.id}`,
+        initials:         recruit.initials,
+        name:             recruit.name,
+        platform:         recruit.platform,
+        niche:            recruit.niche,
+        followers:        recruit.followers,
+        coins:            0,
+        tasksCompleted:   0,
+        status:           status === 'Approved' ? 'Active' : 'Rejected',
+        pic:              recruit.pic !== 'Unassigned' ? recruit.pic : '',
+        contact:          'WhatsApp',
+        joinedDate:       new Date().toISOString().split('T')[0],
+        avatarColor:      recruit.avatar_color,
+        email:            recruit.email ?? '',
+        contactNumber:    recruit.contact_number ?? '',
+        platformUsername: recruit.tiktok_username ?? '',
+        persona:          status === 'Rejected' && recruit.description
           ? { rejectionReason: recruit.description }
           : {},
       })

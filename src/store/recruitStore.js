@@ -51,6 +51,9 @@ export const useRecruitStore = create((set, get) => ({
           contact:        'WhatsApp',
           joinedDate:     new Date().toISOString().split('T')[0],
           avatarColor:    recruit.avatarColor,
+          email:          recruit.email ?? '',
+          contactNumber:  recruit.contactNumber ?? '',
+          platformUsername: recruit.tiktokUsername ?? '',
           persona: {
             contentStyle: '', toneOfVoice: '', brandFitTags: [],
             audienceAgeRange: '', audienceGender: '', audienceLocations: '',
