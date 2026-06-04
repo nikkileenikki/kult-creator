@@ -19,25 +19,26 @@ const FOLLOWER_RANGES = {
   '500k+':      500_000,
 }
 
-const CONTENT_CATEGORIES = [
-  'Beauty/Skincare', 'Makeup', 'Fashion', 'Lifestyle',
-  'Educational', 'Reviews/Recommendations', 'Others',
-]
-
-const COLLAB_PREFERENCES = [
-  'Gifted Products', 'Affiliate/commission-based',
-  'Long-term partnerships', 'Paid Campaigns',
-]
-
-// Normalise a label for comparison: trim, collapse spaces around /, lowercase
-function normaliseLabel(s) {
-  return s.toString().trim().replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ').toLowerCase()
+const CATEGORY_MAP = {
+  beauty:      'Beauty/Skincare',
+  makeup:      'Makeup',
+  fashion:     'Fashion',
+  lifestyle:   'Lifestyle',
+  educational: 'Educational',
+  reviews:     'Reviews/Recommendations',
+  others:      'Others',
 }
 
-// Find the canonical list entry that matches val (case-insensitive, slash-normalised)
-function findCanonical(val, list) {
-  const norm = normaliseLabel(val)
-  return list.find(item => normaliseLabel(item) === norm) ?? null
+const COLLAB_MAP = {
+  gifted:    'Gifted Products',
+  affiliate: 'Affiliate/commission-based',
+  longterm:  'Long-term partnerships',
+  paid:      'Paid Campaigns',
+}
+
+function resolveSlug(val, map) {
+  const key = val?.toString().trim().toLowerCase()
+  return map[key] ?? null
 }
 
 const AVATAR_COLORS = [
@@ -111,29 +112,29 @@ export async function onRequestPost({ request, env }) {
   if (liveExpNorm !== 'Yes' && liveExpNorm !== 'No')
     return fail('liveExperience must be "Yes" or "No"')
 
-  // primaryContentCategory — accept single string or array, at least one required
+  // primaryContentCategory — accept single slug or array of slugs
   const rawCats = (Array.isArray(primaryContentCategory)
     ? primaryContentCategory
     : primaryContentCategory ? [primaryContentCategory] : []
   ).map(c => c?.toString().trim()).filter(Boolean)
-  const categories = rawCats.map(c => findCanonical(c, CONTENT_CATEGORIES)).filter(Boolean)
-  const invalidCats = rawCats.filter(c => !findCanonical(c, CONTENT_CATEGORIES))
+  const categories = rawCats.map(c => resolveSlug(c, CATEGORY_MAP)).filter(Boolean)
+  const invalidCats = rawCats.filter(c => !resolveSlug(c, CATEGORY_MAP))
   if (rawCats.length === 0)
-    return fail('at least one primaryContentCategory is required')
+    return fail(`at least one primaryContentCategory is required. Valid slugs: ${Object.keys(CATEGORY_MAP).join(', ')}`)
   if (invalidCats.length)
-    return fail(`invalid category: ${invalidCats.join(', ')}. Valid: ${CONTENT_CATEGORIES.join(', ')}`)
+    return fail(`invalid category slug: ${invalidCats.join(', ')}. Valid: ${Object.keys(CATEGORY_MAP).join(', ')}`)
 
-  // collaborationPreference — accept single string or array, at least one required
+  // collaborationPreference — accept single slug or array of slugs
   const rawPrefs = (Array.isArray(collaborationPreference)
     ? collaborationPreference
     : collaborationPreference ? [collaborationPreference] : []
   ).map(p => p?.toString().trim()).filter(Boolean)
-  const collabPrefs = rawPrefs.map(p => findCanonical(p, COLLAB_PREFERENCES)).filter(Boolean)
-  const invalidPrefs = rawPrefs.filter(p => !findCanonical(p, COLLAB_PREFERENCES))
+  const collabPrefs = rawPrefs.map(p => resolveSlug(p, COLLAB_MAP)).filter(Boolean)
+  const invalidPrefs = rawPrefs.filter(p => !resolveSlug(p, COLLAB_MAP))
   if (rawPrefs.length === 0)
-    return fail('at least one collaborationPreference is required')
+    return fail(`at least one collaborationPreference is required. Valid slugs: ${Object.keys(COLLAB_MAP).join(', ')}`)
   if (invalidPrefs.length)
-    return fail(`invalid preference: ${invalidPrefs.join(', ')}. Valid: ${COLLAB_PREFERENCES.join(', ')}`)
+    return fail(`invalid preference slug: ${invalidPrefs.join(', ')}. Valid: ${Object.keys(COLLAB_MAP).join(', ')}`)
 
   // Consents — accept boolean true, string "true", or number 1
   const isTruthy = v => v === true || v === 'true' || v === 1 || v === '1'
