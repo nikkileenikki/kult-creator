@@ -77,7 +77,7 @@ function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
         {/* Scrollable body */}
         <div className="flex-1 overflow-y-auto">
 
-          {/* Contact section */}
+          {/* Contact */}
           <div className="px-6 py-4 border-b border-white/7">
             <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Contact</div>
             <div className="space-y-3">
@@ -110,11 +110,11 @@ function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
             </div>
           </div>
 
-          {/* Creator stats */}
+          {/* Creator Info */}
           <div className="px-6 py-4 border-b border-white/7">
             <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Creator Info</div>
             <div className="grid grid-cols-2 gap-3">
-              <Row icon={Users} label="Followers">
+              <Row icon={Users} label="Follow Count">
                 {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`}
               </Row>
               <Row icon={Video} label="Live Experience">
@@ -122,18 +122,13 @@ function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
                   {r.liveExperience || '—'}
                 </span>
               </Row>
-              {r.engagementRate > 0 && (
-                <Row icon={Tag} label="Engagement Rate">
-                  {r.engagementRate}%
-                </Row>
-              )}
             </div>
           </div>
 
           {/* Content categories */}
           {categories.length > 0 && (
             <div className="px-6 py-4 border-b border-white/7">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Primary Content</div>
+              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Content Category</div>
               <div className="flex flex-wrap gap-1.5">
                 {categories.map(cat => (
                   <span key={cat} className="text-[12px] px-3 py-1 rounded-full bg-white/5 border border-white/7 text-white/60 font-medium">
@@ -158,22 +153,9 @@ function ProfilePanel({ recruit: r, onClose, onApprove, onReject, onReview }) {
             </div>
           )}
 
-          {/* Description */}
-          {r.description && (
-            <div className="px-6 py-4 border-b border-white/7">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-2">About</div>
-              <p className="text-[13px] text-white/50 leading-relaxed">{r.description}</p>
-            </div>
-          )}
-
-          {/* Application meta */}
+          {/* Applied date */}
           <div className="px-6 py-4">
-            <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Application Details</div>
-            <div className="space-y-3">
-              <Row icon={Calendar} label="Applied Date">{r.appliedDate}</Row>
-              <Row icon={MapPin} label="Source">{r.source}</Row>
-              <Row icon={Tag} label="PIC">{r.pic}</Row>
-            </div>
+            <Row icon={Calendar} label="Applied Date">{r.appliedDate}</Row>
           </div>
         </div>
 
