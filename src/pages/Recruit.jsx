@@ -9,10 +9,10 @@ import { PICS } from '@/lib/data'
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
 const COLLAB_COLOR = {
-  'Gifted products':             'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
-  'Affiliated/commission-based': 'bg-blue-500/10    border-blue-500/20    text-blue-400',
-  'Long-term partnership':       'bg-violet-500/10  border-violet-500/20  text-violet-400',
-  'Paid campaign':               'bg-amber-500/10   border-amber-500/20   text-amber-400',
+  'Gifted Products':             'bg-emerald-500/10 border-emerald-500/20 text-emerald-400',
+  'Affiliate/commission-based':  'bg-blue-500/10    border-blue-500/20    text-blue-400',
+  'Long-term partnerships':      'bg-violet-500/10  border-violet-500/20  text-violet-400',
+  'Paid Campaigns':              'bg-amber-500/10   border-amber-500/20   text-amber-400',
 }
 
 function Row({ icon: Icon, label, children }) {

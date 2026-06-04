@@ -204,9 +204,9 @@ export async function onRequestGet({ env }) {
     }
 
     const recruitsData = [
-      ['r1','HS','Hanis Sofea', 'TikTok',   78000,11.4,'Fashion, Lifestyle',  '["Fashion","Lifestyle"]',     '2026-04-13','Registration Form','Unassigned','','Pending',      'v','hanis.sofea@gmail.com', '+60 11-456 7890','@hanissofea',        '50k-100k','Yes','["Gifted products","Paid campaign"]',                       'tiktok.com/@hanissofea/video/7380124956'],
-      ['r2','DA','Danial Amir', 'TikTok',   42000, 9.8,'Food & Lifestyle',    '["Food & Lifestyle"]',        '2026-04-11','Registration Form','Unassigned','','Under Review','r','danial.amir@gmail.com', '+60 12-789 0123','@danial.amir',        '10k-50k', 'No','["Affiliated/commission-based","Long-term partnership"]',   'tiktok.com/@danial.amir/video/6942038571'],
-      ['r3','AM','Aqil Mukhriz','TikTok',   51000, 9.2,'Fitness, Lifestyle',  '["Fitness","Lifestyle"]',     '2026-04-14','Registration Form','Unassigned','','Pending',      'g','aqil.mukhriz@gmail.com','+60 19-234 5678','@aqilmukhriz',        '50k-100k','Yes','["Gifted products","Affiliated/commission-based"]',          'tiktok.com/@aqilmukhriz/video/8015623490'],
+      ['r1','HS','Hanis Sofea', 'TikTok',   78000,11.4,'Fashion, Lifestyle',  '["Fashion","Lifestyle"]',     '2026-04-13','Registration Form','Unassigned','','Pending',      'v','hanis.sofea@gmail.com', '+60 11-456 7890','@hanissofea',        '50k-100k','Yes','["Gifted Products","Paid Campaigns"]',                       'tiktok.com/@hanissofea/video/7380124956'],
+      ['r2','DA','Danial Amir', 'TikTok',   42000, 9.8,'Food & Lifestyle',    '["Food & Lifestyle"]',        '2026-04-11','Registration Form','Unassigned','','Under Review','r','danial.amir@gmail.com', '+60 12-789 0123','@danial.amir',        '10k-50k', 'No','["Affiliate/commission-based","Long-term partnerships"]',   'tiktok.com/@danial.amir/video/6942038571'],
+      ['r3','AM','Aqil Mukhriz','TikTok',   51000, 9.2,'Fitness, Lifestyle',  '["Fitness","Lifestyle"]',     '2026-04-14','Registration Form','Unassigned','','Pending',      'g','aqil.mukhriz@gmail.com','+60 19-234 5678','@aqilmukhriz',        '50k-100k','Yes','["Gifted Products","Affiliate/commission-based"]',          'tiktok.com/@aqilmukhriz/video/8015623490'],
     ]
 
     for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color, email, contact_number, tiktok_username, follower_range, live_experience, collab_preference, video_link] of recruitsData) {

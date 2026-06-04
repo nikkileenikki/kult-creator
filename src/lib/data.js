@@ -177,7 +177,7 @@ export const RECRUIT_REQUESTS = [
     email: 'hanis.sofea@gmail.com', contactNumber: '+60 11-456 7890',
     tiktokUsername: '@hanissofea', followerRange: '50k-100k',
     liveExperience: 'Yes',
-    collabPreference: ['Gifted products', 'Paid campaign'],
+    collabPreference: ['Gifted Products', 'Paid Campaigns'],
     videoLink: 'tiktok.com/@hanissofea/video/7380124956',
   },
   {
@@ -189,7 +189,7 @@ export const RECRUIT_REQUESTS = [
     email: 'danial.amir@gmail.com', contactNumber: '+60 12-789 0123',
     tiktokUsername: '@danial.amir', followerRange: '10k-50k',
     liveExperience: 'No',
-    collabPreference: ['Affiliated/commission-based', 'Long-term partnership'],
+    collabPreference: ['Affiliate/commission-based', 'Long-term partnerships'],
     videoLink: 'tiktok.com/@danial.amir/video/6942038571',
   },
   {
@@ -201,7 +201,7 @@ export const RECRUIT_REQUESTS = [
     email: 'aqil.mukhriz@gmail.com', contactNumber: '+60 19-234 5678',
     tiktokUsername: '@aqilmukhriz', followerRange: '50k-100k',
     liveExperience: 'Yes',
-    collabPreference: ['Gifted products', 'Affiliated/commission-based'],
+    collabPreference: ['Gifted Products', 'Affiliate/commission-based'],
     videoLink: 'tiktok.com/@aqilmukhriz/video/8015623490',
   },
 ]

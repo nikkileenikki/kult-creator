@@ -25,9 +25,20 @@ const CONTENT_CATEGORIES = [
 ]
 
 const COLLAB_PREFERENCES = [
-  'Gifted products', 'Affiliated/commission-based',
-  'Long-term partnership', 'Paid campaign',
+  'Gifted Products', 'Affiliate/commission-based',
+  'Long-term partnerships', 'Paid Campaigns',
 ]
+
+// Normalise a label for comparison: trim, collapse spaces around /, lowercase
+function normaliseLabel(s) {
+  return s.toString().trim().replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ').toLowerCase()
+}
+
+// Find the canonical list entry that matches val (case-insensitive, slash-normalised)
+function findCanonical(val, list) {
+  const norm = normaliseLabel(val)
+  return list.find(item => normaliseLabel(item) === norm) ?? null
+}
 
 const AVATAR_COLORS = [
   '#6C5CE7','#0891B2','#D97706','#059669','#DC2626',
@@ -101,23 +112,25 @@ export async function onRequestPost({ request, env }) {
     return fail('liveExperience must be "Yes" or "No"')
 
   // primaryContentCategory — accept single string or array, at least one required
-  const categories = (Array.isArray(primaryContentCategory)
+  const rawCats = (Array.isArray(primaryContentCategory)
     ? primaryContentCategory
     : primaryContentCategory ? [primaryContentCategory] : []
   ).map(c => c?.toString().trim()).filter(Boolean)
-  const invalidCats = categories.filter(c => !CONTENT_CATEGORIES.includes(c))
-  if (categories.length === 0)
+  const categories = rawCats.map(c => findCanonical(c, CONTENT_CATEGORIES)).filter(Boolean)
+  const invalidCats = rawCats.filter(c => !findCanonical(c, CONTENT_CATEGORIES))
+  if (rawCats.length === 0)
     return fail('at least one primaryContentCategory is required')
   if (invalidCats.length)
     return fail(`invalid category: ${invalidCats.join(', ')}. Valid: ${CONTENT_CATEGORIES.join(', ')}`)
 
   // collaborationPreference — accept single string or array, at least one required
-  const collabPrefs = (Array.isArray(collaborationPreference)
+  const rawPrefs = (Array.isArray(collaborationPreference)
     ? collaborationPreference
     : collaborationPreference ? [collaborationPreference] : []
   ).map(p => p?.toString().trim()).filter(Boolean)
-  const invalidPrefs = collabPrefs.filter(p => !COLLAB_PREFERENCES.includes(p))
-  if (collabPrefs.length === 0)
+  const collabPrefs = rawPrefs.map(p => findCanonical(p, COLLAB_PREFERENCES)).filter(Boolean)
+  const invalidPrefs = rawPrefs.filter(p => !findCanonical(p, COLLAB_PREFERENCES))
+  if (rawPrefs.length === 0)
     return fail('at least one collaborationPreference is required')
   if (invalidPrefs.length)
     return fail(`invalid preference: ${invalidPrefs.join(', ')}. Valid: ${COLLAB_PREFERENCES.join(', ')}`)
