@@ -10,6 +10,7 @@ export const opts  = ()                    => new Response(null, { status: 204, 
 export const getDB = (env)                 => env.DB ?? null
 
 function tryParse(str, fallback) {
+  if (str == null || str === '') return fallback
   try { return JSON.parse(str) } catch { return fallback }
 }
 
