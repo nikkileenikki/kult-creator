@@ -19,6 +19,13 @@ export async function onRequestPatch({ params, request, env }) {
   try { body = await request.json() } catch { return err('Invalid JSON', 400) }
   const sets = [], vals = []
   if (body.displayName !== undefined) { sets.push('display_name = ?'); vals.push(body.displayName.trim()) }
+  if (body.username !== undefined) {
+    const uname = body.username.trim().toLowerCase()
+    if (!uname) return err('username cannot be empty', 400)
+    const clash = await db.prepare('SELECT id FROM users WHERE username = ? AND id != ?').bind(uname, params.id).first()
+    if (clash) return err('Username already taken', 409)
+    sets.push('username = ?'); vals.push(uname)
+  }
   if (body.role !== undefined) {
     sets.push('role = ?'); vals.push(body.role)
     const perms = body.permissions ?? ROLE_PERMISSIONS[body.role] ?? []

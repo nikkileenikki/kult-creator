@@ -22,6 +22,7 @@ function getInitials(name) {
 
 function EditForm({ user, onSave, onCancel }) {
   const [displayName, setDisplayName] = useState(user.displayName)
+  const [username,    setUsername]    = useState(user.username)
   const [password,    setPassword]    = useState('')
   const [showPw,      setShowPw]      = useState(false)
   const [role,        setRole]        = useState(user.role)
@@ -44,6 +45,7 @@ function EditForm({ user, onSave, onCancel }) {
     try {
       const body = { displayName, role, permissions: perms }
       if (password) body.password = password
+      if (username !== user.username) body.username = username
       await onSave(body)
     } catch (e) {
       setError(e.message)
@@ -70,6 +72,13 @@ function EditForm({ user, onSave, onCancel }) {
               {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
             </button>
           </div>
+        </div>
+      </div>
+      <div>
+        <label className={LABEL}>Username</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[13px]">@</span>
+          <input value={username} onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())} className={INPUT + ' pl-7'} />
         </div>
       </div>
 
