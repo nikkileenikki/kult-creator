@@ -134,31 +134,6 @@ export const brandQ = {
   },
 }
 
-export const brandQ = {
-  list: (db) =>
-    db.prepare('SELECT * FROM brands ORDER BY name ASC').all(),
-
-  byId: (db, id) =>
-    db.prepare('SELECT * FROM brands WHERE id = ?').bind(id).first(),
-
-  create: (db, b) =>
-    db.prepare(`
-      INSERT INTO brands (id, name, industry, color, website)
-      VALUES (?, ?, ?, ?, ?)
-    `).bind(b.id, b.name, b.industry ?? '', b.color ?? '#6C5CE7', b.website ?? '').run(),
-
-  patch: (db, id, fields) => {
-    const colMap = { name:'name', industry:'industry', color:'color', website:'website' }
-    const sets = [], vals = []
-    for (const [key, col] of Object.entries(colMap)) {
-      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
-    }
-    if (!sets.length) return null
-    vals.push(id)
-    return db.prepare(`UPDATE brands SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
-  },
-}
-
 export const campaignQ = {
   list: (db) =>
     db.prepare('SELECT * FROM campaigns ORDER BY created_at DESC').all(),
