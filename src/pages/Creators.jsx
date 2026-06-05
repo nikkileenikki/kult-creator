@@ -30,7 +30,10 @@ export default function Creators() {
     if (filterStatus !== 'All' && c.status !== filterStatus) return false
     if (filterPlatform !== 'All' && c.platform !== filterPlatform) return false
     if (filterTier !== 'All' && getTier(c.coins).name !== filterTier) return false
-    if (filterNiche !== 'All' && c.niche !== filterNiche && c.secondaryNiche !== filterNiche) return false
+    if (filterNiche !== 'All') {
+      const niches = [c.niche, c.secondaryNiche].filter(Boolean).flatMap(n => n.split(', ').map(s => s.trim()))
+      if (!niches.includes(filterNiche)) return false
+    }
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
   }), [creators, filterPlatform, filterTier, filterStatus, filterNiche, search])
@@ -85,7 +88,7 @@ export default function Creators() {
             return (
               <div
                 key={c.id}
-                onClick={() => navigate(`/persona/${c.id}`)}
+                onClick={() => navigate(`/creator/${c.id}`)}
                 className={`bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px] transition-all duration-200 hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-[0_12px_40px_rgba(0,0,0,.3)] group relative overflow-hidden cursor-pointer ${isRejected ? 'opacity-60' : ''}`}
               >
                 <div className="absolute inset-0 bg-gradient-to-br from-transparent via-transparent to-violet-600/5 opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -94,7 +97,7 @@ export default function Creators() {
                   <Avatar initials={c.initials} color={c.avatarColor} size="md" />
                   <div className="flex-1">
                     <div className="font-syne text-[15px] font-bold text-white tracking-tight">{c.name}</div>
-                    <div className="text-[11px] text-white/30 mt-0.5">{c.platform} · {c.niche}</div>
+                    <div className="text-[11px] text-white/30 mt-0.5">{c.platform} · {[c.niche, c.secondaryNiche].filter(Boolean).join(', ')}</div>
                     <div className="flex items-center gap-2 mt-1.5">
                       {isRejected ? (
                         <span className="text-[10px] px-2 py-0.5 rounded-full bg-rose-500/10 border border-rose-500/20 text-rose-400/70 font-medium">Rejected</span>

@@ -10,13 +10,14 @@ export const creatorQ = {
   create: (db, c) =>
     db.prepare(`
       INSERT INTO creators
-        (id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona, contact_number, email, platform_username, date_of_birth)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       c.id, c.initials, c.name, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
       c.pic, c.contact, c.joinedDate, c.avatarColor,
       JSON.stringify(c.persona ?? {}),
+      c.contactNumber ?? '', c.email ?? '', c.platformUsername ?? '', c.dateOfBirth ?? '',
     ).run(),
 
   fullUpdate: (db, id, c) =>
@@ -24,13 +25,15 @@ export const creatorQ = {
       UPDATE creators SET
         name = ?, initials = ?, platform = ?, niche = ?, secondary_niche = ?,
         followers = ?, coins = ?, tasks_completed = ?, status = ?,
-        pic = ?, contact = ?, avatar_color = ?, persona = ?
+        pic = ?, contact = ?, avatar_color = ?, persona = ?,
+        contact_number = ?, email = ?, platform_username = ?, date_of_birth = ?
       WHERE id = ?
     `).bind(
       c.name, c.initials, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
       c.pic, c.contact, c.avatarColor,
       typeof c.persona === 'string' ? c.persona : JSON.stringify(c.persona ?? {}),
+      c.contactNumber ?? '', c.email ?? '', c.platformUsername ?? '', c.dateOfBirth ?? '',
       id,
     ).run(),
 }
@@ -59,7 +62,7 @@ export const taskQ = {
     db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, id).run(),
 
   update: (db, id, fields) => {
-    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes' }
+    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
       if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
@@ -74,8 +77,61 @@ export const recruitQ = {
   list: (db) =>
     db.prepare('SELECT * FROM recruit_requests ORDER BY applied_date DESC').all(),
 
+  create: (db, r) =>
+    db.prepare(`
+      INSERT INTO recruit_requests
+        (id, initials, name, platform, followers, engagement_rate, niche, tags,
+         applied_date, source, pic, description, status, avatar_color,
+         email, contact_number, tiktok_username, follower_range, live_experience, collab_preference, video_link)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).bind(
+      r.id, r.initials, r.name, r.platform, r.followers, r.engagementRate ?? 0,
+      r.niche, JSON.stringify(r.tags ?? []), r.appliedDate, r.source,
+      r.pic ?? 'Unassigned', r.description ?? '', r.status ?? 'Pending', r.avatarColor,
+      r.email ?? '', r.contactNumber ?? '', r.tiktokUsername ?? '',
+      r.followerRange ?? '', r.liveExperience ?? '',
+      JSON.stringify(r.collabPreference ?? []),
+      r.videoLink ?? '',
+    ).run(),
+
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE recruit_requests SET status = ? WHERE id = ?').bind(status, id).run(),
+
+  patch: (db, id, fields) => {
+    const colMap = { status: 'status', pic: 'pic', rejectionReason: 'description' }
+    const sets = [], vals = []
+    for (const [key, col] of Object.entries(colMap)) {
+      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+    }
+    if (!sets.length) return null
+    vals.push(id)
+    return db.prepare(`UPDATE recruit_requests SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+  },
+}
+
+export const brandQ = {
+  list: (db) =>
+    db.prepare('SELECT * FROM brands ORDER BY name ASC').all(),
+
+  byId: (db, id) =>
+    db.prepare('SELECT * FROM brands WHERE id = ?').bind(id).first(),
+
+  create: (db, b) =>
+    db.prepare(`
+      INSERT INTO brands (id, name, industry, color, website)
+      VALUES (?, ?, ?, ?, ?)
+    `).bind(b.id, b.name, b.industry ?? '', b.color ?? '#6C5CE7', b.website ?? '').run(),
+
+  patch: (db, id, fields) => {
+    const colMap = { name:'name', industry:'industry', color:'color', website:'website' }
+    const sets = [], vals = []
+    for (const [key, col] of Object.entries(colMap)) {
+      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+    }
+    if (!sets.length) return null
+    vals.push(id)
+    return db.prepare(`UPDATE brands SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+  },
 }
 
 export const brandQ = {

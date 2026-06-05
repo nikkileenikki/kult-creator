@@ -1,3 +1,6 @@
+import { encryptField } from './_crypto'
+import { hashPassword } from './_passwords'
+
 export async function onRequestGet({ env }) {
   const DB = env.DB
   if (!DB) {
@@ -99,6 +102,50 @@ export async function onRequestGet({ env }) {
       name: 'Add brief column to campaigns',
       sql: `ALTER TABLE campaigns ADD COLUMN brief TEXT NOT NULL DEFAULT ''`,
     },
+    { name: 'Add contact_number to creators',    sql: `ALTER TABLE creators ADD COLUMN contact_number    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add email to creators',             sql: `ALTER TABLE creators ADD COLUMN email             TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add platform_username to creators', sql: `ALTER TABLE creators ADD COLUMN platform_username TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add date_of_birth to creators',     sql: `ALTER TABLE creators ADD COLUMN date_of_birth     TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add rating to tasks',               sql: `ALTER TABLE tasks    ADD COLUMN rating             INTEGER NOT NULL DEFAULT 0` },
+    { name: 'Add review to tasks',               sql: `ALTER TABLE tasks    ADD COLUMN review             TEXT NOT NULL DEFAULT ''` },
+    {
+      name: 'Create brands table',
+      sql: `CREATE TABLE IF NOT EXISTS brands (
+        id         TEXT PRIMARY KEY,
+        name       TEXT NOT NULL,
+        industry   TEXT NOT NULL DEFAULT '',
+        color      TEXT NOT NULL DEFAULT '#6C5CE7',
+        website    TEXT NOT NULL DEFAULT '',
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
+    {
+      name: 'Add brand_id column to campaigns',
+      sql: `ALTER TABLE campaigns ADD COLUMN brand_id TEXT NOT NULL DEFAULT ''`,
+    },
+    {
+      name: 'Add brand_name column to campaigns',
+      sql: `ALTER TABLE campaigns ADD COLUMN brand_name TEXT NOT NULL DEFAULT ''`,
+    },
+    {
+      name: 'Create users table',
+      sql: `CREATE TABLE IF NOT EXISTS users (
+        id            TEXT PRIMARY KEY,
+        username      TEXT NOT NULL UNIQUE,
+        display_name  TEXT NOT NULL,
+        password_hash TEXT NOT NULL,
+        role          TEXT NOT NULL DEFAULT 'viewer',
+        permissions   TEXT NOT NULL DEFAULT '[]',
+        created_at    TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
+    { name: 'Add email to recruit_requests',             sql: `ALTER TABLE recruit_requests ADD COLUMN email             TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add contact_number to recruit_requests',    sql: `ALTER TABLE recruit_requests ADD COLUMN contact_number    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add tiktok_username to recruit_requests',   sql: `ALTER TABLE recruit_requests ADD COLUMN tiktok_username   TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add follower_range to recruit_requests',    sql: `ALTER TABLE recruit_requests ADD COLUMN follower_range    TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add live_experience to recruit_requests',   sql: `ALTER TABLE recruit_requests ADD COLUMN live_experience   TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add collab_preference to recruit_requests', sql: `ALTER TABLE recruit_requests ADD COLUMN collab_preference TEXT NOT NULL DEFAULT '[]'` },
+    { name: 'Add video_link to recruit_requests',        sql: `ALTER TABLE recruit_requests ADD COLUMN video_link        TEXT NOT NULL DEFAULT ''` },
   ]
 
   for (const step of steps) {
@@ -125,18 +172,20 @@ export async function onRequestGet({ env }) {
     }
 
     const creatorsData = [
-      ['1','SR','Siti Rania','TikTok','Lifestyle & Wellness',520000,9200,92,'Active','Sarah K.','WhatsApp','2024-01-15','v'],
-      ['2','HZ','Hafiz Zaki','YouTube','Tech',380000,6200,62,'Active','Lina M.','Email','2023-08-20','b'],
-      ['3','AN','Aina Nadia','Instagram','Beauty',210000,2700,27,'Active','Sarah K.','Instagram DM','2024-03-10','g'],
-      ['4','FH','Farah Hana','TikTok','Food & Lifestyle',145000,1100,11,'On Hold','Lina M.','WhatsApp','2024-06-01','r'],
-      ['5','RI','Razif Idham','YouTube','Gaming',280000,800,8,'Active','Sarah K.','Discord','2025-01-05','t'],
-      ['6','NZ','Nur Zulaikha','Instagram','Skincare',94000,290,3,'Active','Lina M.','WhatsApp','2025-11-20','i'],
+      ['1','SR','Siti Rania',   'TikTok',    'Lifestyle & Wellness, Fashion','', 520000,9200,92,'Active', 'Sarah K.','WhatsApp',    '2024-01-15','v','+60 12-345 6789','siti.rania@gmail.com',   '@sitirania',        '1998-03-22'],
+      ['2','HZ','Hafiz Zaki',   'YouTube',   'Tech, Gaming',              '',  380000,6200,62,'Active', 'Lina M.', 'Email',       '2023-08-20','b','+60 11-234 5678','hafiz.zaki@gmail.com',   '@hafizzaki',        '1995-07-14'],
+      ['3','AN','Aina Nadia',   'Instagram', 'Beauty, Skincare',           '',  210000,2700,27,'Active', 'Sarah K.','Instagram DM','2024-03-10','g','+60 10-987 6543','aina.nadia@gmail.com',   '@ainanadia',        '2001-11-05'],
+      ['4','FH','Farah Hana',   'TikTok',    'Food & Lifestyle, Entertainment','',145000,1100,11,'On Hold','Lina M.', 'WhatsApp',    '2024-06-01','r','+60 17-654 3210','farah.hana@gmail.com',   '@farahhana.my',     '1999-08-30'],
+      ['5','RI','Razif Idham',  'YouTube',   'Gaming, Tech',               '',  280000, 800, 8,'Active', 'Sarah K.','Discord',     '2025-01-05','t','+60 16-888 9900','razif.idham@gmail.com',  '@razifidham',       '2000-02-18'],
+      ['6','NZ','Nur Zulaikha', 'Instagram', 'Skincare, Beauty',           '',   94000, 290, 3,'Active', 'Lina M.', 'WhatsApp',    '2025-11-20','i','+60 13-456 7890','nur.zulaikha@gmail.com', '@nurzulaikha.skin', '2002-05-09'],
     ]
 
-    for (const [id, initials, name, platform, niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color] of creatorsData) {
+    for (const [id, initials, name, platform, niche, secondary_niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, contact_number, email, platform_username, date_of_birth] of creatorsData) {
+      const enc_contact_number = await encryptField(contact_number, env)
+      const enc_email          = await encryptField(email, env)
       await DB.prepare(
-        `INSERT OR IGNORE INTO creators (id,initials,name,platform,niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-      ).bind(id, initials, name, platform, niche, followers, coins, tasks_completed, status, pic, contact, joined_date, avatar_color, persona[id]).run()
+        `INSERT OR IGNORE INTO creators (id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona,contact_number,email,platform_username,date_of_birth) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id,initials,name,platform,niche,secondary_niche,followers,coins,tasks_completed,status,pic,contact,joined_date,avatar_color,persona[id],enc_contact_number,enc_email,platform_username,date_of_birth).run()
     }
 
     const tasksData = [
@@ -155,15 +204,15 @@ export async function onRequestGet({ env }) {
     }
 
     const recruitsData = [
-      ['r1','RI','Razif Idham','YouTube',280000,8.2,'Gaming','["YouTube","Gaming","Tech"]','2026-04-13','Link in Bio','Unassigned','Specialises in mobile gaming content. Portfolio includes Samsung and Razer collabs. Strong community engagement with regular live streams.','Pending','t'],
-      ['r2','NZ','Nur Zulaikha','Instagram',94000,12.0,'Skincare','["Instagram","Skincare","Halal Beauty"]','2026-04-11','Referral','Lina M.','Focuses on halal and clean beauty. Audience predominantly female 20–30. Very high story engagement. Strong skincare product reviews.','Under Review','i'],
-      ['r3','AM','Aqil Mukhriz','TikTok',51000,9.2,'Fitness','["TikTok","Fitness","Wellness"]','2026-04-14','Referral','Unassigned','Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.','Pending','g'],
+      ['r1','HS','Hanis Sofea', 'TikTok',   78000,11.4,'Fashion, Lifestyle',  '["Fashion","Lifestyle"]',     '2026-04-13','Registration Form','Unassigned','','Pending',      'v','hanis.sofea@gmail.com', '+60 11-456 7890','@hanissofea',        '50k-100k','Yes','["Gifted Products","Paid Campaigns"]',                       'tiktok.com/@hanissofea/video/7380124956'],
+      ['r2','DA','Danial Amir', 'TikTok',   42000, 9.8,'Food & Lifestyle',    '["Food & Lifestyle"]',        '2026-04-11','Registration Form','Unassigned','','Under Review','r','danial.amir@gmail.com', '+60 12-789 0123','@danial.amir',        '10k-50k', 'No','["Affiliate/commission-based","Long-term partnerships"]',   'tiktok.com/@danial.amir/video/6942038571'],
+      ['r3','AM','Aqil Mukhriz','TikTok',   51000, 9.2,'Fitness, Lifestyle',  '["Fitness","Lifestyle"]',     '2026-04-14','Registration Form','Unassigned','','Pending',      'g','aqil.mukhriz@gmail.com','+60 19-234 5678','@aqilmukhriz',        '50k-100k','Yes','["Gifted Products","Affiliate/commission-based"]',          'tiktok.com/@aqilmukhriz/video/8015623490'],
     ]
 
-    for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color] of recruitsData) {
+    for (const [id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color, email, contact_number, tiktok_username, follower_range, live_experience, collab_preference, video_link] of recruitsData) {
       await DB.prepare(
-        `INSERT OR IGNORE INTO recruit_requests (id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
-      ).bind(id, initials, name, platform, followers, engagement_rate, niche, tags, applied_date, source, pic, description, status, avatar_color).run()
+        `INSERT OR IGNORE INTO recruit_requests (id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color,email,contact_number,tiktok_username,follower_range,live_experience,collab_preference,video_link) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id,initials,name,platform,followers,engagement_rate,niche,tags,applied_date,source,pic,description,status,avatar_color,email,contact_number,tiktok_username,follower_range,live_experience,collab_preference,video_link).run()
     }
 
     const activityData = [
@@ -180,21 +229,54 @@ export async function onRequestGet({ env }) {
       ).bind(id, color, text, time).run()
     }
 
-    const campaignsData = [
-      ['camp1', 'Ramadan Campaign',  'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7'],
-      ['camp2', 'Brand Launch Q2',   'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2'],
-      ['camp3', 'Skincare Series',   'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706'],
+    const brandsData = [
+      ['brand1', 'Wardah',    'Beauty & Skincare', '#8B5CF6', 'wardah.com'],
+      ['brand2', 'Shopee',    'E-commerce',        '#EE4D2D', 'shopee.my'],
+      ['brand3', 'Nestlé MY', 'FMCG',              '#009FE3', 'nestle.com.my'],
     ]
 
-    for (const [id, name, description, status, budget, start_date, end_date, color] of campaignsData) {
+    for (const [id, name, industry, color, website] of brandsData) {
       await DB.prepare(
-        `INSERT OR IGNORE INTO campaigns (id,name,description,status,budget,start_date,end_date,color) VALUES (?,?,?,?,?,?,?,?)`
-      ).bind(id, name, description, status, budget, start_date, end_date, color).run()
+        `INSERT OR IGNORE INTO brands (id,name,industry,color,website) VALUES (?,?,?,?,?)`
+      ).bind(id, name, industry, color, website).run()
     }
 
-    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns' })
+    const campaignsData = [
+      ['camp1', 'Ramadan Campaign',  'Eid season promotion across social platforms', 'Active',   15000, '2025-02-15', '2025-04-05', '#6C5CE7', 'brand1', 'Wardah'],
+      ['camp2', 'Brand Launch Q2',   'New product line launch with key creators',    'Active',   25000, '2025-04-01', '2025-06-30', '#0891B2', 'brand2', 'Shopee'],
+      ['camp3', 'Skincare Series',   'Ongoing skincare content series',              'Planning',  8000, '2025-05-01', '2025-07-31', '#D97706', 'brand1', 'Wardah'],
+    ]
+
+    for (const [id, name, description, status, budget, start_date, end_date, color, brand_id, brand_name] of campaignsData) {
+      await DB.prepare(
+        `INSERT OR IGNORE INTO campaigns (id,name,description,status,budget,start_date,end_date,color,brand_id,brand_name) VALUES (?,?,?,?,?,?,?,?,?,?)`
+      ).bind(id, name, description, status, budget, start_date, end_date, color, brand_id, brand_name).run()
+    }
+
+    results.push({ step: 'Seed data', status: 'ok', inserted: 'creators, tasks, recruits, activity, campaigns, brands' })
   } else {
     results.push({ step: 'Seed data', status: 'skipped', reason: `${count} creators already exist` })
+  }
+
+  // Seed default users if none exist
+  const { results: existingUsers } = await DB.prepare('SELECT COUNT(*) as count FROM users').all()
+  if ((existingUsers[0]?.count ?? 0) === 0) {
+    const defaultUsers = [
+      { id: 'u1', username: 'admin',  displayName: 'Admin',    password: 'admin123',  role: 'admin',
+        permissions: ['users.manage','contacts.view_all','creators.edit','campaigns.manage','brands.manage','recruits.approve'] },
+      { id: 'u2', username: 'sarah',  displayName: 'Sarah K.', password: 'sarah123',  role: 'pic',
+        permissions: ['contacts.view_assigned','creators.edit'] },
+      { id: 'u3', username: 'lina',   displayName: 'Lina M.',  password: 'lina123',   role: 'pic',
+        permissions: ['contacts.view_assigned','creators.edit'] },
+    ]
+    for (const u of defaultUsers) {
+      const hash = await hashPassword(u.password)
+      await DB.prepare(`INSERT OR IGNORE INTO users (id,username,display_name,password_hash,role,permissions) VALUES (?,?,?,?,?,?)`)
+        .bind(u.id, u.username, u.displayName, hash, u.role, JSON.stringify(u.permissions)).run()
+    }
+    results.push({ step: 'Seed users', status: 'ok', inserted: defaultUsers.map(u => u.username).join(', ') })
+  } else {
+    results.push({ step: 'Seed users', status: 'skipped', reason: 'users already exist' })
   }
 
   return Response.json({ success: true, results }, { status: 200 })

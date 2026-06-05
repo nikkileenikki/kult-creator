@@ -12,11 +12,16 @@ import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
 import Brands from '@/pages/Brands'
 import Settings from '@/pages/Settings'
+import Users from '@/pages/Users'
+import NewUser from '@/pages/NewUser'
+import Login from '@/pages/Login'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
+import AddBrandModal from '@/components/modals/AddBrandModal'
 import EditTaskModal from '@/components/modals/EditTaskModal'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
@@ -46,6 +51,9 @@ function Toast() {
 }
 
 export default function App() {
+  const token = useAuthStore(s => s.token)
+  const user  = useAuthStore(s => s.user)
+
   const fetchCreators  = useCreatorStore(s => s.fetchCreators)
   const fetchTasks     = useTaskStore(s => s.fetchTasks)
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
@@ -53,12 +61,17 @@ export default function App() {
   const fetchBrands    = useBrandStore(s => s.fetchBrands)
 
   useEffect(() => {
+    if (!token || !user) return
     fetchCreators()
     fetchTasks()
     fetchRecruits()
     fetchCampaigns()
     fetchBrands()
-  }, [])
+  }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  if (!token || !user) {
+    return <Login />
+  }
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-[#0D0D10]">
@@ -74,8 +87,10 @@ export default function App() {
             <Route path="/recruit"     element={<Recruit />} />
             <Route path="/tiering"     element={<Tiering />} />
             <Route path="/niche"       element={<Niche />} />
-            <Route path="/persona/:id" element={<Persona />} />
+            <Route path="/creator/:id" element={<Persona />} />
             <Route path="/settings"    element={<Settings />} />
+            <Route path="/users"       element={<Users />} />
+            <Route path="/users/new"   element={<NewUser />} />
           </Routes>
         </main>
       </div>
@@ -84,6 +99,7 @@ export default function App() {
       <AddTaskModal />
       <AddCreatorModal />
       <AddCampaignModal />
+      <AddBrandModal />
       <EditTaskModal />
 
       {/* Toast */}

@@ -1,4 +1,5 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useCreatorStore } from '@/store/creatorStore'
@@ -510,8 +511,14 @@ export default function Campaigns() {
   const openEdit     = useUIStore(s => s.openEditTask)
   const openAddTask  = useUIStore(s => s.openAddTask)
   const globalSearch = useUIStore(s => s.globalSearch)
+  const location     = useLocation()
   const [selected, setSelected]         = useState(null)
   const [filterStatus, setFilterStatus] = useState('All')
+
+  useEffect(() => {
+    const id = location.state?.campaignId
+    if (id) setSelected(id)
+  }, [location.state])
 
   const campaign = campaigns.find(c => c.id === selected)
 
@@ -519,7 +526,10 @@ export default function Campaigns() {
     let list = filterStatus === 'All' ? campaigns : campaigns.filter(c => c.status === filterStatus)
     if (globalSearch) {
       const q = globalSearch.toLowerCase()
-      list = list.filter(c => c.name.toLowerCase().includes(q))
+      list = list.filter(c =>
+        c.name.toLowerCase().includes(q) ||
+        (c.brandName && c.brandName.toLowerCase().includes(q))
+      )
     }
     return list
   }, [campaigns, filterStatus, globalSearch])

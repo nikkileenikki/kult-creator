@@ -3,12 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2 } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
@@ -70,19 +71,42 @@ const PRIORITY_COLOR = {
   Low:    'text-emerald-400',
 }
 
+const MASK = '••••••••••'
+
+function MaskedField({ value, revealed, onToggle, canReveal }) {
+  if (!value) return <span className="text-white/20 italic text-[12px]">Not set</span>
+  return (
+    <div className="flex items-center gap-1.5">
+      <span className={`font-medium text-[12px] ${revealed ? 'text-white' : 'text-white/40 tracking-widest'}`}>
+        {revealed ? value : MASK}
+      </span>
+      {canReveal ? (
+        <button type="button" onClick={onToggle} className="text-white/25 hover:text-white/70 transition-colors flex-shrink-0">
+          {revealed ? <EyeOff size={12} /> : <Eye size={12} />}
+        </button>
+      ) : (
+        <Lock size={11} className="text-white/20 flex-shrink-0" title="Only the assigned PIC can reveal this field" />
+      )}
+    </div>
+  )
+}
+
 export default function Persona() {
   const { id }     = useParams()
   const navigate   = useNavigate()
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
+  const canViewContacts = useAuthStore(s => s.canViewContacts)
   const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(null)
   const [saving, setSaving]   = useState(false)
+  const [revealed, setRevealed] = useState({ phone: false, email: false })
 
   const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
+  const canReveal = canViewContacts(creator?.pic)
 
   if (!creator) {
     return (
@@ -104,9 +128,11 @@ export default function Persona() {
     setDraft({
       name: creator.name, initials: creator.initials,
       platform: creator.platform, secondaryPlatform: creator.secondaryPlatform ?? '',
-      niche: creator.niche, secondaryNiche: creator.secondaryNiche ?? '',
+      niche: [creator.niche, creator.secondaryNiche].filter(Boolean).join(', '), secondaryNiche: '',
       followers: creator.followers, status: creator.status,
       pic: creator.pic, contact: creator.contact, avatarColor: creator.avatarColor,
+      contactNumber: creator.contactNumber ?? '', email: creator.email ?? '',
+      platformUsername: creator.platformUsername ?? '', dateOfBirth: creator.dateOfBirth ?? '',
       persona: {
         contentStyle:      persona.contentStyle      ?? '',
         toneOfVoice:       persona.toneOfVoice       ?? '',
@@ -182,6 +208,19 @@ export default function Persona() {
         </div>
       </div>
 
+      {/* Rejection banner */}
+      {creator.status === 'Rejected' && (
+        <div className="mb-4 px-4 py-3 rounded-xl bg-rose-500/8 border border-rose-500/20 flex items-start gap-3">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-400 mt-1.5 flex-shrink-0" />
+          <div>
+            <div className="text-[11px] font-semibold text-rose-400/80 uppercase tracking-wider mb-0.5">Application Rejected</div>
+            <div className="text-[13px] text-rose-300/70">
+              {persona.rejectionReason || <span className="italic text-rose-300/30">No reason recorded</span>}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-[270px_1fr] gap-4">
 
         {/* Sidebar */}
@@ -215,8 +254,7 @@ export default function Persona() {
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
                 <div className="text-[12px] text-white/30 mt-1">
-                  {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {creator.niche}
-                  {creator.secondaryNiche && <span className="opacity-60"> · {creator.secondaryNiche}</span>}
+                  {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {[creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')}
                 </div>
                 <div className="flex justify-center gap-1.5 mt-2.5">
                   <Badge variant={tier.name.toLowerCase()}>
@@ -238,8 +276,7 @@ export default function Persona() {
                 {[
                   { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
                   { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
-                  { label: 'Primary Niche',      key: 'niche',             type: 'select', options: NICHES },
-                  { label: 'Secondary Niche',    key: 'secondaryNiche',    type: 'select', options: NICHES, optional: true },
+                  { label: 'Niches',             key: 'niche',             type: 'multi',  options: NICHES },
                   { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold'] },
                   { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
                   { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
@@ -249,34 +286,127 @@ export default function Persona() {
                       {f.label}
                       {f.optional && <span className="normal-case font-normal text-white/20 ml-1">(optional)</span>}
                     </label>
-                    <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
-                      {f.optional && <option value="">None</option>}
-                      {f.options.map(o => <option key={o}>{o}</option>)}
-                    </select>
+                    {f.type === 'multi' ? (
+                      <div className="flex flex-wrap gap-1.5 mt-1">
+                        {f.options.map(o => {
+                          const vals = (d[f.key] ?? '').split(', ').filter(Boolean)
+                          const on = vals.includes(o)
+                          return (
+                            <button
+                              key={o}
+                              type="button"
+                              onClick={() => {
+                                const next = on ? vals.filter(x => x !== o) : [...vals, o]
+                                setField(f.key, next.join(', '))
+                              }}
+                              className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${on ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/40 hover:border-white/20'}`}
+                            >
+                              {o}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <select value={d[f.key] ?? ''} onChange={e => setField(f.key, e.target.value)} className={SELECT}>
+                        {f.optional && <option value="">None</option>}
+                        {f.options.map(o => <option key={o}>{o}</option>)}
+                      </select>
+                    )}
                   </div>
                 ))}
                 <div>
                   <label className={LABEL}>Followers</label>
                   <input type="number" value={d.followers ?? ''} onChange={e => setField('followers', Number(e.target.value))} className={INPUT} />
                 </div>
+                <div>
+                  <label className={LABEL}>Contact Number</label>
+                  {canReveal ? (
+                    <input value={d.contactNumber ?? ''} onChange={e => setField('contactNumber', e.target.value)} placeholder="+60 12-345 6789" className={INPUT} />
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-[#1A1A22] border border-white/[0.07] rounded-lg text-[12px] text-white/30 italic">
+                      <Lock size={11} className="flex-shrink-0 text-white/20" />
+                      Only {creator.pic} or Admin can edit contact details
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className={LABEL}>Email</label>
+                  {canReveal ? (
+                    <input type="email" value={d.email ?? ''} onChange={e => setField('email', e.target.value)} placeholder="name@email.com" className={INPUT} />
+                  ) : (
+                    <div className="flex items-center gap-1.5 px-3 py-2 bg-[#1A1A22] border border-white/[0.07] rounded-lg text-[12px] text-white/30 italic">
+                      <Lock size={11} className="flex-shrink-0 text-white/20" />
+                      Only {creator.pic} or Admin can edit contact details
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className={LABEL}>Platform Username</label>
+                  <input value={d.platformUsername ?? ''} onChange={e => setField('platformUsername', e.target.value)} placeholder="@username" className={INPUT} />
+                </div>
+                <div>
+                  <label className={LABEL}>Date of Birth</label>
+                  <input type="date" value={d.dateOfBirth ?? ''} onChange={e => setField('dateOfBirth', e.target.value)} className={cn(INPUT, '[color-scheme:dark]')} />
+                </div>
               </div>
             ) : (
-              [
-                ['Followers',           (creator.followers/1000).toFixed(0) + 'K'],
-                ['Platform',            creator.platform],
-                ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
-                ['Primary Niche',       creator.niche],
-                ...(creator.secondaryNiche ? [['Secondary Niche', creator.secondaryNiche]] : []),
-                ['Tasks Done',       creator.tasksCompleted],
-                ['Joined',           creator.joinedDate],
-                ['PIC',              creator.pic],
-                ['Contact',          creator.contact],
-              ].map(([label, val]) => (
-                <div key={label} className="flex justify-between items-center px-4 py-2.5 border-b border-white/7 last:border-0 text-[12px]">
-                  <span className="text-white/30">{label}</span>
-                  <span className={`font-medium ${label === 'Contact' ? 'text-violet-400 cursor-pointer' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
-                </div>
-              ))
+              <div>
+                {[
+                  ['Followers',      (creator.followers/1000).toFixed(0) + 'K'],
+                  ['Platform',       creator.platform],
+                  ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
+                  ['Niches', [creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')],
+                  ['Tasks Done',     creator.tasksCompleted],
+                  ['Joined',         creator.joinedDate],
+                  ['PIC',            creator.pic],
+                  ['Contact',        creator.contact],
+                  ...(creator.platformUsername ? [['Username', creator.platformUsername]] : []),
+                  ...(creator.dateOfBirth ? [['Date of Birth', creator.dateOfBirth]] : []),
+                ].map(([label, val]) => (
+                  <div key={label} className={`flex px-4 py-2.5 border-b border-white/7 text-[12px] ${label === 'Niches' ? 'flex-col gap-1.5' : 'justify-between items-center'}`}>
+                    <span className="text-white/30">{label}</span>
+                    {label === 'Niches' ? (
+                      <div className="flex flex-wrap gap-1.5">
+                        {String(val).split(', ').filter(Boolean).map(n => (
+                          <span key={n} className="text-[11px] px-2.5 py-0.5 rounded-full bg-violet-500/10 border border-violet-500/20 text-violet-300 font-medium">{n}</span>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className={`font-medium ${label === 'Contact' ? 'text-violet-400' : 'text-white'}`}>{val}{label === 'Contact' ? ' ↗' : ''}</span>
+                    )}
+                  </div>
+                ))}
+                {(creator.contactNumber || creator.email) && (
+                  <div className="mx-3 my-2 px-3 py-2 bg-white/[.025] border border-white/7 rounded-lg space-y-2">
+                    <div className="font-mono text-[9px] font-medium text-white/20 uppercase tracking-wider mb-2">Private Contact Info</div>
+                    {creator.contactNumber && (
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="text-white/30">Phone</span>
+                        <MaskedField
+                          value={creator.contactNumber}
+                          revealed={revealed.phone}
+                          onToggle={() => setRevealed(r => ({ ...r, phone: !r.phone }))}
+                          canReveal={canReveal}
+                        />
+                      </div>
+                    )}
+                    {creator.email && (
+                      <div className="flex items-center justify-between text-[12px]">
+                        <span className="text-white/30">Email</span>
+                        <MaskedField
+                          value={creator.email}
+                          revealed={revealed.email}
+                          onToggle={() => setRevealed(r => ({ ...r, email: !r.email }))}
+                          canReveal={canReveal}
+                        />
+                      </div>
+                    )}
+                    {!canReveal && (
+                      <div className="text-[10px] text-white/20 italic mt-1">Only {creator.pic} or Admin can reveal</div>
+                    )}
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
@@ -403,17 +533,31 @@ export default function Persona() {
               ? <div className="text-[12px] text-white/20 italic">No completed tasks yet.</div>
               : <div className="space-y-2">
                   {completedTasks.map(t => (
-                    <div key={t.id} className="flex items-center gap-3 bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
-                      <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <div className="text-[13px] text-white truncate">{t.task}</div>
-                        <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                    <div key={t.id} className="bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <div className="text-[13px] text-white truncate">{t.task}</div>
+                          <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {t.rating > 0 && (
+                            <div className="flex items-center gap-0.5">
+                              {[1,2,3,4,5].map(n => (
+                                <Star key={n} size={10} className={n <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />
+                              ))}
+                            </div>
+                          )}
+                          <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
+                          <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
+                          <span className="text-[11px] text-white/25">{t.dueDate}</span>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
-                        <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
-                        <span className="text-[11px] text-white/25">{t.dueDate}</span>
-                      </div>
+                      {t.review && (
+                        <div className="mt-2 ml-[22px] text-[11px] text-white/35 italic border-l border-white/7 pl-2.5">
+                          {t.review}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

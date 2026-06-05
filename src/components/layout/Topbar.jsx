@@ -1,52 +1,74 @@
-import { Bell, Search } from 'lucide-react'
+import { Bell, Search, LogOut } from 'lucide-react'
 import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useEffect, useMemo } from 'react'
 import NotificationsPanel from './NotificationsPanel'
+
+const ROLE_AVATAR_COLOR = {
+  admin:   'from-amber-500 to-amber-400',
+  manager: 'from-violet-500 to-violet-400',
+  pic:     'from-blue-500 to-blue-400',
+  viewer:  'from-white/20 to-white/10',
+}
+
+function getUserInitials(displayName) {
+  if (!displayName) return '?'
+  return displayName.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
+}
+
 
 const PAGE_META = {
   '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
   '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…' },
   '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
-  '/brands':    { cta: null,           action: null,               placeholder: 'Search brands…' },
+  '/brands':    { cta: 'New Brand',    action: 'openAddBrand',    placeholder: 'Search brands…' },
   '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…' },
   '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
   '/settings':  { cta: null,           action: null,               placeholder: 'Search…' },
+  '/users':     { cta: null,           action: null,               placeholder: 'Search users…' },
+  '/users/new': { cta: null,           action: null,               placeholder: 'Search…' },
 }
 
 export default function Topbar() {
   const { pathname } = useLocation()
   const meta = PAGE_META[pathname]
-    ?? (pathname.startsWith('/persona/') ? { cta: null, action: null, placeholder: 'Search profile…' } : PAGE_META['/'])
+    ?? (pathname.startsWith('/creator/') ? { cta: null, action: null, placeholder: 'Search profile…' } : PAGE_META['/'])
 
   const openAddTask         = useUIStore(s => s.openAddTask)
   const openAddCreator      = useUIStore(s => s.openAddCreator)
   const openAddCampaign     = useUIStore(s => s.openAddCampaign)
+  const openAddBrand        = useUIStore(s => s.openAddBrand)
   const toggleNotifications = useUIStore(s => s.toggleNotifications)
   const notificationsOpen   = useUIStore(s => s.notificationsOpen)
   const globalSearch        = useUIStore(s => s.globalSearch)
   const setGlobalSearch     = useUIStore(s => s.setGlobalSearch)
+  const user                = useAuthStore(s => s.user)
+  const logout              = useAuthStore(s => s.logout)
 
   useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const tasks = useTaskStore(s => s.tasks)
+  const tasks           = useTaskStore(s => s.tasks)
+  const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
   const alertCount = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const limit = new Date(today); limit.setDate(today.getDate() + 3)
     return tasks.filter(t => {
+      if (dismissedAlerts.has(t.id)) return false
       if (t.status === 'Overdue') return true
       if (t.status === 'Completed') return false
       const due = new Date(t.dueDate)
       return due >= today && due <= limit
     }).length
-  }, [tasks])
+  }, [tasks, dismissedAlerts])
 
   function handleCTA() {
     if (meta.action === 'openAddTask')     openAddTask()
     if (meta.action === 'openAddCreator')  openAddCreator()
     if (meta.action === 'openAddCampaign') openAddCampaign()
+    if (meta.action === 'openAddBrand')    openAddBrand()
   }
 
   return (
@@ -61,21 +83,40 @@ export default function Topbar() {
         <span className="font-syne text-[15px] font-extrabold text-white tracking-tight whitespace-nowrap">Creator Engine</span>
       </div>
 
-      {/* Search */}
-      <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-56 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
-        <Search size={13} className="flex-shrink-0 text-white/30" />
-        <input
-          value={globalSearch}
-          onChange={e => setGlobalSearch(e.target.value)}
-          placeholder={meta.placeholder}
-          className="bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 w-full"
-        />
-        {globalSearch && (
-          <button onClick={() => setGlobalSearch('')} className="text-white/25 hover:text-white/60 text-[11px] leading-none flex-shrink-0">✕</button>
-        )}
-      </div>
+      {/* Search — hidden on dashboard */}
+      {pathname !== '/' && (
+        <div className="flex items-center gap-2 bg-[#1E1E28] border border-white/7 rounded-lg px-3 py-[7px] w-56 hover:border-white/14 focus-within:border-violet-500/40 focus-within:ring-1 focus-within:ring-violet-500/15 transition-all">
+          <Search size={13} className="flex-shrink-0 text-white/30" />
+          <input
+            value={globalSearch}
+            onChange={e => setGlobalSearch(e.target.value)}
+            placeholder={meta.placeholder}
+            className="bg-transparent outline-none text-[13px] text-white placeholder:text-white/25 w-full"
+          />
+          {globalSearch && (
+            <button onClick={() => setGlobalSearch('')} className="text-white/25 hover:text-white/60 text-[11px] leading-none flex-shrink-0">✕</button>
+          )}
+        </div>
+      )}
 
       <div className="ml-auto flex items-center gap-2">
+        {/* Logged-in user display + logout */}
+        {user && (
+          <div className="flex items-center gap-2 h-[34px] px-2.5 rounded-lg bg-[#1E1E28] border border-white/7">
+            <div className={`w-5 h-5 rounded-full bg-gradient-to-br ${ROLE_AVATAR_COLOR[user.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[8px] font-bold text-white flex-shrink-0`}>
+              {getUserInitials(user.displayName)}
+            </div>
+            <span className="text-[12px] font-medium text-white/70">{user.displayName}</span>
+            <button
+              onClick={logout}
+              title="Sign out"
+              className="ml-1 text-white/25 hover:text-white/70 transition-colors flex-shrink-0"
+            >
+              <LogOut size={13} />
+            </button>
+          </div>
+        )}
+
         {/* Notification bell */}
         <div className="relative">
           <button

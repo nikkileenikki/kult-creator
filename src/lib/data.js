@@ -32,9 +32,10 @@ export const AVATAR_COLOR_OPTIONS = [
 export const CREATORS = [
   {
     id: '1', initials: 'SR', name: 'Siti Rania', platform: 'TikTok', secondaryPlatform: 'Instagram',
-    niche: 'Lifestyle & Wellness', secondaryNiche: 'Fashion', followers: 520000, coins: 9200,
+    niche: 'Lifestyle & Wellness, Fashion', secondaryNiche: '', followers: 520000, coins: 9200,
     tasksCompleted: 92, status: 'Active', pic: 'Sarah K.',
     contact: 'WhatsApp', joinedDate: '2024-01-15', avatarColor: 'v',
+    contactNumber: '+60 12-345 6789', email: 'siti.rania@gmail.com', platformUsername: '@sitirania', dateOfBirth: '1998-03-22',
     persona: {
       contentStyle: 'Aesthetic & Inspirational',
       toneOfVoice: 'Soft-spoken, Warm, Relatable',
@@ -51,9 +52,10 @@ export const CREATORS = [
   },
   {
     id: '2', initials: 'HZ', name: 'Hafiz Zaki', platform: 'YouTube', secondaryPlatform: 'Instagram',
-    niche: 'Tech', secondaryNiche: 'Gaming', followers: 380000, coins: 6200,
+    niche: 'Tech, Gaming', secondaryNiche: '', followers: 380000, coins: 6200,
     tasksCompleted: 62, status: 'Active', pic: 'Lina M.',
     contact: 'Email', joinedDate: '2023-08-20', avatarColor: 'b',
+    contactNumber: '+60 11-234 5678', email: 'hafiz.zaki@gmail.com', platformUsername: '@hafizzaki', dateOfBirth: '1995-07-14',
     persona: {
       contentStyle: 'Educational & In-depth',
       toneOfVoice: 'Professional, Analytical, Witty',
@@ -70,9 +72,10 @@ export const CREATORS = [
   },
   {
     id: '3', initials: 'AN', name: 'Aina Nadia', platform: 'Instagram', secondaryPlatform: 'TikTok',
-    niche: 'Beauty', secondaryNiche: 'Skincare', followers: 210000, coins: 2700,
+    niche: 'Beauty, Skincare', secondaryNiche: '', followers: 210000, coins: 2700,
     tasksCompleted: 27, status: 'Active', pic: 'Sarah K.',
     contact: 'Instagram DM', joinedDate: '2024-03-10', avatarColor: 'g',
+    contactNumber: '+60 10-987 6543', email: 'aina.nadia@gmail.com', platformUsername: '@ainanadia', dateOfBirth: '2001-11-05',
     persona: {
       contentStyle: 'Aesthetic & Tutorial-driven',
       toneOfVoice: 'Bubbly, Friendly, Encouraging',
@@ -89,9 +92,10 @@ export const CREATORS = [
   },
   {
     id: '4', initials: 'FH', name: 'Farah Hana', platform: 'TikTok', secondaryPlatform: '',
-    niche: 'Food & Lifestyle', secondaryNiche: 'Entertainment', followers: 145000, coins: 1100,
+    niche: 'Food & Lifestyle, Entertainment', secondaryNiche: '', followers: 145000, coins: 1100,
     tasksCompleted: 11, status: 'On Hold', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2024-06-01', avatarColor: 'r',
+    contactNumber: '+60 17-654 3210', email: 'farah.hana@gmail.com', platformUsername: '@farahhana.my', dateOfBirth: '1999-08-30',
     persona: {
       contentStyle: 'Raw & Authentic',
       toneOfVoice: 'Casual, Humorous, Relatable',
@@ -108,9 +112,10 @@ export const CREATORS = [
   },
   {
     id: '5', initials: 'RI', name: 'Razif Idham', platform: 'YouTube', secondaryPlatform: 'TikTok',
-    niche: 'Gaming', secondaryNiche: 'Tech', followers: 280000, coins: 800,
+    niche: 'Gaming, Tech', secondaryNiche: '', followers: 280000, coins: 800,
     tasksCompleted: 8, status: 'Active', pic: 'Sarah K.',
     contact: 'Discord', joinedDate: '2025-01-05', avatarColor: 't',
+    contactNumber: '+60 16-888 9900', email: 'razif.idham@gmail.com', platformUsername: '@razifidham', dateOfBirth: '2000-02-18',
     persona: {
       contentStyle: 'Entertaining & Community-driven',
       toneOfVoice: 'Energetic, Gamer slang, Inclusive',
@@ -127,9 +132,10 @@ export const CREATORS = [
   },
   {
     id: '6', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram', secondaryPlatform: '',
-    niche: 'Skincare', secondaryNiche: 'Beauty', followers: 94000, coins: 290,
+    niche: 'Skincare, Beauty', secondaryNiche: '', followers: 94000, coins: 290,
     tasksCompleted: 3, status: 'Active', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2025-11-20', avatarColor: 'i',
+    contactNumber: '+60 13-456 7890', email: 'nur.zulaikha@gmail.com', platformUsername: '@nurzulaikha.skin', dateOfBirth: '2002-05-09',
     persona: {
       contentStyle: 'Educational & Clean',
       toneOfVoice: 'Calm, Trustworthy, Informative',
@@ -149,7 +155,7 @@ export const CREATORS = [
 export const TASKS = [
   { id: 't1', creatorId: '1', creatorName: 'Siti Rania', platform: 'TikTok', task: 'Film Lifestyle Reel', project: 'Ramadan Campaign', status: 'In Progress', pic: 'Sarah K.', dueDate: '2026-04-18', priority: 'High', coins: 100 },
   { id: 't2', creatorId: '2', creatorName: 'Hafiz Zaki', platform: 'YouTube', task: 'Submit Draft Caption', project: 'Brand Launch Q2', status: 'Under Review', pic: 'Lina M.', dueDate: '2026-04-16', priority: 'Medium', coins: 100 },
-  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100 },
+  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100, rating: 5, review: 'Delivered on time, great quality reel. Engagement was above average.' },
   { id: 't4', creatorId: '4', creatorName: 'Farah Hana', platform: 'TikTok', task: 'Record TikTok GRWM', project: 'Ramadan Campaign', status: 'Overdue', pic: 'Lina M.', dueDate: '2026-04-10', priority: 'Urgent', coins: 100 },
   { id: 't5', creatorId: '5', creatorName: 'Razif Idham', platform: 'YouTube', task: 'Brand Mention in Vlog', project: 'Brand Launch Q2', status: 'Not Started', pic: 'Sarah K.', dueDate: '2026-04-25', priority: 'Medium', coins: 100 },
   { id: 't6', creatorId: '6', creatorName: 'Nur Zulaikha', platform: 'Instagram', task: 'Skincare GRWM Video', project: 'Skincare Series', status: 'In Progress', pic: 'Lina M.', dueDate: '2026-04-20', priority: 'High', coins: 100 },
@@ -163,28 +169,40 @@ export const CAMPAIGNS = [
 
 export const RECRUIT_REQUESTS = [
   {
-    id: 'r1', initials: 'RI', name: 'Razif Idham', platform: 'YouTube',
-    followers: 280000, engagementRate: 8.2, niche: 'Gaming',
-    tags: ['YouTube', 'Gaming', 'Tech'], appliedDate: '2026-04-13',
-    source: 'Link in Bio', pic: 'Unassigned',
-    description: 'Specialises in mobile gaming content. Portfolio includes Samsung and Razer collabs. Strong community engagement with regular live streams.',
-    status: 'Pending', avatarColor: 't',
+    id: 'r1', initials: 'HS', name: 'Hanis Sofea', platform: 'TikTok',
+    followers: 78000, engagementRate: 11.4, niche: 'Fashion, Lifestyle',
+    tags: ['Fashion', 'Lifestyle'], appliedDate: '2026-04-13',
+    source: 'Registration Form', pic: 'Unassigned', description: '',
+    status: 'Pending', avatarColor: 'v',
+    email: 'hanis.sofea@gmail.com', contactNumber: '+60 11-456 7890',
+    tiktokUsername: '@hanissofea', followerRange: '50k-100k',
+    liveExperience: 'Yes',
+    collabPreference: ['Gifted Products', 'Paid Campaigns'],
+    videoLink: 'tiktok.com/@hanissofea/video/7380124956',
   },
   {
-    id: 'r2', initials: 'NZ', name: 'Nur Zulaikha', platform: 'Instagram',
-    followers: 94000, engagementRate: 12, niche: 'Skincare',
-    tags: ['Instagram', 'Skincare', 'Halal Beauty'], appliedDate: '2026-04-11',
-    source: 'Referral', pic: 'Lina M.',
-    description: 'Focuses on halal and clean beauty. Audience predominantly female 20–30. Very high story engagement. Strong skincare product reviews.',
-    status: 'Under Review', avatarColor: 'i',
+    id: 'r2', initials: 'DA', name: 'Danial Amir', platform: 'TikTok',
+    followers: 42000, engagementRate: 9.8, niche: 'Food & Lifestyle',
+    tags: ['Food & Lifestyle'], appliedDate: '2026-04-11',
+    source: 'Registration Form', pic: 'Unassigned', description: '',
+    status: 'Under Review', avatarColor: 'r',
+    email: 'danial.amir@gmail.com', contactNumber: '+60 12-789 0123',
+    tiktokUsername: '@danial.amir', followerRange: '10k-50k',
+    liveExperience: 'No',
+    collabPreference: ['Affiliate/commission-based', 'Long-term partnerships'],
+    videoLink: 'tiktok.com/@danial.amir/video/6942038571',
   },
   {
     id: 'r3', initials: 'AM', name: 'Aqil Mukhriz', platform: 'TikTok',
-    followers: 51000, engagementRate: 9.2, niche: 'Fitness',
-    tags: ['TikTok', 'Fitness', 'Wellness'], appliedDate: '2026-04-14',
-    source: 'Referral', pic: 'Unassigned',
-    description: 'Active fitness creator posting daily workout challenges. Strong Gen-Z following. Interested in health supplement and sportswear brand deals.',
+    followers: 51000, engagementRate: 9.2, niche: 'Fitness, Lifestyle',
+    tags: ['Fitness', 'Lifestyle'], appliedDate: '2026-04-14',
+    source: 'Registration Form', pic: 'Unassigned', description: '',
     status: 'Pending', avatarColor: 'g',
+    email: 'aqil.mukhriz@gmail.com', contactNumber: '+60 19-234 5678',
+    tiktokUsername: '@aqilmukhriz', followerRange: '50k-100k',
+    liveExperience: 'Yes',
+    collabPreference: ['Gifted Products', 'Affiliate/commission-based'],
+    videoLink: 'tiktok.com/@aqilmukhriz/video/8015623490',
   },
 ]
 

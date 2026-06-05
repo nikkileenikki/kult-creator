@@ -12,7 +12,10 @@ export default function Niche() {
   const [selected, setSelected] = useState(null)
 
   const nicheStats = useMemo(() => NICHES.map(niche => {
-    const list = creators.filter(c => c.niche === niche || c.secondaryNiche === niche)
+    const list = creators.filter(c => {
+      const niches = [c.niche, c.secondaryNiche].filter(Boolean).flatMap(n => n.split(', ').map(s => s.trim()))
+      return niches.includes(niche)
+    })
     const totalFollowers = list.reduce((s, c) => s + c.followers, 0)
     const platforms = [...new Set(list.map(c => c.platform))]
     return { niche, list, totalFollowers, platforms }
@@ -44,7 +47,7 @@ export default function Niche() {
             {selectedNiche.list.map(c => (
               <div
                 key={c.id}
-                onClick={() => navigate(`/persona/${c.id}`)}
+                onClick={() => navigate(`/creator/${c.id}`)}
                 className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-4 cursor-pointer hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,.3)] transition-all"
               >
                 <div className="flex items-center gap-3">

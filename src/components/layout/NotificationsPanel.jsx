@@ -1,12 +1,16 @@
 import { useEffect, useRef, useMemo } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
+import { X, CheckCheck } from 'lucide-react'
 
 export default function NotificationsPanel() {
-  const panelRef   = useRef(null)
-  const tasks      = useTaskStore(s => s.tasks)
-  const openEdit   = useUIStore(s => s.openEditTask)
-  const close      = useUIStore(s => s.closeNotifications)
+  const panelRef        = useRef(null)
+  const tasks           = useTaskStore(s => s.tasks)
+  const openEdit        = useUIStore(s => s.openEditTask)
+  const close           = useUIStore(s => s.closeNotifications)
+  const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
+  const dismissAlert    = useUIStore(s => s.dismissAlert)
+  const dismissAllAlerts = useUIStore(s => s.dismissAllAlerts)
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -22,15 +26,17 @@ export default function NotificationsPanel() {
     const limit = new Date(today)
     limit.setDate(today.getDate() + 3)
 
-    const overdue = tasks.filter(t => t.status === 'Overdue')
+    const overdue = tasks.filter(t => t.status === 'Overdue' && !dismissedAlerts.has(t.id))
     const dueSoon = tasks.filter(t => {
       if (t.status === 'Completed' || t.status === 'Overdue') return false
+      if (dismissedAlerts.has(t.id)) return false
       const due = new Date(t.dueDate)
       return due >= today && due <= limit
     })
     return { overdue, dueSoon }
-  }, [tasks])
+  }, [tasks, dismissedAlerts])
 
+  const allIds  = [...overdue, ...dueSoon].map(t => t.id)
   const isEmpty = overdue.length === 0 && dueSoon.length === 0
 
   function handleClick(id) {
@@ -43,12 +49,24 @@ export default function NotificationsPanel() {
       ref={panelRef}
       className="absolute top-[calc(100%+8px)] right-0 z-50 w-[320px] bg-[#111116] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.6)] overflow-hidden animate-[fadeUp_.15s_ease]"
     >
-      <div className="px-4 py-3 border-b border-white/[0.07]">
-        <span className="font-syne text-[13px] font-bold text-white">Notifications</span>
+      <div className="px-4 py-3 border-b border-white/[0.07] flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="font-syne text-[13px] font-bold text-white">Notifications</span>
+          {!isEmpty && (
+            <span className="font-mono text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
+              {overdue.length + dueSoon.length}
+            </span>
+          )}
+        </div>
         {!isEmpty && (
-          <span className="ml-2 font-mono text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
-            {overdue.length + dueSoon.length}
-          </span>
+          <button
+            onClick={() => dismissAllAlerts(allIds)}
+            className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors"
+            title="Mark all as read"
+          >
+            <CheckCheck size={13} />
+            <span>Mark all read</span>
+          </button>
         )}
       </div>
 
@@ -65,16 +83,24 @@ export default function NotificationsPanel() {
                 Overdue · {overdue.length}
               </div>
               {overdue.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => handleClick(t.id)}
-                  className="w-full text-left px-4 py-3 border-b border-white/[0.05] hover:bg-white/[.03] transition-colors"
-                >
-                  <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
-                  <div className="text-[11px] text-white/30 mt-0.5">
-                    {t.creatorName} · <span className="text-rose-400">{t.dueDate}</span>
-                  </div>
-                </button>
+                <div key={t.id} className="flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors">
+                  <button
+                    onClick={() => handleClick(t.id)}
+                    className="flex-1 text-left px-4 py-3"
+                  >
+                    <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
+                    <div className="text-[11px] text-white/30 mt-0.5">
+                      {t.creatorName} · <span className="text-rose-400">{t.dueDate}</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => dismissAlert(t.id)}
+                    className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    title="Dismiss"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
               ))}
             </div>
           )}
@@ -85,16 +111,24 @@ export default function NotificationsPanel() {
                 Due Soon · {dueSoon.length}
               </div>
               {dueSoon.map(t => (
-                <button
-                  key={t.id}
-                  onClick={() => handleClick(t.id)}
-                  className="w-full text-left px-4 py-3 border-b border-white/[0.05] last:border-0 hover:bg-white/[.03] transition-colors"
-                >
-                  <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
-                  <div className="text-[11px] text-white/30 mt-0.5">
-                    {t.creatorName} · <span className="text-amber-400">{t.dueDate}</span>
-                  </div>
-                </button>
+                <div key={t.id} className="flex items-center border-b border-white/[0.05] last:border-0 group hover:bg-white/[.02] transition-colors">
+                  <button
+                    onClick={() => handleClick(t.id)}
+                    className="flex-1 text-left px-4 py-3"
+                  >
+                    <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
+                    <div className="text-[11px] text-white/30 mt-0.5">
+                      {t.creatorName} · <span className="text-amber-400">{t.dueDate}</span>
+                    </div>
+                  </button>
+                  <button
+                    onClick={() => dismissAlert(t.id)}
+                    className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                    title="Dismiss"
+                  >
+                    <X size={13} />
+                  </button>
+                </div>
               ))}
             </div>
           )}

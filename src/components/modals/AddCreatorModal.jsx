@@ -16,12 +16,15 @@ const schema = z.object({
   platform:          z.string().min(1, 'Select a platform'),
   secondaryPlatform: z.string().default(''),
   niche:             z.string().min(1, 'Niche is required'),
-  secondaryNiche:    z.string().default(''),
   followers:         z.coerce.number().min(0, 'Min 0').max(100_000_000, 'Too large'),
   status:            z.enum(['Active', 'On Hold']),
   pic:               z.string().min(1, 'PIC is required'),
   contact:           z.string().min(1, 'Select a contact method'),
   avatarColor:       z.string().min(1),
+  contactNumber:     z.string().default(''),
+  email:             z.string().default(''),
+  platformUsername:  z.string().default(''),
+  dateOfBirth:       z.string().default(''),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -49,12 +52,15 @@ export default function AddCreatorModal() {
       platform:          PLATFORMS[0],
       secondaryPlatform: '',
       niche:             '',
-      secondaryNiche:    '',
       followers:         0,
       status:            'Active',
       pic:               PICS[0],
       contact:           CONTACT_METHODS[0],
       avatarColor:       'v',
+      contactNumber:     '',
+      email:             '',
+      platformUsername:  '',
+      dateOfBirth:       '',
     },
   })
 
@@ -183,23 +189,29 @@ export default function AddCreatorModal() {
                   </div>
                 </div>
 
-                {/* Primary + Secondary Niche */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Primary Niche</label>
-                    <select {...register('niche')} className={INPUT}>
-                      <option value="">Select niche…</option>
-                      {NICHES.map(n => <option key={n}>{n}</option>)}
-                    </select>
-                    {errors.niche && <p className={ERR}>{errors.niche.message}</p>}
+                {/* Niches multi-select */}
+                <div>
+                  <label className={LABEL}>Niches</label>
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {NICHES.map(n => {
+                      const vals = (watch('niche') ?? '').split(', ').filter(Boolean)
+                      const on = vals.includes(n)
+                      return (
+                        <button
+                          key={n}
+                          type="button"
+                          onClick={() => {
+                            const next = on ? vals.filter(x => x !== n) : [...vals, n]
+                            setValue('niche', next.join(', '), { shouldValidate: true })
+                          }}
+                          className={`text-[11px] px-2.5 py-1 rounded-full border transition-all ${on ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/40 hover:border-white/20'}`}
+                        >
+                          {n}
+                        </button>
+                      )
+                    })}
                   </div>
-                  <div>
-                    <label className={LABEL}>Secondary Niche <span className="normal-case text-white/20 font-normal">(optional)</span></label>
-                    <select {...register('secondaryNiche')} className={INPUT}>
-                      <option value="">None</option>
-                      {NICHES.map(n => <option key={n}>{n}</option>)}
-                    </select>
-                  </div>
+                  {errors.niche && <p className={ERR}>{errors.niche.message}</p>}
                 </div>
 
                 {/* Followers + Status */}
@@ -238,6 +250,28 @@ export default function AddCreatorModal() {
                     <select {...register('contact')} className={INPUT}>
                       {CONTACT_METHODS.map(c => <option key={c}>{c}</option>)}
                     </select>
+                  </div>
+                </div>
+
+                {/* Contact details */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={LABEL}>Contact Number <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('contactNumber')} placeholder="e.g. +60 12-345 6789" className={INPUT} />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Email <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('email')} type="email" placeholder="e.g. name@email.com" className={INPUT} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={LABEL}>Platform Username <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input {...register('platformUsername')} placeholder="e.g. @username" className={INPUT} />
+                  </div>
+                  <div>
+                    <label className={LABEL}>Date of Birth <span className="normal-case text-white/20 font-normal">(optional)</span></label>
+                    <input type="date" {...register('dateOfBirth')} className={cn(INPUT, '[color-scheme:dark]')} />
                   </div>
                 </div>
 

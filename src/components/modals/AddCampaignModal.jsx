@@ -18,6 +18,9 @@ const schema = z.object({
   endDate:     z.string().default(''),
   color:       z.string().default('#6C5CE7'),
   brandId:     z.string().default(''),
+}).refine(d => !d.startDate || !d.endDate || d.endDate >= d.startDate, {
+  message: 'End date must be on or after start date',
+  path: ['endDate'],
 })
 
 const COLORS = ['#6C5CE7','#0891B2','#D97706','#059669','#DC2626','#7C3AED','#DB2777','#EA580C']
@@ -37,6 +40,8 @@ export default function AddCampaignModal() {
   })
 
   const selectedColor = watch('color')
+  const watchStart    = watch('startDate')
+  const watchEnd      = watch('endDate')
 
   useEffect(() => { if (!open) reset() }, [open])
 
@@ -96,11 +101,12 @@ export default function AddCampaignModal() {
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className={LABEL}>Start Date</label>
-                <input type="date" {...register('startDate')} onWheel={e => e.currentTarget.blur()} className={INPUT} />
+                <input type="date" {...register('startDate')} max={watchEnd || undefined} onWheel={e => e.currentTarget.blur()} className={INPUT} />
               </div>
               <div>
                 <label className={LABEL}>End Date</label>
-                <input type="date" {...register('endDate')} onWheel={e => e.currentTarget.blur()} className={INPUT} />
+                <input type="date" {...register('endDate')} min={watchStart || undefined} onWheel={e => e.currentTarget.blur()} className={INPUT} />
+                {errors.endDate && <p className="text-rose-400 text-[11px] mt-1">{errors.endDate.message}</p>}
               </div>
             </div>
 
