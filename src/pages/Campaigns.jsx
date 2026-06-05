@@ -5,6 +5,7 @@ import { useCampaignStore } from '@/store/campaignStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
 import { useBrandStore } from '@/store/brandStore'
+import { useAuthStore } from '@/store/authStore'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 import { Pencil, ChevronRight, Check, X } from 'lucide-react'
@@ -167,6 +168,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
   const updateTask     = useTaskStore(s => s.updateTask)
   const showToast      = useUIStore(s => s.showToast)
   const brands         = useBrandStore(s => s.brands)
+  const can            = useAuthStore(s => s.can)
 
   const [editing,     setEditing]     = useState(false)
   const [draft,       setDraft]       = useState(null)
@@ -238,19 +240,21 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
               + Add Task
             </button>
           )}
-          {editing ? (
-            <>
-              <button onClick={cancelEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <X size={13} /> Cancel
+          {can('campaigns.manage') && (
+            editing ? (
+              <>
+                <button onClick={cancelEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                  <X size={13} /> Cancel
+                </button>
+                <button onClick={saveEdit} disabled={saving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-50">
+                  <Check size={13} /> {saving ? 'Saving…' : 'Save'}
+                </button>
+              </>
+            ) : (
+              <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
+                <Pencil size={13} /> Edit
               </button>
-              <button onClick={saveEdit} disabled={saving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-50">
-                <Check size={13} /> {saving ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          ) : (
-            <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
-              <Pencil size={13} /> Edit
-            </button>
+            )
           )}
         </div>
       </div>

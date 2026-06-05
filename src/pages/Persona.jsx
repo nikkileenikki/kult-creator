@@ -98,6 +98,7 @@ export default function Persona() {
   const updateCreator = useCreatorStore(s => s.updateCreator)
   const showToast  = useUIStore(s => s.showToast)
   const canViewContacts = useAuthStore(s => s.canViewContacts)
+  const can = useAuthStore(s => s.can)
   const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)
@@ -105,7 +106,7 @@ export default function Persona() {
   const [saving, setSaving]   = useState(false)
   const [revealed, setRevealed] = useState({ phone: false, email: false })
 
-  const completedTasks = tasks.filter(t => t.creatorId === id && t.status === 'Completed')
+  const creatorTasks = tasks.filter(t => t.creatorId === id)
   const canReveal = canViewContacts(creator?.pic)
 
   if (!creator) {
@@ -191,19 +192,21 @@ export default function Persona() {
         <span className="text-white text-[13px]">Profile</span>
 
         <div className="ml-auto flex items-center gap-2">
-          {editing ? (
-            <>
-              <button onClick={cancelEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                <X size={13} /> Cancel
+          {can('creators.edit') && (
+            editing ? (
+              <>
+                <button onClick={cancelEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                  <X size={13} /> Cancel
+                </button>
+                <button onClick={saveEdit} disabled={saving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-50">
+                  <Check size={13} /> {saving ? 'Saving…' : 'Save'}
+                </button>
+              </>
+            ) : (
+              <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
+                <Pencil size={13} /> Edit Profile
               </button>
-              <button onClick={saveEdit} disabled={saving} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-50">
-                <Check size={13} /> {saving ? 'Saving…' : 'Save'}
-              </button>
-            </>
-          ) : (
-            <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
-              <Pencil size={13} /> Edit Profile
-            </button>
+            )
           )}
         </div>
       </div>
@@ -521,48 +524,67 @@ export default function Persona() {
             }
           </div>
 
-          {/* Completed tasks */}
-          <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px]">
-            <div className="flex items-center justify-between mb-3">
-              <div className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em]">Completed Tasks</div>
-              <span className="text-[11px] font-semibold text-emerald-400 bg-emerald-400/10 border border-emerald-400/20 rounded-full px-2 py-0.5">
-                {completedTasks.length}
-              </span>
-            </div>
-            {completedTasks.length === 0
-              ? <div className="text-[12px] text-white/20 italic">No completed tasks yet.</div>
-              : <div className="space-y-2">
-                  {completedTasks.map(t => (
-                    <div key={t.id} className="bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
-                      <div className="flex items-center gap-3">
-                        <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
-                        <div className="flex-1 min-w-0">
-                          <div className="text-[13px] text-white truncate">{t.task}</div>
-                          <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
-                        </div>
-                        <div className="flex items-center gap-2 flex-shrink-0">
-                          {t.rating > 0 && (
-                            <div className="flex items-center gap-0.5">
-                              {[1,2,3,4,5].map(n => (
-                                <Star key={n} size={10} className={n <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />
-                              ))}
-                            </div>
-                          )}
-                          <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
-                          <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
-                          <span className="text-[11px] text-white/25">{t.dueDate}</span>
-                        </div>
+          {/* Tasks */}
+          {creatorTasks.length > 0 && (() => {
+            const TASK_GROUPS = [
+              { status: 'In Progress',   label: 'In Progress',   dot: 'bg-blue-400',    text: 'text-blue-400',    count: 'text-blue-400 bg-blue-400/10 border-blue-400/20' },
+              { status: 'Under Review',  label: 'Under Review',  dot: 'bg-amber-400',   text: 'text-amber-400',   count: 'text-amber-400 bg-amber-400/10 border-amber-400/20' },
+              { status: 'Not Started',   label: 'Not Started',   dot: 'bg-white/30',    text: 'text-white/40',    count: 'text-white/40 bg-white/5 border-white/10' },
+              { status: 'Overdue',       label: 'Overdue',       dot: 'bg-rose-400',    text: 'text-rose-400',    count: 'text-rose-400 bg-rose-400/10 border-rose-400/20' },
+              { status: 'Completed',     label: 'Completed',     dot: 'bg-emerald-400', text: 'text-emerald-400', count: 'text-emerald-400 bg-emerald-400/10 border-emerald-400/20' },
+            ]
+            const groups = TASK_GROUPS.map(g => ({ ...g, tasks: creatorTasks.filter(t => t.status === g.status) })).filter(g => g.tasks.length > 0)
+            return (
+              <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-[18px]">
+                <div className="flex items-center justify-between mb-3">
+                  <div className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em]">Tasks</div>
+                  <span className="text-[11px] font-semibold text-white/30 bg-white/5 border border-white/10 rounded-full px-2 py-0.5">{creatorTasks.length}</span>
+                </div>
+                <div className="space-y-4">
+                  {groups.map(g => (
+                    <div key={g.status}>
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${g.dot}`} />
+                        <span className={`text-[10px] font-semibold uppercase tracking-wider ${g.text}`}>{g.label}</span>
+                        <span className={`text-[10px] font-semibold rounded-full px-1.5 py-0.5 border ${g.count}`}>{g.tasks.length}</span>
                       </div>
-                      {t.review && (
-                        <div className="mt-2 ml-[22px] text-[11px] text-white/35 italic border-l border-white/7 pl-2.5">
-                          {t.review}
-                        </div>
-                      )}
+                      <div className="space-y-1.5 pl-3.5">
+                        {g.tasks.map(t => (
+                          <div key={t.id} className="bg-[#16161C] border border-white/7 rounded-[9px] px-3.5 py-2.5">
+                            <div className="flex items-center gap-3">
+                              {g.status === 'Completed'
+                                ? <CheckCircle2 size={14} className="text-emerald-400 flex-shrink-0" />
+                                : <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${g.dot}`} />
+                              }
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[13px] text-white truncate">{t.task}</div>
+                                <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
+                              </div>
+                              <div className="flex items-center gap-2 flex-shrink-0">
+                                {t.rating > 0 && g.status === 'Completed' && (
+                                  <div className="flex items-center gap-0.5">
+                                    {[1,2,3,4,5].map(n => (
+                                      <Star key={n} size={10} className={n <= t.rating ? 'text-amber-400 fill-amber-400' : 'text-white/10'} />
+                                    ))}
+                                  </div>
+                                )}
+                                <span className={`text-[11px] font-medium ${PRIORITY_COLOR[t.priority] ?? 'text-white/40'}`}>{t.priority}</span>
+                                <span className="text-[11px] text-amber-400 font-mono">+{t.coins} 🪙</span>
+                                <span className="text-[11px] text-white/25">{t.dueDate}</span>
+                              </div>
+                            </div>
+                            {t.review && g.status === 'Completed' && (
+                              <div className="mt-2 ml-[22px] text-[11px] text-white/35 italic border-l border-white/7 pl-2.5">{t.review}</div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   ))}
                 </div>
-            }
-          </div>
+              </div>
+            )
+          })()}
 
         </div>
       </div>
