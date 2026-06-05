@@ -8,6 +8,7 @@ import { useTaskStore } from '@/store/taskStore'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { PICS } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
@@ -38,6 +39,7 @@ export default function EditTaskModal() {
   const task       = useTaskStore(s => s.tasks.find(t => t.id === taskId))
   const creators   = useCreatorStore(s => s.creators)
   const campaigns  = useCampaignStore(s => s.campaigns)
+  const canEdit    = useAuthStore(s => s.can('creators.edit'))
 
   const {
     register,
@@ -107,7 +109,10 @@ export default function EditTaskModal() {
           <div className="bg-[#111116] border border-white/[0.07] rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
               <div>
-                <Dialog.Title className="font-syne text-[15px] font-bold text-white">Edit Task</Dialog.Title>
+                <div className="flex items-center gap-2">
+                <Dialog.Title className="font-syne text-[15px] font-bold text-white">{canEdit ? 'Edit Task' : 'Task Details'}</Dialog.Title>
+                {!canEdit && <span className="text-[10px] text-white/30 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">View only</span>}
+              </div>
                 <Dialog.Description className="text-[12px] text-white/30 mt-0.5">
                   {displayCreatorName} · {selectedCreator?.platform ?? task?.platform ?? ''}
                 </Dialog.Description>
@@ -123,7 +128,7 @@ export default function EditTaskModal() {
                 {/* Creator */}
                 <div>
                   <label className={LABEL}>Creator</label>
-                  <select {...register('creatorId')} className={INPUT}>
+                  <select {...register('creatorId')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                     <option value="">Unassigned</option>
                     {creators.filter(c => c.status !== 'Rejected').map(c => (
                       <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
@@ -134,7 +139,7 @@ export default function EditTaskModal() {
                 {/* Task name */}
                 <div>
                   <label className={LABEL}>Task / Deliverable</label>
-                  <input {...register('task')} className={INPUT} />
+                  <input {...register('task')} readOnly={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
                   {errors.task && <p className={ERR}>{errors.task.message}</p>}
                 </div>
 
@@ -142,7 +147,7 @@ export default function EditTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Project</label>
-                    <select {...register('project')} className={INPUT}>
+                    <select {...register('project')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                       {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                   </div>
@@ -154,7 +159,7 @@ export default function EditTaskModal() {
                         <span className="text-[10px] text-white/30 font-mono uppercase tracking-wide">Locked</span>
                       </div>
                     ) : (
-                      <select {...register('status')} className={INPUT}>
+                      <select {...register('status')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                         {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
                           <option key={s}>{s}</option>
                         ))}
@@ -167,13 +172,13 @@ export default function EditTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Priority</label>
-                    <select {...register('priority')} className={INPUT}>
+                    <select {...register('priority')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                       {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className={LABEL}>PIC</label>
-                    <select {...register('pic')} className={INPUT}>
+                    <select {...register('pic')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                       {PICS.map(p => <option key={p}>{p}</option>)}
                     </select>
                   </div>
@@ -183,12 +188,12 @@ export default function EditTaskModal() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className={LABEL}>Due Date</label>
-                    <input type="date" {...register('dueDate')} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]')} />
+                    <input type="date" {...register('dueDate')} readOnly={!canEdit} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]', !canEdit && 'opacity-60 cursor-not-allowed')} />
                     {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
                   </div>
                   <div>
                     <label className={LABEL}>Coins</label>
-                    <input type="number" {...register('coins')} min={0} max={10000} className={INPUT} />
+                    <input type="number" {...register('coins')} readOnly={!canEdit} min={0} max={10000} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
                     {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
                   </div>
                 </div>
@@ -198,9 +203,10 @@ export default function EditTaskModal() {
                   <label className={LABEL}>Notes for Creator</label>
                   <textarea
                     {...register('notes')}
+                    readOnly={!canEdit}
                     rows={2}
                     placeholder="Specific instructions, references, or creative direction…"
-                    className={cn(INPUT, 'resize-none')}
+                    className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
                   />
                 </div>
 
@@ -215,8 +221,9 @@ export default function EditTaskModal() {
                           <button
                             key={n}
                             type="button"
-                            onClick={() => setValue('rating', watchRating === n ? 0 : n, { shouldValidate: true })}
-                            className="transition-all"
+                            disabled={!canEdit}
+                            onClick={() => canEdit && setValue('rating', watchRating === n ? 0 : n, { shouldValidate: true })}
+                            className={cn('transition-all', !canEdit && 'cursor-not-allowed')}
                           >
                             <Star
                               size={22}
@@ -233,9 +240,10 @@ export default function EditTaskModal() {
                       <label className={LABEL}>Review Notes</label>
                       <textarea
                         {...register('review')}
+                        readOnly={!canEdit}
                         rows={2}
                         placeholder="Notes on performance, quality, timeliness…"
-                        className={cn(INPUT, 'resize-none')}
+                        className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
                       />
                     </div>
                   </div>
@@ -254,15 +262,17 @@ export default function EditTaskModal() {
 
               <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.07]">
                 <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                  Cancel
+                  {canEdit ? 'Cancel' : 'Close'}
                 </button>
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all shadow-[0_0_16px_rgba(108,92,231,.35)] hover:-translate-y-px disabled:opacity-50"
-                >
-                  Save Changes
-                </button>
+                {canEdit && (
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all shadow-[0_0_16px_rgba(108,92,231,.35)] hover:-translate-y-px disabled:opacity-50"
+                  >
+                    Save Changes
+                  </button>
+                )}
               </div>
             </form>
           </div>

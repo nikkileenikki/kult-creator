@@ -24,7 +24,7 @@ const SEL   = 'text-[11px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#1
 
 // ─── By Creator View ──────────────────────────────────────────────────────────
 
-function CreatorView({ campaign, tasks, openEdit, openAddTask }) {
+function CreatorView({ campaign, tasks, openEdit, openAddTask, canEdit }) {
   const creators = useCreatorStore(s => s.creators)
 
   const groups = useMemo(() => {
@@ -75,12 +75,14 @@ function CreatorView({ campaign, tasks, openEdit, openAddTask }) {
                   <span className="font-mono text-[9px] text-white/25">{progress}%</span>
                 </div>
               </div>
-              <button
-                onClick={() => openAddTask({ project: campaign.name, creatorId: group.id || undefined })}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/7 hover:border-violet-500/30 hover:bg-violet-600/10 text-white/40 hover:text-white/70 text-[11px] font-medium transition-all flex-shrink-0"
-              >
-                + Add Task
-              </button>
+              {canEdit && (
+                <button
+                  onClick={() => openAddTask({ project: campaign.name, creatorId: group.id || undefined })}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/7 hover:border-violet-500/30 hover:bg-violet-600/10 text-white/40 hover:text-white/70 text-[11px] font-medium transition-all flex-shrink-0"
+                >
+                  + Add Task
+                </button>
+              )}
             </div>
             <div>
               {group.tasks.map(t => (
@@ -232,7 +234,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
         <ChevronRight size={14} className="text-white/20" />
         <span className="text-white text-[13px]">{campaign.name}</span>
         <div className="ml-auto flex items-center gap-2">
-          {!editing && (
+          {!editing && can('creators.edit') && (
             <button
               onClick={() => openAddTask({ project: campaign.name })}
               className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
@@ -392,14 +394,14 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 
       {/* By Creator view */}
       {view === 'creator' && (
-        <CreatorView campaign={campaign} tasks={tasks} openEdit={openEdit} openAddTask={openAddTask} />
+        <CreatorView campaign={campaign} tasks={tasks} openEdit={openEdit} openAddTask={openAddTask} canEdit={can('creators.edit')} />
       )}
 
       {/* Table view */}
       {view === 'table' && (
         <>
           {/* Bulk action bar */}
-          {selectedIds.size > 0 && (
+          {selectedIds.size > 0 && can('creators.edit') && (
             <div className="flex items-center gap-3 mb-3 px-4 py-2.5 bg-violet-600/10 border border-violet-500/20 rounded-[10px]">
               <span className="text-[12px] text-violet-300 font-medium">{selectedIds.size} selected</span>
               <div className="flex items-center gap-2 ml-auto">
@@ -421,12 +423,14 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
               <thead>
                 <tr className="bg-[#16161C]">
                   <th className="px-3.5 py-2.5 w-8 border-b border-white/7">
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.size === tasks.length && tasks.length > 0}
-                      onChange={e => setSelectedIds(e.target.checked ? new Set(tasks.map(t => t.id)) : new Set())}
-                      className="accent-violet-500 cursor-pointer"
-                    />
+                    {can('creators.edit') && (
+                      <input
+                        type="checkbox"
+                        checked={selectedIds.size === tasks.length && tasks.length > 0}
+                        onChange={e => setSelectedIds(e.target.checked ? new Set(tasks.map(t => t.id)) : new Set())}
+                        className="accent-violet-500 cursor-pointer"
+                      />
+                    )}
                   </th>
                   {['Creator','Task / Deliverable','Status','PIC','Due Date','Priority','Coins'].map(h => (
                     <th key={h} className="px-3.5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
@@ -439,16 +443,18 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                 ) : tasks.map((t, i) => (
                   <tr key={t.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors group">
                     <td className="px-3.5 py-3" onClick={e => e.stopPropagation()}>
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(t.id)}
-                        onChange={e => setSelectedIds(prev => {
-                          const next = new Set(prev)
-                          e.target.checked ? next.add(t.id) : next.delete(t.id)
-                          return next
-                        })}
-                        className="accent-violet-500 cursor-pointer"
-                      />
+                      {can('creators.edit') && (
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.has(t.id)}
+                          onChange={e => setSelectedIds(prev => {
+                            const next = new Set(prev)
+                            e.target.checked ? next.add(t.id) : next.delete(t.id)
+                            return next
+                          })}
+                          className="accent-violet-500 cursor-pointer"
+                        />
+                      )}
                     </td>
                     <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}>
                       <div className="flex items-center gap-2">
