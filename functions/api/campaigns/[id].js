@@ -12,3 +12,12 @@ export async function onRequestPatch({ params, request, env }) {
   const row = await campaignQ.byId(db, params.id)
   return json(mapCampaign(row))
 }
+
+export async function onRequestDelete({ params, env }) {
+  const db = getDB(env)
+  if (!db) return err('DB binding not found', 500)
+  const existing = await campaignQ.byId(db, params.id)
+  if (!existing) return err('Campaign not found', 404)
+  await db.prepare('DELETE FROM campaigns WHERE id = ?').bind(params.id).run()
+  return json({ success: true })
+}

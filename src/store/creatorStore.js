@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { getTier } from '../lib/tierUtils'
-import { fetchCreators, createCreator, updateCreator as apiUpdateCreator } from '../lib/api/creators'
+import { fetchCreators, createCreator, updateCreator as apiUpdateCreator, deleteCreator as apiDeleteCreator } from '../lib/api/creators'
 
 export const useCreatorStore = create((set, get) => ({
   creators: [],
@@ -53,5 +53,10 @@ export const useCreatorStore = create((set, get) => ({
     })
     set(state => ({ creators: [...state.creators, newCreator] }))
     return newCreator
+  },
+
+  deleteCreator: async (id) => {
+    set(state => ({ creators: state.creators.filter(c => c.id !== id) }))
+    await apiDeleteCreator(id)
   },
 }))

@@ -9,7 +9,7 @@ import { PLATFORMS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
@@ -96,6 +96,7 @@ export default function Persona() {
   const navigate   = useNavigate()
   const creator    = useCreatorStore(s => s.creators.find(c => c.id === id))
   const updateCreator = useCreatorStore(s => s.updateCreator)
+  const deleteCreator = useCreatorStore(s => s.deleteCreator)
   const showToast  = useUIStore(s => s.showToast)
   const canViewContacts = useAuthStore(s => s.canViewContacts)
   const can = useAuthStore(s => s.can)
@@ -205,9 +206,22 @@ export default function Persona() {
                 </button>
               </>
             ) : (
-              <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
-                <Pencil size={13} /> Edit Profile
-              </button>
+              <>
+                <button
+                  onClick={async () => {
+                    if (!window.confirm(`Delete ${creator.name}? This cannot be undone.`)) return
+                    await deleteCreator(creator.id)
+                    showToast(`${creator.name} deleted`)
+                    navigate('/creators')
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[13px] font-semibold transition-all"
+                >
+                  <Trash2 size={13} />
+                </button>
+                <button onClick={startEdit} className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 text-white/60 hover:text-white text-[13px] font-semibold transition-all">
+                  <Pencil size={13} /> Edit Profile
+                </button>
+              </>
             )
           )}
         </div>

@@ -24,3 +24,8 @@ export async function updateBrand(id, patch) {
   }
   return request('PATCH', `/brands/${id}`, patch)
 }
+
+export async function deleteBrand(id) {
+  if (USE_MOCK) { await delay(200); return { success: true } }
+  return request('DELETE', `/brands/${id}`)
+}

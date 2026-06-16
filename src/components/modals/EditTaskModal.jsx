@@ -2,7 +2,7 @@ import * as Dialog from '@radix-ui/react-dialog'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { X, Coins, Star } from 'lucide-react'
+import { X, Coins, Star, Trash2 } from 'lucide-react'
 import { useEffect } from 'react'
 import { useTaskStore } from '@/store/taskStore'
 import { useCreatorStore } from '@/store/creatorStore'
@@ -35,6 +35,7 @@ export default function EditTaskModal() {
   const closeModal = useUIStore(s => s.closeEditTask)
   const showToast  = useUIStore(s => s.showToast)
   const updateTask = useTaskStore(s => s.updateTask)
+  const deleteTask = useTaskStore(s => s.deleteTask)
   const task       = useTaskStore(s => s.tasks.find(t => t.id === taskId))
   const creators   = useCreatorStore(s => s.creators)
   const campaigns  = useCampaignStore(s => s.campaigns)
@@ -261,19 +262,37 @@ export default function EditTaskModal() {
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-white/[0.07]">
-                <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
-                  {canEdit ? 'Cancel' : 'Close'}
-                </button>
-                {canEdit && (
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all shadow-[0_0_16px_rgba(108,92,231,.35)] hover:-translate-y-px disabled:opacity-50"
-                  >
-                    Save Changes
+              <div className="flex items-center justify-between gap-3 px-6 py-4 border-t border-white/[0.07]">
+                <div>
+                  {canEdit && (
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm('Delete this task? This cannot be undone.')) return
+                        await deleteTask(taskId)
+                        showToast('Task deleted')
+                        onClose()
+                      }}
+                      className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[13px] font-semibold transition-all"
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  )}
+                </div>
+                <div className="flex items-center gap-3">
+                  <button type="button" onClick={onClose} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
+                    {canEdit ? 'Cancel' : 'Close'}
                   </button>
-                )}
+                  {canEdit && (
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all shadow-[0_0_16px_rgba(108,92,231,.35)] hover:-translate-y-px disabled:opacity-50"
+                    >
+                      Save Changes
+                    </button>
+                  )}
+                </div>
               </div>
             </form>
           </div>
