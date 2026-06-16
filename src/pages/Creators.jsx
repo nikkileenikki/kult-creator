@@ -44,7 +44,7 @@ export default function Creators() {
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Creators</h1>
           <p className="text-[12px] text-white/30 mt-1">
-            {filtered.length}{filtered.length !== creators.length ? ` of ${creators.length}` : ''} creators
+            {filtered.length} creator{filtered.length !== 1 ? 's' : ''}
             {filterStatus !== 'All' ? ` · ${filterStatus}` : ''}
           </p>
         </div>
