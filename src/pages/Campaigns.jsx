@@ -576,7 +576,7 @@ export default function Campaigns() {
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Campaigns</h1>
           <p className="text-[12px] text-white/30 mt-1">
-            {filteredCampaigns.length}{filteredCampaigns.length !== campaigns.length ? ` of ${campaigns.length}` : ''} campaigns · {tasks.length} tasks total
+            {filteredCampaigns.length} campaign{filteredCampaigns.length !== 1 ? 's' : ''} · {tasks.filter(t => filteredCampaigns.some(c => c.name === t.project)).length} tasks
           </p>
         </div>
         <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
