@@ -184,5 +184,5 @@ export const analyticsQ = {
   },
 
   activity: (db) =>
-    db.prepare('SELECT * FROM activity_feed WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10').all(),
+    db.prepare('SELECT * FROM activity_feed WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 5').all(),
 }

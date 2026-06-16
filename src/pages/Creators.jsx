@@ -2,11 +2,10 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
-import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
-import { NICHES } from '@/lib/data'
+import { getTier } from '@/lib/tierUtils'
+import { useNicheStore } from '@/store/nicheStore'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
-import ProgressBar from '@/components/shared/ProgressBar'
 
 const TIER_BADGE  = { Platinum:'platinum', Diamond:'diamond', Gold:'gold', Silver:'silver', Bronze:'bronze' }
 const TIER_EMOJI  = { Platinum:'👑', Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
@@ -15,16 +14,19 @@ const TIER_ORDER  = ['All', 'Platinum', 'Diamond', 'Gold', 'Silver', 'Bronze']
 const SELECT = 'text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#1E1E28] text-white/50 font-figtree outline-none hover:border-white/12 cursor-pointer transition-all'
 
 export default function Creators() {
-  const creators = useCreatorStore(s => s.creators)
-  const navigate = useNavigate()
-  const search   = useUIStore(s => s.globalSearch)
+  const creators    = useCreatorStore(s => s.creators)
+  const navigate    = useNavigate()
+  const search      = useUIStore(s => s.globalSearch)
+  const nichesData  = useNicheStore(s => s.niches)
 
   const [filterPlatform, setFilterPlatform] = useState('All')
   const [filterTier,     setFilterTier]     = useState('All')
   const [filterStatus,   setFilterStatus]   = useState('Active')
   const [filterNiche,    setFilterNiche]    = useState('All')
+  const [filterPic,      setFilterPic]      = useState('All')
 
   const platforms = useMemo(() => ['All', ...[...new Set(creators.map(c => c.platform))]], [creators])
+  const pics      = useMemo(() => ['All', ...[...new Set(creators.map(c => c.pic).filter(Boolean))].sort()], [creators])
 
   const filtered = useMemo(() => creators.filter(c => {
     if (filterStatus !== 'All' && c.status !== filterStatus) return false
@@ -34,9 +36,10 @@ export default function Creators() {
       const niches = [c.niche, c.secondaryNiche].filter(Boolean).flatMap(n => n.split(', ').map(s => s.trim()))
       if (!niches.includes(filterNiche)) return false
     }
+    if (filterPic !== 'All' && c.pic !== filterPic) return false
     if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
     return true
-  }), [creators, filterPlatform, filterTier, filterStatus, filterNiche, search])
+  }), [creators, filterPlatform, filterTier, filterStatus, filterNiche, filterPic, search])
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
@@ -52,7 +55,12 @@ export default function Creators() {
           {/* Niche filter */}
           <select value={filterNiche} onChange={e => setFilterNiche(e.target.value)} className={SELECT}>
             <option value="All">All Niches</option>
-            {NICHES.map(n => <option key={n} value={n}>{n}</option>)}
+            {nichesData.map(n => <option key={n.name} value={n.name}>{n.name}</option>)}
+          </select>
+
+          {/* PIC filter */}
+          <select value={filterPic} onChange={e => setFilterPic(e.target.value)} className={SELECT}>
+            {pics.map(p => <option key={p} value={p}>{p === 'All' ? 'All PICs' : p}</option>)}
           </select>
 
           {/* Tier filter */}
@@ -80,9 +88,7 @@ export default function Creators() {
       ) : (
         <div className="grid grid-cols-[repeat(auto-fill,minmax(260px,1fr))] gap-3.5">
           {filtered.map(c => {
-            const tier     = getTier(c.coins)
-            const progress = getProgress(c.coins)
-            const toNext   = coinsToNextTier(c.coins)
+            const tier       = getTier(c.coins)
             const isRejected = c.status === 'Rejected'
 
             return (
@@ -112,16 +118,6 @@ export default function Creators() {
                   </div>
                 </div>
 
-                {!isRejected && (
-                  <div className="mb-3.5">
-                    <div className="flex justify-between font-mono text-[10px] text-white/25 mb-1.5">
-                      <span>{toNext > 0 ? `${toNext.toLocaleString()} to ${getTier(c.coins + toNext).name}` : 'Max tier reached'}</span>
-                      <span>{c.coins.toLocaleString()}{toNext > 0 ? ` / ${(c.coins + toNext).toLocaleString()}` : ''}</span>
-                    </div>
-                    <ProgressBar value={progress} tierColor={tier.name.toLowerCase()} height="h-1" />
-                  </div>
-                )}
-
                 <div className="grid grid-cols-3 gap-2 border-t border-white/7 pt-3.5">
                   <div>
                     <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">Followers</div>
@@ -132,8 +128,8 @@ export default function Creators() {
                     <div className="font-syne text-[14px] font-bold text-white mt-0.5">{c.tasksCompleted}</div>
                   </div>
                   <div>
-                    <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">Status</div>
-                    <div className={`text-[11px] font-medium mt-0.5 ${isRejected?'text-rose-400/60':c.status==='Active'?'text-emerald-400':'text-amber-300'}`}>{c.status}</div>
+                    <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">PIC</div>
+                    <div className="text-[11px] font-medium text-white/60 mt-0.5 truncate">{c.pic}</div>
                   </div>
                 </div>
               </div>
