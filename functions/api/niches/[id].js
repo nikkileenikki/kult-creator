@@ -8,6 +8,6 @@ export async function onRequestDelete({ params, request, env }) {
   if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB not found', 500)
-  await db.prepare('DELETE FROM niches WHERE id = ?').bind(params.id).run()
+  await db.prepare('UPDATE niches SET deleted_at = ? WHERE id = ?').bind(new Date().toISOString(), params.id).run()
   return json({ success: true })
 }

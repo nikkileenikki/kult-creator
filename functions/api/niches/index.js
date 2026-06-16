@@ -8,7 +8,7 @@ export async function onRequestGet({ request, env }) {
   if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB not found', 500)
-  const { results } = await db.prepare('SELECT id, name FROM niches ORDER BY name ASC').all()
+  const { results } = await db.prepare('SELECT id, name FROM niches WHERE deleted_at IS NULL ORDER BY name ASC').all()
   return json(results)
 }
 
