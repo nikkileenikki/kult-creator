@@ -62,5 +62,6 @@ export async function onRequestDelete({ params, env }) {
   const now = new Date().toISOString()
   await db.prepare('UPDATE creators SET deleted_at = ? WHERE id = ?').bind(now, params.id).run()
   await db.prepare('UPDATE tasks SET deleted_at = ? WHERE creator_id = ?').bind(now, params.id).run()
+  await db.prepare('UPDATE activity_feed SET deleted_at = ? WHERE creator_id = ?').bind(now, params.id).run()
   return json({ success: true })
 }

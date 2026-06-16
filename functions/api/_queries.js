@@ -171,7 +171,7 @@ export const analyticsQ = {
     `).first(),
 
   tiers: async (db) => {
-    const { results } = await db.prepare('SELECT coins FROM creators WHERE deleted_at IS NULL').all()
+    const { results } = await db.prepare('SELECT coins FROM creators WHERE deleted_at IS NULL AND status != ?').bind('Rejected').all()
     const counts = { platinum: 0, diamond: 0, gold: 0, silver: 0, bronze: 0 }
     for (const { coins } of results) {
       if      (coins >= 10000) counts.platinum++
@@ -184,5 +184,5 @@ export const analyticsQ = {
   },
 
   activity: (db) =>
-    db.prepare('SELECT * FROM activity_feed ORDER BY created_at DESC LIMIT 10').all(),
+    db.prepare('SELECT * FROM activity_feed WHERE deleted_at IS NULL ORDER BY created_at DESC LIMIT 10').all(),
 }
