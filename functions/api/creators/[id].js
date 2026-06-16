@@ -59,7 +59,8 @@ export async function onRequestDelete({ params, env }) {
   if (!db) return err('DB binding not found', 500)
   const existing = await creatorQ.byId(db, params.id)
   if (!existing) return err('Creator not found', 404)
-  await db.prepare('DELETE FROM creators WHERE id = ?').bind(params.id).run()
-  await db.prepare('DELETE FROM tasks WHERE creator_id = ?').bind(params.id).run()
+  const now = new Date().toISOString()
+  await db.prepare('UPDATE creators SET deleted_at = ? WHERE id = ?').bind(now, params.id).run()
+  await db.prepare('UPDATE tasks SET deleted_at = ? WHERE creator_id = ?').bind(now, params.id).run()
   return json({ success: true })
 }

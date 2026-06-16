@@ -16,8 +16,8 @@ export async function onRequestPatch({ params, request, env }) {
 export async function onRequestDelete({ params, env }) {
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
-  const existing = await db.prepare('SELECT id FROM tasks WHERE id = ?').bind(params.id).first()
+  const existing = await db.prepare('SELECT id FROM tasks WHERE id = ? AND deleted_at IS NULL').bind(params.id).first()
   if (!existing) return err('Task not found', 404)
-  await db.prepare('DELETE FROM tasks WHERE id = ?').bind(params.id).run()
+  await db.prepare('UPDATE tasks SET deleted_at = ? WHERE id = ?').bind(new Date().toISOString(), params.id).run()
   return json({ success: true })
 }

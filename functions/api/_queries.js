@@ -2,10 +2,10 @@
 
 export const creatorQ = {
   list: (db) =>
-    db.prepare('SELECT * FROM creators ORDER BY coins DESC').all(),
+    db.prepare('SELECT * FROM creators WHERE deleted_at IS NULL ORDER BY coins DESC').all(),
 
   byId: (db, id) =>
-    db.prepare('SELECT * FROM creators WHERE id = ?').bind(id).first(),
+    db.prepare('SELECT * FROM creators WHERE id = ? AND deleted_at IS NULL').bind(id).first(),
 
   create: (db, c) =>
     db.prepare(`
@@ -27,7 +27,7 @@ export const creatorQ = {
         followers = ?, coins = ?, tasks_completed = ?, status = ?,
         pic = ?, contact = ?, avatar_color = ?, persona = ?,
         contact_number = ?, email = ?, platform_username = ?, date_of_birth = ?
-      WHERE id = ?
+      WHERE id = ? AND deleted_at IS NULL
     `).bind(
       c.name, c.initials, c.platform, c.niche, c.secondaryNiche ?? '',
       c.followers, c.coins, c.tasksCompleted, c.status,
@@ -40,12 +40,11 @@ export const creatorQ = {
 
 export const taskQ = {
   list: (db, filters = {}) => {
-    const wheres = [], vals = []
+    const wheres = ['deleted_at IS NULL'], vals = []
     if (filters.creatorId) { wheres.push('creator_id = ?'); vals.push(filters.creatorId) }
     if (filters.status)    { wheres.push('status = ?');     vals.push(filters.status) }
     if (filters.project)   { wheres.push('project = ?');    vals.push(filters.project) }
-    const where = wheres.length ? `WHERE ${wheres.join(' AND ')}` : ''
-    return db.prepare(`SELECT * FROM tasks ${where} ORDER BY due_date ASC`).bind(...vals).all()
+    return db.prepare(`SELECT * FROM tasks WHERE ${wheres.join(' AND ')} ORDER BY due_date ASC`).bind(...vals).all()
   },
 
   create: (db, t) =>
@@ -59,7 +58,7 @@ export const taskQ = {
     ).run(),
 
   updateStatus: (db, id, status) =>
-    db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, id).run(),
+    db.prepare('UPDATE tasks SET status = ? WHERE id = ? AND deleted_at IS NULL').bind(status, id).run(),
 
   update: (db, id, fields) => {
     const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
@@ -69,7 +68,7 @@ export const taskQ = {
     }
     if (!sets.length) return null
     vals.push(id)
-    return db.prepare(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+    return db.prepare(`UPDATE tasks SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`).bind(...vals).run()
   },
 }
 
@@ -111,10 +110,10 @@ export const recruitQ = {
 
 export const brandQ = {
   list: (db) =>
-    db.prepare('SELECT * FROM brands ORDER BY name ASC').all(),
+    db.prepare('SELECT * FROM brands WHERE deleted_at IS NULL ORDER BY name ASC').all(),
 
   byId: (db, id) =>
-    db.prepare('SELECT * FROM brands WHERE id = ?').bind(id).first(),
+    db.prepare('SELECT * FROM brands WHERE id = ? AND deleted_at IS NULL').bind(id).first(),
 
   create: (db, b) =>
     db.prepare(`
@@ -130,16 +129,16 @@ export const brandQ = {
     }
     if (!sets.length) return null
     vals.push(id)
-    return db.prepare(`UPDATE brands SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+    return db.prepare(`UPDATE brands SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`).bind(...vals).run()
   },
 }
 
 export const campaignQ = {
   list: (db) =>
-    db.prepare('SELECT * FROM campaigns ORDER BY created_at DESC').all(),
+    db.prepare('SELECT * FROM campaigns WHERE deleted_at IS NULL ORDER BY created_at DESC').all(),
 
   byId: (db, id) =>
-    db.prepare('SELECT * FROM campaigns WHERE id = ?').bind(id).first(),
+    db.prepare('SELECT * FROM campaigns WHERE id = ? AND deleted_at IS NULL').bind(id).first(),
 
   create: (db, c) =>
     db.prepare(`
@@ -155,7 +154,7 @@ export const campaignQ = {
     }
     if (!sets.length) return null
     vals.push(id)
-    return db.prepare(`UPDATE campaigns SET ${sets.join(', ')} WHERE id = ?`).bind(...vals).run()
+    return db.prepare(`UPDATE campaigns SET ${sets.join(', ')} WHERE id = ? AND deleted_at IS NULL`).bind(...vals).run()
   },
 }
 
@@ -163,16 +162,16 @@ export const analyticsQ = {
   dashboard: (db) =>
     db.prepare(`
       SELECT
-        (SELECT COUNT(*) FROM creators WHERE status = 'Active')                                   AS active_creators,
-        (SELECT COUNT(*) FROM tasks WHERE status NOT IN ('Completed','Overdue'))                   AS due_this_week,
-        (SELECT COUNT(*) FROM tasks WHERE status = 'Overdue')                                     AS overdue,
-        (SELECT COUNT(*) FROM tasks WHERE status = 'Completed')                                   AS completed,
-        (SELECT COUNT(*) FROM tasks)                                                               AS total_tasks,
-        (SELECT COUNT(*) FROM recruit_requests WHERE status IN ('Pending','Under Review'))         AS pending_recruits
+        (SELECT COUNT(*) FROM creators WHERE status = 'Active' AND deleted_at IS NULL)                          AS active_creators,
+        (SELECT COUNT(*) FROM tasks WHERE status NOT IN ('Completed','Overdue') AND deleted_at IS NULL)          AS due_this_week,
+        (SELECT COUNT(*) FROM tasks WHERE status = 'Overdue' AND deleted_at IS NULL)                            AS overdue,
+        (SELECT COUNT(*) FROM tasks WHERE status = 'Completed' AND deleted_at IS NULL)                          AS completed,
+        (SELECT COUNT(*) FROM tasks WHERE deleted_at IS NULL)                                                   AS total_tasks,
+        (SELECT COUNT(*) FROM recruit_requests WHERE status IN ('Pending','Under Review'))                      AS pending_recruits
     `).first(),
 
   tiers: async (db) => {
-    const { results } = await db.prepare('SELECT coins FROM creators').all()
+    const { results } = await db.prepare('SELECT coins FROM creators WHERE deleted_at IS NULL').all()
     const counts = { platinum: 0, diamond: 0, gold: 0, silver: 0, bronze: 0 }
     for (const { coins } of results) {
       if      (coins >= 10000) counts.platinum++
