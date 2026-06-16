@@ -102,7 +102,8 @@ export default function Persona() {
   const can = useAuthStore(s => s.can)
   const storedPics = useAuthStore(s => s.pics)
   const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
-  const tasks = useTaskStore(s => s.tasks)
+  const tasks              = useTaskStore(s => s.tasks)
+  const removeCreatorTasks = useTaskStore(s => s.removeCreatorTasks)
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft]     = useState(null)
@@ -211,6 +212,7 @@ export default function Persona() {
                   onClick={async () => {
                     if (!window.confirm(`Delete ${creator.name}? This cannot be undone.`)) return
                     await deleteCreator(creator.id)
+                    removeCreatorTasks(creator.id)
                     showToast(`${creator.name} deleted`)
                     navigate('/creators')
                   }}
@@ -279,12 +281,37 @@ export default function Persona() {
                   <Badge variant={tier.name.toLowerCase()}>
                     {tier.name === 'Platinum' ? '👑' : tier.name === 'Diamond' ? '💎' : tier.name === 'Gold' ? '🥇' : tier.name === 'Silver' ? '🥈' : '🥉'} {tier.name}
                   </Badge>
-                  <Badge variant={creator.status === 'Active' ? 'green' : 'amber'}>{creator.status}</Badge>
+                  <Badge variant={creator.status === 'Active' ? 'green' : creator.status === 'Rejected' ? 'red' : 'amber'}>{creator.status}</Badge>
                 </div>
                 <div className="font-mono text-[11px] text-white/25 mt-2">{creator.coins.toLocaleString()} 🪙 · {toNext === 0 ? 'Max tier' : `${toNext.toLocaleString()} to next`}</div>
                 <div className="mt-2.5 px-1">
                   <ProgressBar value={progress} tierColor={tier.name.toLowerCase()} height="h-[5px]" />
                 </div>
+                {can('creators.edit') && (
+                  <div className="flex justify-center gap-1.5 mt-3">
+                    {['Active', 'On Hold', 'Rejected'].map(s => (
+                      <button
+                        key={s}
+                        type="button"
+                        disabled={creator.status === s}
+                        onClick={async () => {
+                          await updateCreator(creator.id, { status: s })
+                          showToast(`${creator.name} marked as ${s}`)
+                        }}
+                        className={cn(
+                          'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-all',
+                          creator.status === s
+                            ? s === 'Active'   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 cursor-default'
+                            : s === 'On Hold'  ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 cursor-default'
+                                               : 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
+                            : 'bg-white/5 border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
+                        )}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </>
             )}
           </div>
@@ -296,7 +323,7 @@ export default function Persona() {
                   { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
                   { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
                   { label: 'Niches',             key: 'niche',             type: 'multi',  options: NICHES },
-                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold'] },
+                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold','Rejected'] },
                   { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
                   { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
                 ].map(f => (

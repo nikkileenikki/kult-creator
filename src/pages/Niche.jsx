@@ -13,6 +13,7 @@ export default function Niche() {
 
   const nicheStats = useMemo(() => NICHES.map(niche => {
     const list = creators.filter(c => {
+      if (c.status === 'Rejected') return false
       const niches = [c.niche, c.secondaryNiche].filter(Boolean).flatMap(n => n.split(', ').map(s => s.trim()))
       return niches.includes(niche)
     })

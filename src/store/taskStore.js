@@ -45,4 +45,8 @@ export const useTaskStore = create((set, get) => ({
     set(state => ({ tasks: state.tasks.filter(t => t.id !== id) }))
     await apiDeleteTask(id)
   },
+
+  removeCreatorTasks: (creatorId) => {
+    set(state => ({ tasks: state.tasks.filter(t => t.creatorId !== creatorId) }))
+  },
 }))
