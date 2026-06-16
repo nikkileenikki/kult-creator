@@ -5,7 +5,6 @@ import { useAuthStore } from '@/store/authStore'
 import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar } from 'lucide-react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
-import { PICS } from '@/lib/data'
 
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
@@ -29,6 +28,8 @@ function Row({ icon: Icon, label, children }) {
 }
 
 function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
+  const storedPics = useAuthStore(s => s.pics)
+  const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
   const [step, setStep]                     = useState(null)  // null | 'approve' | 'reject' | 'review'
   const [selectedPic, setSelectedPic]       = useState(PICS[0])
   const [rejectionReason, setRejectionReason] = useState('')

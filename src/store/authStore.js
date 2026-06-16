@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { request } from '@/lib/api'
 
 function parseToken(token) {
   try {
@@ -14,6 +15,14 @@ const initialUser = storedToken ? parseToken(storedToken) : null
 export const useAuthStore = create((set, get) => ({
   token: initialUser ? storedToken : null,
   user:  initialUser,
+  pics: [],
+
+  async fetchPics() {
+    try {
+      const names = await request('GET', '/users/pics')
+      set({ pics: Array.isArray(names) ? names : [] })
+    } catch { /* leave empty — fallback used in components */ }
+  },
 
   login(token, user) {
     localStorage.setItem('ce_auth_token', token)

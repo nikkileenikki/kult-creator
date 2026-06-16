@@ -5,7 +5,7 @@ import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
-import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
+import { PLATFORMS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
@@ -99,6 +99,8 @@ export default function Persona() {
   const showToast  = useUIStore(s => s.showToast)
   const canViewContacts = useAuthStore(s => s.canViewContacts)
   const can = useAuthStore(s => s.can)
+  const storedPics = useAuthStore(s => s.pics)
+  const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
   const tasks = useTaskStore(s => s.tasks)
 
   const [editing, setEditing] = useState(false)

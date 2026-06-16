@@ -9,7 +9,6 @@ import { useCreatorStore } from '@/store/creatorStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
-import { PICS } from '@/lib/data'
 import { cn } from '@/lib/utils'
 
 const schema = z.object({
@@ -40,6 +39,8 @@ export default function EditTaskModal() {
   const creators   = useCreatorStore(s => s.creators)
   const campaigns  = useCampaignStore(s => s.campaigns)
   const canEdit    = useAuthStore(s => s.can('creators.edit'))
+  const storedPics = useAuthStore(s => s.pics)
+  const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
 
   const {
     register,

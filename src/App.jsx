@@ -59,6 +59,7 @@ export default function App() {
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
   const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns)
   const fetchBrands    = useBrandStore(s => s.fetchBrands)
+  const fetchPics      = useAuthStore(s => s.fetchPics)
 
   useEffect(() => {
     if (!token || !user) return
@@ -67,6 +68,7 @@ export default function App() {
     fetchRecruits()
     fetchCampaigns()
     fetchBrands()
+    fetchPics()
   }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!token || !user) {

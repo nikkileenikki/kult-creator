@@ -6,7 +6,8 @@ import { X } from 'lucide-react'
 import { useEffect } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
-import { PLATFORMS, PICS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
+import { useAuthStore } from '@/store/authStore'
+import { PLATFORMS, CONTACT_METHODS, AVATAR_COLOR_OPTIONS, NICHES } from '@/lib/data'
 import Avatar from '@/components/shared/Avatar'
 import { cn } from '@/lib/utils'
 
@@ -36,6 +37,8 @@ export default function AddCreatorModal() {
   const closeModal = useUIStore(s => s.closeAddCreator)
   const showToast  = useUIStore(s => s.showToast)
   const addCreator = useCreatorStore(s => s.addCreator)
+  const storedPics = useAuthStore(s => s.pics)
+  const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
 
   const {
     register,
