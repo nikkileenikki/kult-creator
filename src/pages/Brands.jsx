@@ -113,7 +113,7 @@ export default function Brands() {
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Brands</h1>
           <p className="text-[12px] text-white/30 mt-1">
-            {filtered.length}{filtered.length !== brands.length ? ` of ${brands.length}` : ''} brand{brands.length !== 1 ? 's' : ''} · {campaigns.length} campaigns total
+            {filtered.length} brand{filtered.length !== 1 ? 's' : ''} · {campaigns.filter(c => filtered.some(b => b.id === c.brandId)).length} campaign{campaigns.filter(c => filtered.some(b => b.id === c.brandId)).length !== 1 ? 's' : ''}
           </p>
         </div>
         {industries.length > 2 && (
