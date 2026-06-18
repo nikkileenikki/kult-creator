@@ -50,11 +50,11 @@ export const taskQ = {
   create: (db, t) =>
     db.prepare(`
       INSERT INTO tasks
-        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
-      t.id, t.creatorId ?? '', t.creatorName ?? 'Unassigned', t.platform ?? '', t.task,
-      t.project, t.status, t.priority, t.pic, t.dueDate, t.coins,
+      t.id, t.creatorId || null, t.creatorName ?? 'Unassigned', t.platform ?? '', t.task,
+      t.project ?? '', t.status, t.priority, t.pic, t.dueDate, t.coins, t.notes ?? '',
     ).run(),
 
   updateStatus: (db, id, status) =>
@@ -64,7 +64,9 @@ export const taskQ = {
     const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
-      if (key in fields) { sets.push(`${col} = ?`); vals.push(fields[key]) }
+      if (!(key in fields)) continue
+      sets.push(`${col} = ?`)
+      vals.push(key === 'creatorId' ? (fields[key] || null) : fields[key])
     }
     if (!sets.length) return null
     vals.push(id)

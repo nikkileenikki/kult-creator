@@ -284,7 +284,12 @@ export default function Persona() {
                   <Badge variant={tier.name.toLowerCase()}>
                     {tier.name === 'Platinum' ? '👑' : tier.name === 'Diamond' ? '💎' : tier.name === 'Gold' ? '🥇' : tier.name === 'Silver' ? '🥈' : '🥉'} {tier.name}
                   </Badge>
-                  <Badge variant={creator.status === 'Active' ? 'green' : creator.status === 'Rejected' ? 'red' : 'amber'}>{creator.status}</Badge>
+                  <Badge variant={
+                    creator.status === 'Active'          ? 'green' :
+                    creator.status === 'Pending to sign' ? 'amber' :
+                    creator.status === 'Suspended'       ? 'red'   :
+                                                           'red'
+                  }>{creator.status}</Badge>
                 </div>
                 <div className="font-mono text-[11px] text-white/25 mt-2">{creator.coins.toLocaleString()} 🪙 · {toNext === 0 ? 'Max tier' : `${toNext.toLocaleString()} to next`}</div>
                 <div className="mt-2.5 px-1">
@@ -292,7 +297,7 @@ export default function Persona() {
                 </div>
                 {can('creators.edit') && (
                   <div className="flex justify-center gap-1.5 mt-3">
-                    {['Active', 'On Hold', 'Rejected'].map(s => (
+                    {['Active', 'Pending to sign', 'Suspended', 'Rejected'].map(s => (
                       <button
                         key={s}
                         type="button"
@@ -304,9 +309,10 @@ export default function Persona() {
                         className={cn(
                           'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-all',
                           creator.status === s
-                            ? s === 'Active'   ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 cursor-default'
-                            : s === 'On Hold'  ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 cursor-default'
-                                               : 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
+                            ? s === 'Active'            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 cursor-default'
+                            : s === 'Pending to sign'   ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 cursor-default'
+                            : s === 'Suspended'         ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
+                                                        : 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
                             : 'bg-white/5 border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
                         )}
                       >
@@ -326,7 +332,7 @@ export default function Persona() {
                   { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
                   { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
                   { label: 'Niches',             key: 'niche',             type: 'multi',  options: NICHES },
-                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold','Rejected'] },
+                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','Pending to sign','Suspended','Rejected'] },
                   { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
                   { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
                 ].map(f => (

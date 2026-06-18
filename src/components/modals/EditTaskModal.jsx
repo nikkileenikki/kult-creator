@@ -132,7 +132,7 @@ export default function EditTaskModal() {
                   <label className={LABEL}>Creator</label>
                   <select {...register('creatorId')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
                     <option value="">Unassigned</option>
-                    {creators.filter(c => c.status !== 'Rejected').map(c => (
+                    {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
                       <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
                     ))}
                   </select>

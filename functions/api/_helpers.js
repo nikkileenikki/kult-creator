@@ -43,7 +43,7 @@ export function mapTask(row) {
   if (!row) return null
   return {
     id:          row.id,
-    creatorId:   row.creator_id,
+    creatorId:   row.creator_id ?? '',
     creatorName: row.creator_name,
     platform:    row.platform,
     task:        row.task,

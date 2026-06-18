@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils'
 const schema = z.object({
   creatorId: z.string().optional(),
   task:      z.string().min(1, 'Task name is required').max(100, 'Max 100 characters'),
-  project:   z.string().min(1, 'Select a project'),
+  project:   z.string().optional().default(''),
   status:    z.enum(['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue']),
   priority:  z.enum(['Low', 'Medium', 'High', 'Urgent']),
   pic:       z.string().min(1, 'PIC is required'),
@@ -76,7 +76,7 @@ export default function AddTaskModal() {
         notes:     '',
       })
     }
-  }, [open, prefill]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [open, prefill, defaultProject]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const selectedCreatorId = watch('creatorId')
   const selectedCreator   = creators.find(c => c.id === selectedCreatorId)
@@ -88,21 +88,25 @@ export default function AddTaskModal() {
 
   async function onSubmit(data) {
     const creator = creators.find(c => c.id === data.creatorId)
-    await addTask({
-      creatorId:   data.creatorId || '',
-      creatorName: creator?.name ?? 'Unassigned',
-      platform:    creator?.platform ?? '',
-      task:        data.task,
-      project:     data.project,
-      status:      data.status,
-      priority:    data.priority,
-      pic:         data.pic,
-      dueDate:     data.dueDate,
-      coins:       data.coins,
-      notes:       data.notes,
-    })
-    showToast(creator ? `Task added for ${creator.name}` : 'Task added (unassigned)')
-    onClose()
+    try {
+      await addTask({
+        creatorId:   data.creatorId || '',
+        creatorName: creator?.name ?? 'Unassigned',
+        platform:    creator?.platform ?? '',
+        task:        data.task,
+        project:     data.project,
+        status:      data.status,
+        priority:    data.priority,
+        pic:         data.pic,
+        dueDate:     data.dueDate,
+        coins:       data.coins,
+        notes:       data.notes,
+      })
+      showToast(creator ? `Task added for ${creator.name}` : 'Task added (unassigned)')
+      onClose()
+    } catch (e) {
+      showToast(e?.message ?? 'Failed to add task. Please try again.', 'error')
+    }
   }
 
   const projectLocked = !!prefill?.project
@@ -147,7 +151,7 @@ export default function AddTaskModal() {
                       className={cn(INPUT, selectedCreator ? 'pl-11' : '', creatorLocked ? 'opacity-60 cursor-not-allowed' : '')}
                     >
                       <option value="">Unassigned</option>
-                      {creators.filter(c => c.status !== 'Rejected').map(c => (
+                      {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
                         <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
                       ))}
                     </select>
@@ -170,6 +174,7 @@ export default function AddTaskModal() {
                       disabled={projectLocked}
                       className={cn(INPUT, projectLocked ? 'opacity-60 cursor-not-allowed' : '')}
                     >
+                      <option value="">— No project —</option>
                       {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
                     </select>
                     {errors.project && <p className={ERR}>{errors.project.message}</p>}
