@@ -93,7 +93,7 @@ export const CREATORS = [
   {
     id: '4', initials: 'FH', name: 'Farah Hana', platform: 'TikTok', secondaryPlatform: '',
     niche: 'Food & Lifestyle, Entertainment', secondaryNiche: '', followers: 145000, coins: 1100,
-    tasksCompleted: 11, status: 'On Hold', pic: 'Lina M.',
+    tasksCompleted: 11, status: 'Pending to sign', pic: 'Lina M.',
     contact: 'WhatsApp', joinedDate: '2024-06-01', avatarColor: 'r',
     contactNumber: '+60 17-654 3210', email: 'farah.hana@gmail.com', platformUsername: '@farahhana.my', dateOfBirth: '1999-08-30',
     persona: {

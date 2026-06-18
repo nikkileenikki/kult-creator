@@ -17,7 +17,7 @@ const schema = z.object({
   secondaryPlatform: z.string().default(''),
   niche:             z.string().min(1, 'Niche is required'),
   followers:         z.coerce.number().min(0, 'Min 0').max(100_000_000, 'Too large'),
-  status:            z.enum(['Active', 'On Hold']),
+  status:            z.enum(['Active', 'Pending to sign', 'Suspended', 'Rejected']),
   pic:               z.string().min(1, 'PIC is required'),
   contact:           z.string().min(1, 'Select a contact method'),
   avatarColor:       z.string().min(1),
@@ -231,7 +231,9 @@ export default function AddCreatorModal() {
                     <label className={LABEL}>Status</label>
                     <select {...register('status')} className={INPUT}>
                       <option>Active</option>
-                      <option>On Hold</option>
+                      <option>Pending to sign</option>
+                      <option>Suspended</option>
+                      <option>Rejected</option>
                     </select>
                   </div>
                 </div>

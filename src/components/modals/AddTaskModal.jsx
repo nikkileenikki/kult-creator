@@ -149,7 +149,7 @@ export default function AddTaskModal() {
                       className={cn(INPUT, selectedCreator ? 'pl-11' : '', creatorLocked ? 'opacity-60 cursor-not-allowed' : '')}
                     >
                       <option value="">Unassigned</option>
-                      {creators.filter(c => c.status !== 'Rejected').map(c => (
+                      {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
                         <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
                       ))}
                     </select>

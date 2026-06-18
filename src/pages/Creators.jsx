@@ -68,7 +68,8 @@ export default function Creators() {
           {/* Status filter */}
           <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className={SELECT}>
             <option value="Active">Active</option>
-            <option value="On Hold">On Hold</option>
+            <option value="Pending to sign">Pending to sign</option>
+            <option value="Suspended">Suspended</option>
             <option value="All">All Statuses</option>
             <option value="Rejected">Rejected</option>
           </select>
@@ -105,7 +106,12 @@ export default function Creators() {
                         <Badge variant={TIER_BADGE[tier.name]}>{TIER_EMOJI[tier.name]} {tier.name}</Badge>
                       )}
                       {!isRejected && (
-                        <span className={`w-1.5 h-1.5 rounded-full ${c.status==='Active'?'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,.5)]':'bg-amber-400'}`} />
+                        <span className={`w-1.5 h-1.5 rounded-full ${
+                          c.status==='Active'          ? 'bg-emerald-400 shadow-[0_0_5px_rgba(52,211,153,.5)]' :
+                          c.status==='Pending to sign' ? 'bg-amber-400' :
+                          c.status==='Suspended'       ? 'bg-rose-400' :
+                                                         'bg-white/20'
+                        }`} />
                       )}
                       <span className="font-mono text-[11px] text-white/25 ml-auto">{c.coins.toLocaleString()} 🪙</span>
                     </div>
@@ -133,7 +139,12 @@ export default function Creators() {
                   </div>
                   <div>
                     <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">Status</div>
-                    <div className={`text-[11px] font-medium mt-0.5 ${isRejected?'text-rose-400/60':c.status==='Active'?'text-emerald-400':'text-amber-300'}`}>{c.status}</div>
+                    <div className={`text-[11px] font-medium mt-0.5 ${
+                      isRejected              ? 'text-rose-400/60' :
+                      c.status==='Active'     ? 'text-emerald-400' :
+                      c.status==='Suspended'  ? 'text-rose-400' :
+                                                'text-amber-300'
+                    }`}>{c.status}</div>
                   </div>
                 </div>
               </div>

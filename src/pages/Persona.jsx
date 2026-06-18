@@ -260,7 +260,12 @@ export default function Persona() {
                   <Badge variant={tier.name.toLowerCase()}>
                     {tier.name === 'Platinum' ? '👑' : tier.name === 'Diamond' ? '💎' : tier.name === 'Gold' ? '🥇' : tier.name === 'Silver' ? '🥈' : '🥉'} {tier.name}
                   </Badge>
-                  <Badge variant={creator.status === 'Active' ? 'green' : 'amber'}>{creator.status}</Badge>
+                  <Badge variant={
+                    creator.status === 'Active'          ? 'green' :
+                    creator.status === 'Pending to sign' ? 'amber' :
+                    creator.status === 'Suspended'       ? 'red'   :
+                                                           'red'
+                  }>{creator.status}</Badge>
                 </div>
                 <div className="font-mono text-[11px] text-white/25 mt-2">{creator.coins.toLocaleString()} 🪙 · {toNext === 0 ? 'Max tier' : `${toNext.toLocaleString()} to next`}</div>
                 <div className="mt-2.5 px-1">
@@ -277,7 +282,7 @@ export default function Persona() {
                   { label: 'Primary Platform',   key: 'platform',          type: 'select', options: PLATFORMS },
                   { label: 'Secondary Platform', key: 'secondaryPlatform', type: 'select', options: PLATFORMS, optional: true },
                   { label: 'Niches',             key: 'niche',             type: 'multi',  options: NICHES },
-                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','On Hold'] },
+                  { label: 'Status',             key: 'status',            type: 'select', options: ['Active','Pending to sign','Suspended','Rejected'] },
                   { label: 'PIC',                key: 'pic',               type: 'select', options: PICS },
                   { label: 'Contact',            key: 'contact',           type: 'select', options: CONTACT_METHODS },
                 ].map(f => (

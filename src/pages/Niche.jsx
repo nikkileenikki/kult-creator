@@ -62,7 +62,12 @@ export default function Niche() {
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/7 text-[11px] font-mono text-white/30">
                   <span>{(c.followers / 1000).toFixed(0)}K followers</span>
-                  <span className={c.status === 'Active' ? 'text-emerald-400' : 'text-amber-300'}>{c.status}</span>
+                  <span className={
+                    c.status === 'Active'          ? 'text-emerald-400' :
+                    c.status === 'Suspended'        ? 'text-rose-400' :
+                    c.status === 'Rejected'         ? 'text-rose-400/60' :
+                                                      'text-amber-300'
+                  }>{c.status}</span>
                 </div>
               </div>
             ))}
