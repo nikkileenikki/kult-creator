@@ -43,3 +43,8 @@ export async function updateTaskStatus(taskId, status) {
   }
   return request('PATCH', `/tasks/${taskId}/status`, { status })
 }
+
+export async function deleteTask(id) {
+  if (USE_MOCK) { await delay(200); return { success: true } }
+  return request('DELETE', `/tasks/${id}`)
+}

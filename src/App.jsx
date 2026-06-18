@@ -27,6 +27,7 @@ import { useTaskStore } from '@/store/taskStore'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useBrandStore } from '@/store/brandStore'
+import { useNicheStore } from '@/store/nicheStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -59,6 +60,8 @@ export default function App() {
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
   const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns)
   const fetchBrands    = useBrandStore(s => s.fetchBrands)
+  const fetchPics      = useAuthStore(s => s.fetchPics)
+  const fetchNiches    = useNicheStore(s => s.fetchNiches)
 
   useEffect(() => {
     if (!token || !user) return
@@ -67,6 +70,8 @@ export default function App() {
     fetchRecruits()
     fetchCampaigns()
     fetchBrands()
+    fetchPics()
+    fetchNiches()
   }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!token || !user) {

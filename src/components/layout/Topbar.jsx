@@ -20,16 +20,16 @@ function getUserInitials(displayName) {
 
 
 const PAGE_META = {
-  '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…' },
-  '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…' },
-  '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…' },
-  '/brands':    { cta: 'New Brand',    action: 'openAddBrand',    placeholder: 'Search brands…' },
-  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…' },
-  '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…' },
-  '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…' },
-  '/settings':  { cta: null,           action: null,               placeholder: 'Search…' },
-  '/users':     { cta: null,           action: null,               placeholder: 'Search users…' },
-  '/users/new': { cta: null,           action: null,               placeholder: 'Search…' },
+  '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…',     permission: 'creators.edit' },
+  '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…', permission: 'campaigns.manage' },
+  '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…',  permission: 'creators.edit' },
+  '/brands':    { cta: 'New Brand',    action: 'openAddBrand',    placeholder: 'Search brands…',     permission: 'brands.manage' },
+  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…',     permission: 'creators.edit' },
+  '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…',  permission: null },
+  '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…',  permission: null },
+  '/settings':  { cta: null,           action: null,               placeholder: 'Search…',           permission: null },
+  '/users':     { cta: null,           action: null,               placeholder: 'Search users…',     permission: null },
+  '/users/new': { cta: null,           action: null,               placeholder: 'Search…',           permission: null },
 }
 
 export default function Topbar() {
@@ -47,6 +47,7 @@ export default function Topbar() {
   const setGlobalSearch     = useUIStore(s => s.setGlobalSearch)
   const user                = useAuthStore(s => s.user)
   const logout              = useAuthStore(s => s.logout)
+  const can                 = useAuthStore(s => s.can)
 
   useEffect(() => { setGlobalSearch('') }, [pathname]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -131,8 +132,8 @@ export default function Topbar() {
           {notificationsOpen && <NotificationsPanel />}
         </div>
 
-        {/* CTA */}
-        {meta.cta && (
+        {/* CTA — only shown when the page has an action AND the user has the required permission */}
+        {meta.cta && (!meta.permission || can(meta.permission)) && (
           <button
             onClick={handleCTA}
             className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:shadow-[0_0_28px_rgba(108,92,231,.4)] hover:-translate-y-px"

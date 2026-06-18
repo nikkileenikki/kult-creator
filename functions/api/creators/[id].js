@@ -53,3 +53,15 @@ export async function onRequestPatch({ params, request, env }) {
   updated.email          = await decryptField(updated.email, env)
   return json(mapCreator(updated))
 }
+
+export async function onRequestDelete({ params, env }) {
+  const db = getDB(env)
+  if (!db) return err('DB binding not found', 500)
+  const existing = await creatorQ.byId(db, params.id)
+  if (!existing) return err('Creator not found', 404)
+  const now = new Date().toISOString()
+  await db.prepare('UPDATE creators SET deleted_at = ? WHERE id = ?').bind(now, params.id).run()
+  await db.prepare('UPDATE tasks SET deleted_at = ? WHERE creator_id = ?').bind(now, params.id).run()
+  await db.prepare('UPDATE activity_feed SET deleted_at = ? WHERE creator_id = ?').bind(now, params.id).run()
+  return json({ success: true })
+}

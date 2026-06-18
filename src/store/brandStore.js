@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { fetchBrands, createBrand, updateBrand as apiUpdate } from '../lib/api/brands'
+import { fetchBrands, createBrand, updateBrand as apiUpdate, deleteBrand as apiDelete } from '../lib/api/brands'
 
 export const useBrandStore = create((set) => ({
   brands:  [],
@@ -25,5 +25,10 @@ export const useBrandStore = create((set) => ({
   updateBrand: async (id, patch) => {
     set(s => ({ brands: s.brands.map(b => b.id === id ? { ...b, ...patch } : b) }))
     await apiUpdate(id, patch)
+  },
+
+  deleteBrand: async (id) => {
+    set(s => ({ brands: s.brands.filter(b => b.id !== id) }))
+    await apiDelete(id)
   },
 }))

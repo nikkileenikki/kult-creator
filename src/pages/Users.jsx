@@ -22,6 +22,7 @@ function getInitials(name) {
 
 function EditForm({ user, onSave, onCancel }) {
   const [displayName, setDisplayName] = useState(user.displayName)
+  const [username,    setUsername]    = useState(user.username)
   const [password,    setPassword]    = useState('')
   const [showPw,      setShowPw]      = useState(false)
   const [role,        setRole]        = useState(user.role)
@@ -44,6 +45,7 @@ function EditForm({ user, onSave, onCancel }) {
     try {
       const body = { displayName, role, permissions: perms }
       if (password) body.password = password
+      if (username !== user.username) body.username = username
       await onSave(body)
     } catch (e) {
       setError(e.message)
@@ -70,6 +72,13 @@ function EditForm({ user, onSave, onCancel }) {
               {showPw ? <EyeOff size={13} /> : <Eye size={13} />}
             </button>
           </div>
+        </div>
+      </div>
+      <div>
+        <label className={LABEL}>Username</label>
+        <div className="relative">
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white/30 text-[13px]">@</span>
+          <input value={username} onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())} className={INPUT + ' pl-7'} />
         </div>
       </div>
 
@@ -120,6 +129,7 @@ function EditForm({ user, onSave, onCancel }) {
 export default function Users() {
   const navigate    = useNavigate()
   const authUser    = useAuthStore(s => s.user)
+  const can         = useAuthStore(s => s.can)
   const showToast   = useUIStore(s => s.showToast)
 
   const [users,     setUsers]     = useState([])
@@ -171,12 +181,14 @@ export default function Users() {
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Users</h1>
           <p className="text-[12px] text-white/30 mt-1">{users.length} account{users.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
-          onClick={() => navigate('/users/new')}
-          className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:-translate-y-px"
-        >
-          <Plus size={14} /> New User
-        </button>
+        {can('users.manage') && (
+          <button
+            onClick={() => navigate('/users/new')}
+            className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)] hover:-translate-y-px"
+          >
+            <Plus size={14} /> New User
+          </button>
+        )}
       </div>
 
       {/* Search */}
@@ -234,22 +246,24 @@ export default function Users() {
                   </div>
 
                   {/* Actions */}
-                  <div className="flex items-center gap-1 flex-shrink-0">
-                    <button
-                      onClick={() => setEditingId(editingId === u.id ? null : u.id)}
-                      className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editingId === u.id ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70'}`}
-                    >
-                      <Pencil size={11} />
-                    </button>
-                    {u.id !== authUser?.sub && (
+                  {can('users.manage') && (
+                    <div className="flex items-center gap-1 flex-shrink-0">
                       <button
-                        onClick={() => handleDelete(u)}
-                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
+                        onClick={() => setEditingId(editingId === u.id ? null : u.id)}
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editingId === u.id ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70'}`}
                       >
-                        <Trash2 size={11} />
+                        <Pencil size={11} />
                       </button>
-                    )}
-                  </div>
+                      {u.id !== authUser?.sub && (
+                        <button
+                          onClick={() => handleDelete(u)}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {editingId === u.id && (

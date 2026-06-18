@@ -3,13 +3,17 @@ import { useNavigate } from 'react-router-dom'
 import { useBrandStore } from '@/store/brandStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
-import { ChevronRight } from 'lucide-react'
+import { useAuthStore } from '@/store/authStore'
+import { ChevronRight, Trash2 } from 'lucide-react'
 
 export default function Brands() {
   const navigate     = useNavigate()
   const brands       = useBrandStore(s => s.brands)
+  const deleteBrand  = useBrandStore(s => s.deleteBrand)
   const campaigns    = useCampaignStore(s => s.campaigns)
   const globalSearch = useUIStore(s => s.globalSearch)
+  const showToast    = useUIStore(s => s.showToast)
+  const can          = useAuthStore(s => s.can)
 
   const [selected,        setSelected]        = useState(null)
   const [filterIndustry,  setFilterIndustry]  = useState('All')
@@ -41,6 +45,19 @@ export default function Brands() {
           </button>
           <ChevronRight size={14} className="text-white/20" />
           <span className="text-white text-[13px]">{selectedBrand.name}</span>
+          {can('brands.manage') && (
+            <button
+              onClick={async () => {
+                if (!window.confirm(`Delete brand "${selectedBrand.name}"? This cannot be undone.`)) return
+                await deleteBrand(selectedBrand.id)
+                showToast(`${selectedBrand.name} deleted`)
+                setSelected(null)
+              }}
+              className="ml-auto flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[13px] font-semibold transition-all"
+            >
+              <Trash2 size={13} />
+            </button>
+          )}
         </div>
 
         <div className="flex items-center gap-4 mb-5">
@@ -96,7 +113,7 @@ export default function Brands() {
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Brands</h1>
           <p className="text-[12px] text-white/30 mt-1">
-            {filtered.length}{filtered.length !== brands.length ? ` of ${brands.length}` : ''} brand{brands.length !== 1 ? 's' : ''} · {campaigns.length} campaigns total
+            {filtered.length} brand{filtered.length !== 1 ? 's' : ''} · {campaigns.filter(c => filtered.some(b => b.id === c.brandId)).length} campaign{campaigns.filter(c => filtered.some(b => b.id === c.brandId)).length !== 1 ? 's' : ''}
           </p>
         </div>
         {industries.length > 2 && (

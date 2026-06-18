@@ -20,3 +20,8 @@ export async function updateCampaign(id, data) {
   if (USE_MOCK) { await delay(200); return { id, ...data } }
   return request('PATCH', `/campaigns/${id}`, data)
 }
+
+export async function deleteCampaign(id) {
+  if (USE_MOCK) { await delay(200); return { success: true } }
+  return request('DELETE', `/campaigns/${id}`)
+}

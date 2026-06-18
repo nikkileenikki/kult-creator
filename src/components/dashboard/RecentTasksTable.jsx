@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 
@@ -16,31 +17,48 @@ const PRIORITY_DOT = {
   Low:    'bg-emerald-400',
 }
 
+const STATUS_OPTIONS = ['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue']
+
 const AVATAR_COLORS = ['v','b','g','r','t','i']
 
+const SELECT = 'text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#16161C] text-white/40 outline-none hover:border-white/12 cursor-pointer'
+
 export default function RecentTasksTable({ tasks = [] }) {
+  const [filterProject, setFilterProject] = useState('')
+  const [filterStatus,  setFilterStatus]  = useState('')
+
+  const projects = [...new Set(tasks.map(t => t.project).filter(Boolean))].sort()
+
+  const visible = tasks
+    .filter(t => !filterProject || t.project === filterProject)
+    .filter(t => !filterStatus  || t.status  === filterStatus)
+    .slice(0, 5)
+
   return (
     <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] overflow-hidden">
       <div className="px-4 py-3.5 border-b border-white/7 flex items-center gap-3">
         <span className="font-syne text-[13px] font-bold text-white">Recent Tasks</span>
         <div className="ml-auto flex gap-2">
-          {['All Projects','All Statuses'].map(p => (
-            <select key={p} className="text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#16161C] text-white/40 outline-none hover:border-white/12 cursor-pointer">
-              <option>{p}</option>
-            </select>
-          ))}
+          <select value={filterProject} onChange={e => setFilterProject(e.target.value)} className={SELECT}>
+            <option value="">All Campaigns</option>
+            {projects.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
+          <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)} className={SELECT}>
+            <option value="">All Statuses</option>
+            {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
         </div>
       </div>
       <table className="w-full border-collapse">
         <thead>
           <tr className="bg-[#16161C]">
-            {['Creator','Task','Project','Status','PIC','Due','Priority','Coins'].map(h => (
+            {['Creator','Task','Status','PIC','Due','Priority','Coins'].map(h => (
               <th key={h} className="px-3.5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {tasks.slice(0, 5).map(t => (
+          {visible.map(t => (
             <tr key={t.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.025] transition-colors cursor-pointer">
               <td className="px-3.5 py-3">
                 <div className="flex items-center gap-2">
@@ -56,9 +74,6 @@ export default function RecentTasksTable({ tasks = [] }) {
                 </div>
               </td>
               <td className="px-3.5 py-3 text-[13px] text-white/70">{t.task}</td>
-              <td className="px-3.5 py-3">
-                <span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 border border-white/7 text-white/40">{t.project}</span>
-              </td>
               <td className="px-3.5 py-3"><Badge variant={STATUS_BADGE[t.status]}>{t.status}</Badge></td>
               <td className="px-3.5 py-3 text-[12px] text-white/40">{t.pic}</td>
               <td className={`px-3.5 py-3 font-mono text-[11px] ${t.status === 'Overdue' ? 'text-rose-400 font-semibold' : 'text-white/30'}`}>

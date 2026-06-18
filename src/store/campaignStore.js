@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { fetchCampaigns, createCampaign, updateCampaign as apiUpdate } from '../lib/api/campaigns'
+import { fetchCampaigns, createCampaign, updateCampaign as apiUpdate, deleteCampaign as apiDelete } from '../lib/api/campaigns'
 
 export const useCampaignStore = create((set) => ({
   campaigns: [],
@@ -25,5 +25,10 @@ export const useCampaignStore = create((set) => ({
   updateCampaign: async (id, patch) => {
     set(s => ({ campaigns: s.campaigns.map(c => c.id === id ? { ...c, ...patch } : c) }))
     await apiUpdate(id, patch)
+  },
+
+  deleteCampaign: async (id) => {
+    set(s => ({ campaigns: s.campaigns.filter(c => c.id !== id) }))
+    await apiDelete(id)
   },
 }))

@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { fetchTasks, createTask, updateTaskStatus as apiUpdateStatus, updateTask as apiUpdateTask } from '../lib/api/tasks'
+import { fetchTasks, createTask, updateTaskStatus as apiUpdateStatus, updateTask as apiUpdateTask, deleteTask as apiDeleteTask } from '../lib/api/tasks'
 import { useCreatorStore } from './creatorStore'
 
 export const useTaskStore = create((set, get) => ({
@@ -39,5 +39,14 @@ export const useTaskStore = create((set, get) => ({
     const newTask = await createTask(task)
     set(state => ({ tasks: [...state.tasks, newTask] }))
     return newTask
+  },
+
+  deleteTask: async (id) => {
+    set(state => ({ tasks: state.tasks.filter(t => t.id !== id) }))
+    await apiDeleteTask(id)
+  },
+
+  removeCreatorTasks: (creatorId) => {
+    set(state => ({ tasks: state.tasks.filter(t => t.creatorId !== creatorId) }))
   },
 }))

@@ -40,3 +40,8 @@ export async function updateCreator(id, patch) {
   }
   return request('PATCH', `/creators/${id}`, patch)
 }
+
+export async function deleteCreator(id) {
+  if (USE_MOCK) { await delay(200); return { success: true } }
+  return request('DELETE', `/creators/${id}`)
+}

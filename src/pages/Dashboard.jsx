@@ -126,7 +126,7 @@ export default function Dashboard() {
         <div className="flex flex-col gap-4">
           <TierSnapshot tierCounts={tierCounts.length ? tierCounts : ['Platinum','Diamond','Gold','Silver','Bronze'].map(name => ({
             name: name.toLowerCase(),
-            count: creators.filter(c => getTier(c.coins).name === name).length,
+            count: creators.filter(c => c.status !== 'Rejected' && getTier(c.coins).name === name).length,
           }))} />
           <ActivityFeed activities={activities} />
         </div>

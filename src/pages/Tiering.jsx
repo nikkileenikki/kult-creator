@@ -17,18 +17,20 @@ export default function Tiering() {
   const creators     = useCreatorStore(s => s.creators)
   const globalSearch = useUIStore(s => s.globalSearch)
 
+  const activeCreators = useMemo(() => creators.filter(c => c.status !== 'Rejected'), [creators])
+
   const sorted = useMemo(() => {
-    const list = [...creators].sort((a, b) => b.coins - a.coins)
+    const list = [...activeCreators].sort((a, b) => b.coins - a.coins)
     if (!globalSearch) return list
     const q = globalSearch.toLowerCase()
     return list.filter(c => c.name.toLowerCase().includes(q))
-  }, [creators, globalSearch])
+  }, [activeCreators, globalSearch])
 
-  const maxCoins = [...creators].sort((a, b) => b.coins - a.coins)[0]?.coins || 1
+  const maxCoins = sorted[0]?.coins || 1
 
   const tierCounts = TIERS.map(t => ({
     ...t,
-    count: creators.filter(c => getTier(c.coins).name === t.name).length,
+    count: activeCreators.filter(c => getTier(c.coins).name === t.name).length,
   }))
 
   return (

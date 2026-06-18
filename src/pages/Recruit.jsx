@@ -1,10 +1,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar } from 'lucide-react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
-import { PICS } from '@/lib/data'
 
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
@@ -28,10 +28,13 @@ function Row({ icon: Icon, label, children }) {
 }
 
 function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
+  const storedPics = useAuthStore(s => s.pics)
+  const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
   const [step, setStep]                     = useState(null)  // null | 'approve' | 'reject' | 'review'
   const [selectedPic, setSelectedPic]       = useState(PICS[0])
   const [rejectionReason, setRejectionReason] = useState('')
   const [reviewer, setReviewer]             = useState(PICS[0])
+  const can = useAuthStore(s => s.can)
 
   useEffect(() => {
     function handleKey(e) {
@@ -155,22 +158,26 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
           <div className="flex-shrink-0 border-t border-white/7 px-6 py-4">
 
             {!step && (
-              <div className="flex gap-2">
-                <button onClick={() => setStep('approve')} className="flex-1 bg-emerald-400/12 text-emerald-400 border border-emerald-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/20 transition-all">
-                  ✓ Approve
-                </button>
-                <button onClick={() => setStep('reject')} className="flex-1 bg-rose-400/12 text-rose-400 border border-rose-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-rose-400/20 transition-all">
-                  ✕ Reject
-                </button>
-                {r.status === 'Pending' && (
-                  <button onClick={() => setStep('review')} className="flex-1 bg-blue-400/12 text-blue-400 border border-blue-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-blue-400/20 transition-all">
-                    ⟳ Under Review
+              can('recruits.approve') ? (
+                <div className="flex gap-2">
+                  <button onClick={() => setStep('approve')} className="flex-1 bg-emerald-400/12 text-emerald-400 border border-emerald-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/20 transition-all">
+                    ✓ Approve
                   </button>
-                )}
-              </div>
+                  <button onClick={() => setStep('reject')} className="flex-1 bg-rose-400/12 text-rose-400 border border-rose-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-rose-400/20 transition-all">
+                    ✕ Reject
+                  </button>
+                  {r.status === 'Pending' && (
+                    <button onClick={() => setStep('review')} className="flex-1 bg-blue-400/12 text-blue-400 border border-blue-400/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-blue-400/20 transition-all">
+                      ⟳ Under Review
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="text-[12px] text-white/25 italic text-center py-1">View only</div>
+              )
             )}
 
-            {step === 'approve' && (
+            {can('recruits.approve') && step === 'approve' && (
               <div className="space-y-3">
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Assign PIC</div>
@@ -191,7 +198,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
               </div>
             )}
 
-            {step === 'reject' && (
+            {can('recruits.approve') && step === 'reject' && (
               <div className="space-y-3">
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5">
@@ -214,7 +221,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
               </div>
             )}
 
-            {step === 'review' && (
+            {can('recruits.approve') && step === 'review' && (
               <div className="space-y-3">
                 <div>
                   <div className="text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-2">Assign reviewer</div>
