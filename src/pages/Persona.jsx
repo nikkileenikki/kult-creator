@@ -296,29 +296,19 @@ export default function Persona() {
                   <ProgressBar value={progress} tierColor={tier.name.toLowerCase()} height="h-[5px]" />
                 </div>
                 {can('creators.edit') && (
-                  <div className="flex justify-center gap-1.5 mt-3">
-                    {['Active', 'Pending to sign', 'Suspended', 'Rejected'].map(s => (
-                      <button
-                        key={s}
-                        type="button"
-                        disabled={creator.status === s}
-                        onClick={async () => {
-                          await updateCreator(creator.id, { status: s })
-                          showToast(`${creator.name} marked as ${s}`)
-                        }}
-                        className={cn(
-                          'text-[10px] px-2.5 py-1 rounded-full border font-medium transition-all',
-                          creator.status === s
-                            ? s === 'Active'            ? 'bg-emerald-500/20 border-emerald-500/40 text-emerald-300 cursor-default'
-                            : s === 'Pending to sign'   ? 'bg-amber-500/20 border-amber-500/40 text-amber-300 cursor-default'
-                            : s === 'Suspended'         ? 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
-                                                        : 'bg-rose-500/20 border-rose-500/40 text-rose-300 cursor-default'
-                            : 'bg-white/5 border-white/10 text-white/30 hover:text-white/60 hover:border-white/20'
-                        )}
-                      >
-                        {s}
-                      </button>
-                    ))}
+                  <div className="mt-3 px-1">
+                    <select
+                      value={creator.status}
+                      onChange={async e => {
+                        await updateCreator(creator.id, { status: e.target.value })
+                        showToast(`${creator.name} marked as ${e.target.value}`)
+                      }}
+                      className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-1.5 text-[12px] text-white/70 focus:outline-none focus:border-violet-500/50 transition-all cursor-pointer"
+                    >
+                      {['Active','Pending to sign','Suspended','Rejected'].map(s => (
+                        <option key={s} value={s}>{s}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </>
