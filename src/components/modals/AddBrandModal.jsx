@@ -1,9 +1,10 @@
 import * as Dialog from '@radix-ui/react-dialog'
 import { useState } from 'react'
-import { X, Check } from 'lucide-react'
+import { X } from 'lucide-react'
 import { useUIStore } from '@/store/uiStore'
 import { useBrandStore } from '@/store/brandStore'
 import { BRAND_INDUSTRIES } from '@/lib/data'
+import { cn } from '@/lib/utils'
 
 const BRAND_COLORS = ['#6C5CE7','#0891B2','#D97706','#059669','#DC2626','#7C3AED','#DB2777','#EA580C','#8B5CF6','#EE4D2D']
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -45,7 +46,7 @@ export default function AddBrandModal() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-modal-overlay" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 animate-modal-content"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 animate-modal-content"
           onOpenAutoFocus={e => e.preventDefault()}
         >
           <div className="bg-[#111116] border border-white/[0.07] rounded-2xl shadow-2xl">
@@ -62,7 +63,7 @@ export default function AddBrandModal() {
             <form onSubmit={handleSubmit} className="px-6 py-5 space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className={LABEL}>Brand Name *</label>
+                  <label className={LABEL}>Brand Name</label>
                   <input value={name} onChange={e => setName(e.target.value)} placeholder="e.g. Wardah" className={INPUT} required />
                 </div>
                 <div>
@@ -83,18 +84,18 @@ export default function AddBrandModal() {
                 <div className="flex gap-2 flex-wrap mt-1">
                   {BRAND_COLORS.map(c => (
                     <button key={c} type="button" onClick={() => setColor(c)}
-                      className={`w-7 h-7 rounded-full transition-all ${color === c ? 'ring-2 ring-white/70 ring-offset-1 ring-offset-[#111116] scale-110' : 'opacity-50 hover:opacity-90'}`}
+                      className={cn('w-7 h-7 rounded-full transition-all', color === c ? 'ring-2 ring-white/70 ring-offset-1 ring-offset-[#111116] scale-110' : 'opacity-50 hover:opacity-90')}
                       style={{ background: c }} />
                   ))}
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-1">
-                <button type="button" onClick={handleClose} className="flex-1 py-2.5 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">
+              <div className="flex items-center justify-end gap-3 pt-1">
+                <button type="button" onClick={handleClose} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/50 hover:text-white hover:bg-white/5 transition-all">
                   Cancel
                 </button>
-                <button type="submit" disabled={saving || !name.trim()} className="flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-50">
-                  <Check size={13} /> {saving ? 'Creating…' : 'Create Brand'}
+                <button type="submit" disabled={saving || !name.trim()} className="flex items-center gap-1.5 px-5 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all shadow-[0_0_16px_rgba(108,92,231,.35)] hover:-translate-y-px disabled:opacity-50">
+                  {saving ? 'Creating…' : 'Create Brand'}
                 </button>
               </div>
             </form>
