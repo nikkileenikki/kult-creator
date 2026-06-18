@@ -141,34 +141,16 @@ export default function Niche() {
             onClick={() => setSelected(niche)}
             className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-4 cursor-pointer hover:border-violet-500/40 hover:-translate-y-0.5 hover:shadow-[0_12px_30px_rgba(0,0,0,.3)] transition-all group relative overflow-visible"
           >
-            {can('campaigns.manage') && (
-              <button
-                type="button"
-                onClick={e => { e.stopPropagation(); deleteNiche(id) }}
-                className="absolute top-2 right-2 w-6 h-6 rounded-md bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/20 hover:text-rose-400 transition-all opacity-0 group-hover:opacity-100"
-              >
-                ×
-              </button>
-            )}
-            <div className="flex items-start justify-between mb-3">
-              <div className="font-syne text-[14px] font-bold text-white group-hover:text-violet-300 transition-colors leading-snug flex-1 mr-2">{niche}</div>
-              <span className={`font-mono text-[20px] font-extrabold flex-shrink-0 leading-none ${list.length > 0 ? 'text-white' : 'text-white/15'}`}>{list.length}</span>
+            <div className="mb-3">
+              <div className="font-syne text-[14px] font-bold text-white group-hover:text-violet-300 transition-colors leading-snug">{niche}</div>
             </div>
 
             <div className="text-[10px] text-white/25 mb-2">
               {list.length === 0
                 ? 'No creators yet'
-                : `${(totalFollowers / 1000).toFixed(0)}K total followers`
+                : `${list.length} creator${list.length !== 1 ? 's' : ''} · ${(totalFollowers / 1000).toFixed(0)}K total followers`
               }
             </div>
-
-            {platforms.length > 0 && (
-              <div className="flex flex-wrap gap-1">
-                {platforms.map(p => (
-                  <span key={p} className="text-[10px] px-2 py-0.5 rounded-full bg-white/5 border border-white/7 text-white/35 font-medium">{p}</span>
-                ))}
-              </div>
-            )}
 
             {list.length > 0 && (
               <div className="flex items-center gap-1 mt-3 pt-3 border-t border-white/7">
