@@ -121,7 +121,7 @@ export default function AddTaskModal() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-modal-overlay" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 animate-modal-content"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 animate-modal-content"
           onOpenAutoFocus={e => e.preventDefault()}
         >
           <div className="bg-[#111116] border border-white/[0.07] rounded-2xl shadow-2xl">
@@ -138,112 +138,123 @@ export default function AddTaskModal() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
-                {/* Creator */}
-                <div>
-                  <label className={LABEL}>Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
-                  <div className="relative">
-                    {selectedCreator && (
-                      <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-                        <Avatar initials={selectedCreator.initials} color={selectedCreator.avatarColor} size="sm" />
+                  {/* LEFT COLUMN */}
+                  <div className="space-y-4">
+
+                    {/* Creator */}
+                    <div>
+                      <label className={LABEL}>Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                      <div className="relative">
+                        {selectedCreator && (
+                          <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
+                            <Avatar initials={selectedCreator.initials} color={selectedCreator.avatarColor} size="sm" />
+                          </div>
+                        )}
+                        <select
+                          {...register('creatorId')}
+                          disabled={creatorLocked}
+                          className={cn(INPUT, selectedCreator ? 'pl-11' : '', creatorLocked ? 'opacity-60 cursor-not-allowed' : '')}
+                        >
+                          <option value="">Unassigned</option>
+                          {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
+                            <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
+                          ))}
+                        </select>
                       </div>
-                    )}
-                    <select
-                      {...register('creatorId')}
-                      disabled={creatorLocked}
-                      className={cn(INPUT, selectedCreator ? 'pl-11' : '', creatorLocked ? 'opacity-60 cursor-not-allowed' : '')}
-                    >
-                      <option value="">Unassigned</option>
-                      {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
-                        <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+                    </div>
 
-                {/* Task name */}
-                <div>
-                  <label className={LABEL}>Task / Deliverable</label>
-                  <input {...register('task')} placeholder="e.g. Film Lifestyle Reel" className={INPUT} />
-                  {errors.task && <p className={ERR}>{errors.task.message}</p>}
-                </div>
+                    {/* Task name */}
+                    <div>
+                      <label className={LABEL}>Task / Deliverable</label>
+                      <input {...register('task')} placeholder="e.g. Film Lifestyle Reel" className={INPUT} />
+                      {errors.task && <p className={ERR}>{errors.task.message}</p>}
+                    </div>
 
-                {/* Description */}
-                <div>
-                  <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
-                  <textarea
-                    {...register('description')}
-                    rows={2}
-                    placeholder="Brief context, goals, or link references…"
-                    className={cn(INPUT, 'resize-none')}
-                  />
-                </div>
+                    {/* Description */}
+                    <div>
+                      <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                      <textarea
+                        {...register('description')}
+                        rows={3}
+                        placeholder="Brief context, goals, or link references…"
+                        className={cn(INPUT, 'resize-none')}
+                      />
+                    </div>
 
-                {/* Project + Status row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Project</label>
-                    <select
-                      {...register('project')}
-                      disabled={projectLocked}
-                      className={cn(INPUT, projectLocked ? 'opacity-60 cursor-not-allowed' : '')}
-                    >
-                      <option value="">— No project —</option>
-                      {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                    {errors.project && <p className={ERR}>{errors.project.message}</p>}
+                    {/* Notes */}
+                    <div>
+                      <label className={LABEL}>Notes for Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                      <textarea
+                        {...register('notes')}
+                        rows={3}
+                        placeholder="Specific instructions, references, or creative direction…"
+                        className={cn(INPUT, 'resize-none')}
+                      />
+                    </div>
                   </div>
-                  <div>
-                    <label className={LABEL}>Status</label>
-                    <select {...register('status')} className={INPUT}>
-                      {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
-                        <option key={s}>{s}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
 
-                {/* Priority + PIC row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Priority</label>
-                    <select {...register('priority')} className={INPUT}>
-                      {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={LABEL}>PIC</label>
-                    <select {...register('pic')} className={INPUT}>
-                      {PICS.map(p => <option key={p}>{p}</option>)}
-                    </select>
-                    {errors.pic && <p className={ERR}>{errors.pic.message}</p>}
-                  </div>
-                </div>
+                  {/* RIGHT COLUMN */}
+                  <div className="space-y-4">
 
-                {/* Due date + Coins row */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Due Date</label>
-                    <input type="date" {...register('dueDate')} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]')} />
-                    {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
-                  </div>
-                  <div>
-                    <label className={LABEL}>Coins</label>
-                    <input type="number" {...register('coins')} min={0} max={10000} className={INPUT} />
-                    {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
-                  </div>
-                </div>
+                    {/* Project */}
+                    <div>
+                      <label className={LABEL}>Project</label>
+                      <select
+                        {...register('project')}
+                        disabled={projectLocked}
+                        className={cn(INPUT, projectLocked ? 'opacity-60 cursor-not-allowed' : '')}
+                      >
+                        <option value="">— No project —</option>
+                        {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      </select>
+                      {errors.project && <p className={ERR}>{errors.project.message}</p>}
+                    </div>
 
-                {/* Notes */}
-                <div>
-                  <label className={LABEL}>Notes for Creator <span className="text-white/20 normal-case font-normal">(optional)</span></label>
-                  <textarea
-                    {...register('notes')}
-                    rows={2}
-                    placeholder="Specific instructions, references, or creative direction…"
-                    className={cn(INPUT, 'resize-none')}
-                  />
+                    {/* Status */}
+                    <div>
+                      <label className={LABEL}>Status</label>
+                      <select {...register('status')} className={INPUT}>
+                        {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
+                          <option key={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Priority + PIC */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={LABEL}>Priority</label>
+                        <select {...register('priority')} className={INPUT}>
+                          {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={LABEL}>PIC</label>
+                        <select {...register('pic')} className={INPUT}>
+                          {PICS.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                        {errors.pic && <p className={ERR}>{errors.pic.message}</p>}
+                      </div>
+                    </div>
+
+                    {/* Due date + Coins */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={LABEL}>Due Date</label>
+                        <input type="date" {...register('dueDate')} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]')} />
+                        {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
+                      </div>
+                      <div>
+                        <label className={LABEL}>Coins</label>
+                        <input type="number" {...register('coins')} min={0} max={10000} className={INPUT} />
+                        {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
+                      </div>
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
