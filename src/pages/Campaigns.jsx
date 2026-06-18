@@ -92,7 +92,10 @@ function CreatorView({ campaign, tasks, openEdit, openAddTask, canEdit }) {
                   className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] last:border-0 hover:bg-white/[.02] cursor-pointer transition-colors group"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                  <span className="flex-1 text-[12px] text-white/60 group-hover:text-white/80 transition-colors">{t.task}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[12px] text-white/60 group-hover:text-white/80 transition-colors truncate">{t.task}</div>
+                    {t.description && <div className="text-[11px] text-white/25 truncate mt-0.5">{t.description}</div>}
+                  </div>
                   <Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge>
                   <span className={`font-mono text-[10px] flex-shrink-0 ${t.status==='Overdue'?'text-rose-400':'text-white/20'}`}>{t.dueDate}</span>
                 </div>
@@ -479,7 +482,10 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3.5 py-3 text-[13px] text-white/70 cursor-pointer" onClick={() => openEdit(t.id)}>{t.task}</td>
+                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}>
+                      <div className="text-[13px] text-white/70">{t.task}</div>
+                      {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate max-w-[260px]">{t.description}</div>}
+                    </td>
                     <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}><Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge></td>
                     <td className="px-3.5 py-3 text-[12px] text-white/40 cursor-pointer" onClick={() => openEdit(t.id)}>{t.pic}</td>
                     <td className={`px-3.5 py-3 font-mono text-[11px] cursor-pointer ${t.status==='Overdue'?'text-rose-400 font-semibold':'text-white/30'}`} onClick={() => openEdit(t.id)}>{t.dueDate}</td>
@@ -506,7 +512,8 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                 </div>
                 {colTasks.map(t => (
                   <div key={t.id} onClick={() => openEdit(t.id)} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
-                    <div className="text-[12px] font-medium text-white mb-1.5 leading-snug">{t.task}</div>
+                    <div className="text-[12px] font-medium text-white mb-1 leading-snug">{t.task}</div>
+                    {t.description && <div className="text-[11px] text-white/30 mb-1 leading-snug line-clamp-2">{t.description}</div>}
                     <div className="text-[11px] text-white/30 mb-2">{t.creatorName || 'Unassigned'} · {t.platform || '—'}</div>
                     <div className="flex items-center justify-between">
                       <span className="flex items-center gap-1.5 text-[11px] text-white/30">

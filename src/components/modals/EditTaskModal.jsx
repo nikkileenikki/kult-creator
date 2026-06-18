@@ -13,7 +13,8 @@ import { cn } from '@/lib/utils'
 
 const schema = z.object({
   creatorId: z.string().optional(),
-  task:      z.string().min(1, 'Task name is required').max(100),
+  task:        z.string().min(1, 'Task name is required').max(100),
+  description: z.string().default(''),
   project:   z.string().min(1, 'Select a project'),
   status:    z.enum(['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue']),
   priority:  z.enum(['Low', 'Medium', 'High', 'Urgent']),
@@ -55,8 +56,9 @@ export default function EditTaskModal() {
   useEffect(() => {
     if (task) reset({
       creatorId: task.creatorId ?? '',
-      task:      task.task,
-      project:   task.project,
+      task:        task.task,
+      description: task.description ?? '',
+      project:     task.project,
       status:    task.status,
       priority:  task.priority,
       pic:       task.pic,
@@ -143,6 +145,18 @@ export default function EditTaskModal() {
                   <label className={LABEL}>Task / Deliverable</label>
                   <input {...register('task')} readOnly={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
                   {errors.task && <p className={ERR}>{errors.task.message}</p>}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                  <textarea
+                    {...register('description')}
+                    readOnly={!canEdit}
+                    rows={2}
+                    placeholder="Brief context, goals, or link references…"
+                    className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
+                  />
                 </div>
 
                 {/* Project + Status */}

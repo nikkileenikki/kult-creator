@@ -53,9 +53,10 @@ export function mapTask(row) {
     pic:         row.pic,
     dueDate:     row.due_date,
     coins:       row.coins,
-    notes:       row.notes  ?? '',
-    rating:      row.rating ?? 0,
-    review:      row.review ?? '',
+    notes:       row.notes       ?? '',
+    description: row.description ?? '',
+    rating:      row.rating      ?? 0,
+    review:      row.review      ?? '',
   }
 }
 

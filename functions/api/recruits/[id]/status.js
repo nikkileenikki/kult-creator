@@ -28,7 +28,7 @@ export async function onRequestPatch({ params, request, env }) {
         followers:        recruit.followers,
         coins:            0,
         tasksCompleted:   0,
-        status:           status === 'Approved' ? 'Active' : 'Rejected',
+        status:           status === 'Approved' ? 'Pending to sign' : 'Rejected',
         pic:              recruit.pic !== 'Unassigned' ? recruit.pic : '',
         contact:          'WhatsApp',
         joinedDate:       new Date().toISOString().split('T')[0],
