@@ -107,16 +107,16 @@ export default function EditTaskModal() {
       <Dialog.Portal>
         <Dialog.Overlay className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm animate-modal-overlay" />
         <Dialog.Content
-          className="fixed left-1/2 top-1/2 z-50 w-full max-w-lg -translate-x-1/2 -translate-y-1/2 animate-modal-content"
+          className="fixed left-1/2 top-1/2 z-50 w-full max-w-2xl -translate-x-1/2 -translate-y-1/2 animate-modal-content"
           onOpenAutoFocus={e => e.preventDefault()}
         >
           <div className="bg-[#111116] border border-white/[0.07] rounded-2xl shadow-2xl">
             <div className="flex items-center justify-between px-6 py-5 border-b border-white/[0.07]">
               <div>
                 <div className="flex items-center gap-2">
-                <Dialog.Title className="font-syne text-[15px] font-bold text-white">{canEdit ? 'Edit Task' : 'Task Details'}</Dialog.Title>
-                {!canEdit && <span className="text-[10px] text-white/30 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">View only</span>}
-              </div>
+                  <Dialog.Title className="font-syne text-[15px] font-bold text-white">{canEdit ? 'Edit Task' : 'Task Details'}</Dialog.Title>
+                  {!canEdit && <span className="text-[10px] text-white/30 bg-white/5 border border-white/10 px-2 py-0.5 rounded-full">View only</span>}
+                </div>
                 <Dialog.Description className="text-[12px] text-white/30 mt-0.5">
                   {displayCreatorName} · {selectedCreator?.platform ?? task?.platform ?? ''}
                 </Dialog.Description>
@@ -127,147 +127,157 @@ export default function EditTaskModal() {
             </div>
 
             <form onSubmit={handleSubmit(onSubmit)}>
-              <div className="px-6 py-5 space-y-4 max-h-[70vh] overflow-y-auto">
+              <div className="px-6 py-5 max-h-[75vh] overflow-y-auto">
+                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
 
-                {/* Creator */}
-                <div>
-                  <label className={LABEL}>Creator</label>
-                  <select {...register('creatorId')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
-                    <option value="">Unassigned</option>
-                    {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
-                      <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
-                    ))}
-                  </select>
-                </div>
+                  {/* LEFT COLUMN */}
+                  <div className="space-y-4">
 
-                {/* Task name */}
-                <div>
-                  <label className={LABEL}>Task / Deliverable</label>
-                  <input {...register('task')} readOnly={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
-                  {errors.task && <p className={ERR}>{errors.task.message}</p>}
-                </div>
-
-                {/* Description */}
-                <div>
-                  <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
-                  <textarea
-                    {...register('description')}
-                    readOnly={!canEdit}
-                    rows={2}
-                    placeholder="Brief context, goals, or link references…"
-                    className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
-                  />
-                </div>
-
-                {/* Project + Status */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Project</label>
-                    <select {...register('project')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
-                      {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={LABEL}>Status</label>
-                    {wasCompleted ? (
-                      <div className={cn(INPUT, 'flex items-center justify-between opacity-60 cursor-not-allowed select-none')}>
-                        <span className="text-emerald-400 font-medium">Completed</span>
-                        <span className="text-[10px] text-white/30 font-mono uppercase tracking-wide">Locked</span>
-                      </div>
-                    ) : (
-                      <select {...register('status')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
-                        {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
-                          <option key={s}>{s}</option>
+                    {/* Creator */}
+                    <div>
+                      <label className={LABEL}>Creator</label>
+                      <select {...register('creatorId')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
+                        <option value="">Unassigned</option>
+                        {creators.filter(c => c.status !== 'Rejected' && c.status !== 'Suspended').map(c => (
+                          <option key={c.id} value={c.id}>{c.name} — {c.platform}</option>
                         ))}
                       </select>
-                    )}
-                  </div>
-                </div>
-
-                {/* Priority + PIC */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Priority</label>
-                    <select {...register('priority')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
-                      {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className={LABEL}>PIC</label>
-                    <select {...register('pic')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
-                      {PICS.map(p => <option key={p}>{p}</option>)}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Due date + Coins */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={LABEL}>Due Date</label>
-                    <input type="date" {...register('dueDate')} readOnly={!canEdit} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]', !canEdit && 'opacity-60 cursor-not-allowed')} />
-                    {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
-                  </div>
-                  <div>
-                    <label className={LABEL}>Coins</label>
-                    <input type="number" {...register('coins')} readOnly={!canEdit} min={0} max={10000} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
-                    {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
-                  </div>
-                </div>
-
-                {/* Notes */}
-                <div>
-                  <label className={LABEL}>Notes for Creator</label>
-                  <textarea
-                    {...register('notes')}
-                    readOnly={!canEdit}
-                    rows={2}
-                    placeholder="Specific instructions, references, or creative direction…"
-                    className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
-                  />
-                </div>
-
-                {/* Rating + Review (shown for completed tasks) */}
-                {showReview && (
-                  <div className="space-y-3 px-3 py-3.5 bg-amber-500/5 border border-amber-500/15 rounded-lg">
-                    <div className="font-mono text-[10px] font-medium text-amber-400/70 uppercase tracking-wider">Performance Review</div>
-                    <div>
-                      <label className={LABEL}>Rating</label>
-                      <div className="flex gap-1.5 mt-1">
-                        {[1,2,3,4,5].map(n => (
-                          <button
-                            key={n}
-                            type="button"
-                            disabled={!canEdit}
-                            onClick={() => canEdit && setValue('rating', watchRating === n ? 0 : n, { shouldValidate: true })}
-                            className={cn('transition-all', !canEdit && 'cursor-not-allowed')}
-                          >
-                            <Star
-                              size={22}
-                              className={n <= watchRating ? 'text-amber-400 fill-amber-400' : 'text-white/15'}
-                            />
-                          </button>
-                        ))}
-                        {watchRating > 0 && (
-                          <span className="ml-1 self-center text-[12px] text-amber-400/60 font-mono">{watchRating}/5</span>
-                        )}
-                      </div>
                     </div>
+
+                    {/* Task name */}
                     <div>
-                      <label className={LABEL}>Review Notes</label>
+                      <label className={LABEL}>Task / Deliverable</label>
+                      <input {...register('task')} readOnly={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
+                      {errors.task && <p className={ERR}>{errors.task.message}</p>}
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
                       <textarea
-                        {...register('review')}
+                        {...register('description')}
                         readOnly={!canEdit}
-                        rows={2}
-                        placeholder="Notes on performance, quality, timeliness…"
+                        rows={3}
+                        placeholder="Brief context, goals, or link references…"
                         className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
                       />
+                    </div>
+
+                    {/* Notes */}
+                    <div>
+                      <label className={LABEL}>Notes for Creator</label>
+                      <textarea
+                        {...register('notes')}
+                        readOnly={!canEdit}
+                        rows={3}
+                        placeholder="Specific instructions, references, or creative direction…"
+                        className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
+                      />
+                    </div>
+                  </div>
+
+                  {/* RIGHT COLUMN */}
+                  <div className="space-y-4">
+
+                    {/* Project */}
+                    <div>
+                      <label className={LABEL}>Project</label>
+                      <select {...register('project')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
+                        {campaigns.map(c => <option key={c.id} value={c.name}>{c.name}</option>)}
+                      </select>
+                    </div>
+
+                    {/* Status */}
+                    <div>
+                      <label className={LABEL}>Status</label>
+                      {wasCompleted ? (
+                        <div className={cn(INPUT, 'flex items-center justify-between opacity-60 cursor-not-allowed select-none')}>
+                          <span className="text-emerald-400 font-medium">Completed</span>
+                          <span className="text-[10px] text-white/30 font-mono uppercase tracking-wide">Locked</span>
+                        </div>
+                      ) : (
+                        <select {...register('status')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
+                          {['Not Started','In Progress','Under Review','Completed','Overdue'].map(s => (
+                            <option key={s}>{s}</option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    {/* Priority + PIC */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={LABEL}>Priority</label>
+                        <select {...register('priority')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
+                          {['Low','Medium','High','Urgent'].map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className={LABEL}>PIC</label>
+                        <select {...register('pic')} disabled={!canEdit} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')}>
+                          {PICS.map(p => <option key={p}>{p}</option>)}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Due date + Coins */}
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className={LABEL}>Due Date</label>
+                        <input type="date" {...register('dueDate')} readOnly={!canEdit} onWheel={e => e.currentTarget.blur()} className={cn(INPUT, '[color-scheme:dark]', !canEdit && 'opacity-60 cursor-not-allowed')} />
+                        {errors.dueDate && <p className={ERR}>{errors.dueDate.message}</p>}
+                      </div>
+                      <div>
+                        <label className={LABEL}>Coins</label>
+                        <input type="number" {...register('coins')} readOnly={!canEdit} min={0} max={10000} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
+                        {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Performance Review — full width below columns */}
+                {showReview && (
+                  <div className="mt-4 space-y-3 px-3 py-3.5 bg-amber-500/5 border border-amber-500/15 rounded-lg">
+                    <div className="font-mono text-[10px] font-medium text-amber-400/70 uppercase tracking-wider">Performance Review</div>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-3">
+                      <div>
+                        <label className={LABEL}>Rating</label>
+                        <div className="flex gap-1.5 mt-1">
+                          {[1,2,3,4,5].map(n => (
+                            <button
+                              key={n}
+                              type="button"
+                              disabled={!canEdit}
+                              onClick={() => canEdit && setValue('rating', watchRating === n ? 0 : n, { shouldValidate: true })}
+                              className={cn('transition-all', !canEdit && 'cursor-not-allowed')}
+                            >
+                              <Star size={22} className={n <= watchRating ? 'text-amber-400 fill-amber-400' : 'text-white/15'} />
+                            </button>
+                          ))}
+                          {watchRating > 0 && (
+                            <span className="ml-1 self-center text-[12px] text-amber-400/60 font-mono">{watchRating}/5</span>
+                          )}
+                        </div>
+                      </div>
+                      <div>
+                        <label className={LABEL}>Review Notes</label>
+                        <textarea
+                          {...register('review')}
+                          readOnly={!canEdit}
+                          rows={2}
+                          placeholder="Notes on performance, quality, timeliness…"
+                          className={cn(INPUT, 'resize-none', !canEdit && 'opacity-60 cursor-not-allowed')}
+                        />
+                      </div>
                     </div>
                   </div>
                 )}
 
                 {/* Coin award notice */}
                 {willComplete && (
-                  <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-lg">
+                  <div className="mt-4 flex items-center gap-2 px-3 py-2.5 bg-emerald-500/8 border border-emerald-500/20 rounded-lg">
                     <Coins size={14} className="text-emerald-400 flex-shrink-0" />
                     <span className="text-[12px] text-white/40">
                       Marking as complete will award <span className="text-emerald-300 font-semibold">{watch('coins')} coins</span> to {displayCreatorName}
