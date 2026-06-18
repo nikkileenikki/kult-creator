@@ -50,18 +50,18 @@ export const taskQ = {
   create: (db, t) =>
     db.prepare(`
       INSERT INTO tasks
-        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins, notes)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, creator_id, creator_name, platform, task, description, project, status, priority, pic, due_date, coins, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       t.id, t.creatorId || null, t.creatorName ?? 'Unassigned', t.platform ?? '', t.task,
-      t.project ?? '', t.status, t.priority, t.pic, t.dueDate, t.coins, t.notes ?? '',
+      t.description ?? '', t.project ?? '', t.status, t.priority, t.pic, t.dueDate, t.coins, t.notes ?? '',
     ).run(),
 
   updateStatus: (db, id, status) =>
     db.prepare('UPDATE tasks SET status = ? WHERE id = ? AND deleted_at IS NULL').bind(status, id).run(),
 
   update: (db, id, fields) => {
-    const colMap = { task:'task', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
+    const colMap = { task:'task', description:'description', project:'project', status:'status', priority:'priority', pic:'pic', dueDate:'due_date', coins:'coins', creatorId:'creator_id', creatorName:'creator_name', platform:'platform', notes:'notes', rating:'rating', review:'review' }
     const sets = [], vals = []
     for (const [key, col] of Object.entries(colMap)) {
       if (!(key in fields)) continue

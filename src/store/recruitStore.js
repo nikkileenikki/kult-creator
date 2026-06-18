@@ -46,7 +46,7 @@ export const useRecruitStore = create((set, get) => ({
           followers:      recruit.followers,
           coins:          0,
           tasksCompleted: 0,
-          status:         status === 'Approved' ? 'Active' : 'Rejected',
+          status:         status === 'Approved' ? 'Pending to sign' : 'Rejected',
           pic:            effectivePic,
           contact:        'WhatsApp',
           joinedDate:     new Date().toISOString().split('T')[0],

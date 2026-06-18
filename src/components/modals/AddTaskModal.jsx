@@ -14,7 +14,8 @@ import { cn } from '@/lib/utils'
 
 const schema = z.object({
   creatorId: z.string().optional(),
-  task:      z.string().min(1, 'Task name is required').max(100, 'Max 100 characters'),
+  task:        z.string().min(1, 'Task name is required').max(100, 'Max 100 characters'),
+  description: z.string().default(''),
   project:   z.string().optional().default(''),
   status:    z.enum(['Not Started', 'In Progress', 'Under Review', 'Completed', 'Overdue']),
   priority:  z.enum(['Low', 'Medium', 'High', 'Urgent']),
@@ -51,8 +52,9 @@ export default function AddTaskModal() {
     resolver: zodResolver(schema),
     defaultValues: {
       creatorId: '',
-      task:      '',
-      project:   defaultProject,
+      task:        '',
+      description: '',
+      project:     defaultProject,
       status:    'Not Started',
       priority:  'Medium',
       pic:       PICS[0],
@@ -65,9 +67,10 @@ export default function AddTaskModal() {
   useEffect(() => {
     if (open) {
       reset({
-        creatorId: prefill?.creatorId ?? '',
-        task:      '',
-        project:   prefill?.project ?? defaultProject,
+        creatorId:   prefill?.creatorId ?? '',
+        task:        '',
+        description: '',
+        project:     prefill?.project ?? defaultProject,
         status:    'Not Started',
         priority:  'Medium',
         pic:       PICS[0],
@@ -94,6 +97,7 @@ export default function AddTaskModal() {
         creatorName: creator?.name ?? 'Unassigned',
         platform:    creator?.platform ?? '',
         task:        data.task,
+        description: data.description,
         project:     data.project,
         status:      data.status,
         priority:    data.priority,
@@ -163,6 +167,17 @@ export default function AddTaskModal() {
                   <label className={LABEL}>Task / Deliverable</label>
                   <input {...register('task')} placeholder="e.g. Film Lifestyle Reel" className={INPUT} />
                   {errors.task && <p className={ERR}>{errors.task.message}</p>}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label className={LABEL}>Description <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                  <textarea
+                    {...register('description')}
+                    rows={2}
+                    placeholder="Brief context, goals, or link references…"
+                    className={cn(INPUT, 'resize-none')}
+                  />
                 </div>
 
                 {/* Project + Status row */}
