@@ -51,11 +51,11 @@ export const taskQ = {
   create: (db, t) =>
     db.prepare(`
       INSERT INTO tasks
-        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        (id, creator_id, creator_name, platform, task, project, status, priority, pic, due_date, coins, notes)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(
       t.id, t.creatorId ?? '', t.creatorName ?? 'Unassigned', t.platform ?? '', t.task,
-      t.project, t.status, t.priority, t.pic, t.dueDate, t.coins,
+      t.project ?? '', t.status, t.priority, t.pic, t.dueDate, t.coins, t.notes ?? '',
     ).run(),
 
   updateStatus: (db, id, status) =>

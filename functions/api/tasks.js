@@ -18,13 +18,17 @@ export async function onRequestGet({ request, env }) {
 export async function onRequestPost({ request, env }) {
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
-  const body = await request.json()
-  const task = { ...body, id: `t${Date.now()}` }
-  await taskQ.create(db, task)
-  return json(mapTask({
-    ...task,
-    creator_id:   task.creatorId,
-    creator_name: task.creatorName,
-    due_date:     task.dueDate,
-  }), 201)
+  try {
+    const body = await request.json()
+    const task = { ...body, id: `t${Date.now()}` }
+    await taskQ.create(db, task)
+    return json(mapTask({
+      ...task,
+      creator_id:   task.creatorId,
+      creator_name: task.creatorName,
+      due_date:     task.dueDate,
+    }), 201)
+  } catch (e) {
+    return err(e?.message ?? 'Failed to create task', 500)
+  }
 }
