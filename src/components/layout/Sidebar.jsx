@@ -4,7 +4,7 @@ import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import {
-  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase, ShieldCheck,
+  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase, ShieldCheck, Kanban,
 } from 'lucide-react'
 
 const ROLE_AVATAR_COLOR = {
@@ -23,6 +23,7 @@ const NAV_BASE = [
   { section: 'Overview', items: [
     { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
     { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
+    { to: '/projects',  label: 'Project Mgmt',     icon: Kanban },
     { to: '/creators',  label: 'Creators',         icon: Users },
     { to: '/brands',    label: 'Brands',            icon: Briefcase },
   ]},
