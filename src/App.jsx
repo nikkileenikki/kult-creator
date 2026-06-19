@@ -11,6 +11,7 @@ import Tiering from '@/pages/Tiering'
 import Persona from '@/pages/Persona'
 import Niche from '@/pages/Niche'
 import Brands from '@/pages/Brands'
+import ProjectManagement from '@/pages/ProjectManagement'
 import Settings from '@/pages/Settings'
 import Users from '@/pages/Users'
 import NewUser from '@/pages/NewUser'
@@ -87,6 +88,7 @@ export default function App() {
           <Routes>
             <Route path="/"            element={<Dashboard />} />
             <Route path="/campaigns"   element={<Campaigns />} />
+            <Route path="/projects"    element={<ProjectManagement />} />
             <Route path="/creators"    element={<Creators />} />
             <Route path="/brands"      element={<Brands />} />
             <Route path="/recruit"     element={<Recruit />} />
