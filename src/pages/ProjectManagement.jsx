@@ -13,8 +13,11 @@ const PROJ_STATUS  = ['Planning', 'Active', 'On Hold', 'Completed']
 const TASK_STATUS  = ['To Do', 'In Progress', 'In Review', 'Blocked', 'Done']
 const PRIORITY_OPT = ['Low', 'Medium', 'High', 'Urgent']
 
-const PRIORITY_DOT = { Urgent:'bg-rose-400', High:'bg-orange-400', Medium:'bg-amber-400', Low:'bg-emerald-400' }
-const PRIORITY_TXT = { Urgent:'text-rose-400', High:'text-orange-400', Medium:'text-amber-400', Low:'text-emerald-400' }
+const PRIORITY_DOT    = { Urgent:'bg-rose-400', High:'bg-orange-400', Medium:'bg-amber-400', Low:'bg-emerald-400' }
+const PRIORITY_TXT    = { Urgent:'text-rose-400', High:'text-orange-400', Medium:'text-amber-400', Low:'text-emerald-400' }
+const PRIORITY_BORDER = { Urgent:'border-l-rose-500', High:'border-l-orange-400', Medium:'border-l-amber-400', Low:'border-l-emerald-400/60' }
+const PRIORITY_BADGE  = { Urgent:'bg-rose-500/15 text-rose-300 border-rose-500/30', High:'bg-orange-500/15 text-orange-300 border-orange-500/30', Medium:'bg-amber-500/15 text-amber-300 border-amber-500/30', Low:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' }
+const PRIORITY_ROW_BG = { Urgent:'bg-rose-500/[0.04]', High:'', Medium:'', Low:'' }
 const STATUS_COLOR = {
   'To Do':      'text-white/40 bg-white/5 border-white/10',
   'In Progress':'text-blue-300 bg-blue-500/10 border-blue-500/20',
@@ -312,10 +315,11 @@ export default function ProjectManagement() {
                 key={p.id}
                 onClick={() => setSelectedId(p.id)}
                 className={cn(
-                  'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all border',
+                  'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all border border-l-2',
                   isActive
                     ? 'bg-violet-600/12 border-violet-500/25 text-white'
-                    : 'bg-[#1E1E28] border-white/7 text-white/60 hover:border-white/12 hover:text-white/80'
+                    : 'bg-[#1E1E28] border-white/7 text-white/60 hover:border-white/12 hover:text-white/80',
+                  PRIORITY_BORDER[p.priority],
                 )}
               >
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: p.color }} />
@@ -324,6 +328,7 @@ export default function ProjectManagement() {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className={`w-1 h-1 rounded-full flex-shrink-0 ${PROJ_STATUS_DOT[p.status] ?? 'bg-white/20'}`} />
                     <span className="text-[10px] text-white/30">{p.status}</span>
+                    <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[p.priority])}>{p.priority}</span>
                     {ptasks.length > 0 && (
                       <span className="text-[10px] text-white/20 ml-auto">{done}/{ptasks.length}</span>
                     )}
@@ -432,16 +437,18 @@ export default function ProjectManagement() {
                         {colTasks.map(t => (
                           <div
                             key={t.id}
-                            className="group bg-[#1E1E28] border border-white/7 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all"
+                            className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all', PRIORITY_BORDER[t.priority])}
                             onClick={() => openEditTask(t)}
                           >
-                            <div className="flex items-start gap-2 mb-1">
-                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${PRIORITY_DOT[t.priority]}`} />
+                            <div className="flex items-start gap-2 mb-1.5">
                               <span className="text-[12px] font-medium text-white leading-snug">{t.title}</span>
                             </div>
-                            {t.description && <div className="text-[11px] text-white/30 mb-2 ml-3.5 line-clamp-2">{t.description}</div>}
-                            <div className="flex items-center justify-between ml-3.5 mt-1">
-                              <span className="text-[10px] text-white/30">{t.assignee || 'Unassigned'}</span>
+                            {t.description && <div className="text-[11px] text-white/30 mb-2 line-clamp-2">{t.description}</div>}
+                            <div className="flex items-center justify-between mt-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
+                                <span className="text-[10px] text-white/30">{t.assignee || 'Unassigned'}</span>
+                              </div>
                               <div className="flex items-center gap-1.5">
                                 {t.dueDate && <span className="font-mono text-[10px] text-white/20">{t.dueDate}</span>}
                                 <button
@@ -483,10 +490,9 @@ export default function ProjectManagement() {
                   </thead>
                   <tbody>
                     {projTasks.map(t => (
-                      <tr key={t.id} onClick={() => openEditTask(t)} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group">
+                      <tr key={t.id} onClick={() => openEditTask(t)} className={cn('border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group', PRIORITY_ROW_BG[t.priority])}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
                             <div>
                               <div className="text-[13px] text-white/80">{t.title}</div>
                               {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate max-w-xs">{t.description}</div>}
@@ -496,7 +502,9 @@ export default function ProjectManagement() {
                         <td className="px-4 py-3">
                           <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLOR[t.status]}`}>{t.status}</span>
                         </td>
-                        <td className={`px-4 py-3 text-[12px] font-medium ${PRIORITY_TXT[t.priority]}`}>{t.priority}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
+                        </td>
                         <td className="px-4 py-3 text-[12px] text-white/40">{t.assignee || '—'}</td>
                         <td className="px-4 py-3 font-mono text-[11px] text-white/30">{t.dueDate || '—'}</td>
                         <td className="px-4 py-3">
