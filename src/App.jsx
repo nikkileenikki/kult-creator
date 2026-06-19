@@ -29,6 +29,7 @@ import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useBrandStore } from '@/store/brandStore'
 import { useNicheStore } from '@/store/nicheStore'
+import { useInternalProjectStore } from '@/store/internalProjectStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -61,8 +62,9 @@ export default function App() {
   const fetchRecruits  = useRecruitStore(s => s.fetchRecruits)
   const fetchCampaigns = useCampaignStore(s => s.fetchCampaigns)
   const fetchBrands    = useBrandStore(s => s.fetchBrands)
-  const fetchPics      = useAuthStore(s => s.fetchPics)
-  const fetchNiches    = useNicheStore(s => s.fetchNiches)
+  const fetchPics         = useAuthStore(s => s.fetchPics)
+  const fetchNiches       = useNicheStore(s => s.fetchNiches)
+  const fetchIntProjects  = useInternalProjectStore(s => s.fetchProjects)
 
   useEffect(() => {
     if (!token || !user) return
@@ -73,6 +75,7 @@ export default function App() {
     fetchBrands()
     fetchPics()
     fetchNiches()
+    fetchIntProjects()
   }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!token || !user) {
