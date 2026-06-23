@@ -495,7 +495,7 @@ export default function ProjectManagement() {
                 </div>
                 <button
                   onClick={() => openNewTask('To Do')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[12px] font-semibold transition-all shadow-[0_0_12px_rgba(108,92,231,.3)]"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[12px] font-semibold transition-all"
                 >
                   <Plus size={13} /> Add Task
                 </button>

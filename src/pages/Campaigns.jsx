@@ -239,14 +239,6 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
         <ChevronRight size={14} className="text-white/20" />
         <span className="text-white text-[13px]">{campaign.name}</span>
         <div className="ml-auto flex items-center gap-2">
-          {!editing && can('creators.edit') && (
-            <button
-              onClick={() => openAddTask({ project: campaign.name })}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
-            >
-              + Add Task
-            </button>
-          )}
           {can('campaigns.manage') && (
             editing ? (
               <>
@@ -400,13 +392,23 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
       {/* View Toggle */}
       <div className="flex items-center justify-between mb-3">
         <span className="text-[13px] font-medium text-white/40">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
-        <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
-          {[['creator','⊞ By Creator'],['table','≡ Table'],['kanban','⧉ Kanban']].map(([v, label]) => (
-            <button key={v} onClick={() => switchView(v)}
-              className={`px-3.5 py-1.5 text-[12px] font-medium rounded-md transition-all ${view===v?'bg-[#1E1E28] text-white':'text-white/30 hover:text-white/60'}`}>
-              {label}
+        <div className="flex items-center gap-2">
+          <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
+            {[['creator','⊞ By Creator'],['table','≡ Table'],['kanban','⧉ Kanban']].map(([v, label]) => (
+              <button key={v} onClick={() => switchView(v)}
+                className={`px-3.5 py-1.5 text-[12px] font-medium rounded-md transition-all ${view===v?'bg-[#1E1E28] text-white':'text-white/30 hover:text-white/60'}`}>
+                {label}
+              </button>
+            ))}
+          </div>
+          {!editing && can('creators.edit') && (
+            <button
+              onClick={() => openAddTask({ project: campaign.name })}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
+            >
+              + Add Task
             </button>
-          ))}
+          )}
         </div>
       </div>
 
