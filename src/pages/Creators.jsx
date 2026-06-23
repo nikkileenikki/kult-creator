@@ -55,15 +55,6 @@ export default function Creators() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {/* Add Creator */}
-          {can('creators.edit') && (
-            <button
-              onClick={openAddCreator}
-              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
-            >
-              + Add Creator
-            </button>
-          )}
           {/* Niche filter */}
           <select value={filterNiche} onChange={e => setFilterNiche(e.target.value)} className={SELECT}>
             <option value="All">All Niches</option>
@@ -93,6 +84,15 @@ export default function Creators() {
             <option value="All">All Statuses</option>
             <option value="Rejected">Rejected</option>
           </select>
+          {/* Add Creator */}
+          {can('creators.edit') && (
+            <button
+              onClick={openAddCreator}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
+            >
+              + Add Creator
+            </button>
+          )}
         </div>
       </div>
 
