@@ -306,8 +306,14 @@ export default function ProjectManagement() {
 
   useEffect(() => { fetchProjects() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Sort projects oldest → newest
+  const sortedProjects = useMemo(() =>
+    [...projects].sort((a, b) => new Date(a.createdAt ?? 0) - new Date(b.createdAt ?? 0)),
+    [projects]
+  )
+
   // Derived state — declared here so the useEffects below can safely reference them
-  const selected   = projects.find(p => p.id === selectedId)
+  const selected   = sortedProjects.find(p => p.id === selectedId)
   const projTasks  = useMemo(() => tasks.filter(t => t.projectId === selectedId), [tasks, selectedId])
 
   const stats = useMemo(() => ({
@@ -318,10 +324,10 @@ export default function ProjectManagement() {
     done:       projTasks.filter(t => t.status === 'Done').length,
   }), [projTasks])
 
-  // Auto-select first project
+  // Auto-select oldest project (first in sorted list)
   useEffect(() => {
-    if (projects.length > 0 && !selectedId) setSelectedId(projects[0].id)
-  }, [projects, selectedId])
+    if (sortedProjects.length > 0 && !selectedId) setSelectedId(sortedProjects[0].id)
+  }, [sortedProjects, selectedId])
 
   // Load tasks when project is selected
   useEffect(() => {
@@ -367,7 +373,7 @@ export default function ProjectManagement() {
   async function handleDeleteProject(id) {
     if (!window.confirm('Delete this project and all its tasks?')) return
     await deleteProject(id)
-    setSelectedId(projects.find(p => p.id !== id)?.id ?? null)
+    setSelectedId(sortedProjects.find(p => p.id !== id)?.id ?? null)
     showToast('Project deleted')
   }
 
@@ -405,16 +411,16 @@ export default function ProjectManagement() {
         </div>
 
         <div className="space-y-1.5 flex-1 overflow-y-auto">
-          {loading && projects.length === 0 && (
+          {loading && sortedProjects.length === 0 && (
             <div className="text-[12px] text-white/25 px-2 py-4 text-center">Loading…</div>
           )}
-          {!loading && projects.length === 0 && (
+          {!loading && sortedProjects.length === 0 && (
             <div className="text-[12px] text-white/25 px-2 py-6 text-center">
               <FolderOpen size={24} className="mx-auto mb-2 opacity-30" />
               No projects yet
             </div>
           )}
-          {projects.map(p => {
+          {sortedProjects.map(p => {
             const ptasks = tasks.filter(t => t.projectId === p.id)
             const done = ptasks.filter(t => t.status === 'Done').length
             const isActive = p.id === selectedId
