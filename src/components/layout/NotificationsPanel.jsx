@@ -42,12 +42,13 @@ export default function NotificationsPanel() {
     return { overdue, dueSoon }
   }, [tasks, dismissedAlerts])
 
-  const taskAlertIds = [...overdue, ...dueSoon].map(t => t.id)
-  const totalCount   = mentions.length + overdue.length + dueSoon.length
-  const isEmpty      = totalCount === 0
+  const taskAlertIds   = [...overdue, ...dueSoon].map(t => t.id)
+  const unreadMentions = mentions.filter(n => !n.read)
+  const totalCount     = unreadMentions.length + overdue.length + dueSoon.length
+  const isEmpty        = mentions.length === 0 && overdue.length === 0 && dueSoon.length === 0
 
   async function handleMentionClick(n) {
-    await markRead(n.id)
+    if (!n.read) await markRead(n.id)
     navigate(`/projects?proj=${n.projectId}&task=${n.taskId}`)
     close()
   }
@@ -101,26 +102,31 @@ export default function NotificationsPanel() {
             <div>
               <div className="px-4 py-2 font-mono text-[9px] text-violet-400/60 uppercase tracking-[.08em] bg-violet-500/5 flex items-center gap-1.5">
                 <AtSign size={9} />
-                Mentions · {mentions.length}
+                Mentions · {unreadMentions.length > 0 ? `${unreadMentions.length} unread` : 'all read'}
               </div>
               {mentions.map(n => (
-                <div key={n.id} className="flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors">
+                <div key={n.id} className={cn('flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors', n.read && 'opacity-50')}>
                   <button
                     onClick={() => handleMentionClick(n)}
                     className="flex-1 text-left px-4 py-3"
                   >
-                    <div className="text-[13px] font-medium text-white leading-snug">{n.taskTitle}</div>
-                    <div className="text-[11px] text-white/30 mt-0.5">
+                    <div className="flex items-center gap-2">
+                      {!n.read && <span className="w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />}
+                      <div className="text-[13px] font-medium text-white leading-snug">{n.taskTitle}</div>
+                    </div>
+                    <div className={cn('text-[11px] text-white/30 mt-0.5', !n.read && 'ml-3.5')}>
                       {n.message} · <span className="text-violet-400/70">{fmtTime(n.createdAt)}</span>
                     </div>
                   </button>
-                  <button
-                    onClick={() => markRead(n.id)}
-                    className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                    title="Dismiss"
-                  >
-                    <X size={13} />
-                  </button>
+                  {!n.read && (
+                    <button
+                      onClick={e => { e.stopPropagation(); markRead(n.id) }}
+                      className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
+                      title="Mark as read"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
               ))}
             </div>

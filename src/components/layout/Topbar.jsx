@@ -54,7 +54,7 @@ export default function Topbar() {
 
   const tasks           = useTaskStore(s => s.tasks)
   const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
-  const mentions        = useNotificationStore(s => s.mentions)
+  const mentions        = useNotificationStore(s => s.mentions.filter(n => !n.read))
   const alertCount = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const limit = new Date(today); limit.setDate(today.getDate() + 3)
