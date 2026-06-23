@@ -302,6 +302,7 @@ export default function ProjectManagement() {
   const [taskModal,   setTaskModal]   = useState(false)
   const [editTask,    setEditTask]    = useState(null)
   const [taskStatus,  setTaskStatus]  = useState(null) // pre-fill status for quick-add
+  const [detailTask,  setDetailTask]  = useState(null) // task detail panel
 
   useEffect(() => { fetchProjects() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -332,11 +333,11 @@ export default function ProjectManagement() {
     if (openProjectId && projects.length > 0) setSelectedId(openProjectId)
   }, [openProjectId, projects])
 
-  // Open task modal from notification link once tasks are loaded
+  // Open task detail from notification link once tasks are loaded
   useEffect(() => {
     if (!openTaskId || projTasks.length === 0) return
     const task = projTasks.find(t => t.id === openTaskId)
-    if (task) { openEditTask(task); setSearchParams({}, { replace: true }) }
+    if (task) { setDetailTask(task); setSearchParams({}, { replace: true }) }
   }, [openTaskId, projTasks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveProject(form) {
@@ -548,7 +549,7 @@ export default function ProjectManagement() {
                           <div
                             key={t.id}
                             className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 hover:bg-[#23233A] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all', PRIORITY_BORDER[t.priority])}
-                            onClick={() => openEditTask(t)}
+                            onClick={() => setDetailTask(t)}
                           >
                             {/* Title */}
                             <div className="text-[12px] font-semibold text-white leading-snug mb-1.5">{t.title}</div>
@@ -605,7 +606,7 @@ export default function ProjectManagement() {
                   </thead>
                   <tbody>
                     {projTasks.map(t => (
-                      <tr key={t.id} onClick={() => openEditTask(t)} className={cn('border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group', PRIORITY_ROW_BG[t.priority])}>
+                      <tr key={t.id} onClick={() => setDetailTask(t)} className={cn('border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group', PRIORITY_ROW_BG[t.priority])}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
                             <div>
@@ -655,6 +656,80 @@ export default function ProjectManagement() {
         onSave={handleSaveTask}
         pics={PICS}
       />
+
+      {/* Task Detail Panel */}
+      {detailTask && (
+        <div className="fixed inset-0 z-40 flex justify-end pointer-events-none">
+          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setDetailTask(null)} />
+          <div className="relative w-[400px] bg-[#111116] border-l border-white/[0.07] flex flex-col shadow-2xl pointer-events-auto animate-[slideInRight_.2s_ease]">
+            {/* Header */}
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[10px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLOR[detailTask.status]}`}>{detailTask.status}</span>
+                <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', PRIORITY_BADGE[detailTask.priority])}>{detailTask.priority}</span>
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => { openEditTask(detailTask); setDetailTask(null) }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/50 hover:text-white text-[12px] transition-all"
+                >
+                  <Pencil size={11} /> Edit
+                </button>
+                <button
+                  onClick={() => setDetailTask(null)}
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            {/* Body */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              <h2 className="font-syne text-[18px] font-bold text-white leading-snug">{detailTask.title}</h2>
+
+              {detailTask.description && (
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Description</div>
+                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{detailTask.description}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Assignee</div>
+                  <div className="text-[13px] text-white/70">{detailTask.assignee || 'Unassigned'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Due Date</div>
+                  <div className="font-mono text-[13px] text-white/70">{detailTask.dueDate || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Status</div>
+                  <div className="text-[13px] text-white/70">{detailTask.status}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Priority</div>
+                  <div className={`text-[13px] font-medium ${PRIORITY_TXT[detailTask.priority]}`}>{detailTask.priority}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="px-5 py-4 border-t border-white/[0.07]">
+              <button
+                onClick={async () => {
+                  await handleDeleteTask(detailTask.id)
+                  setDetailTask(null)
+                }}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[12px] transition-all"
+              >
+                <Trash2 size={12} /> Delete Task
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
