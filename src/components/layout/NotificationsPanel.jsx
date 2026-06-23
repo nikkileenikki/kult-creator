@@ -1,16 +1,23 @@
 import { useEffect, useRef, useMemo } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
-import { X, CheckCheck } from 'lucide-react'
+import { useNotificationStore } from '@/store/notificationStore'
+import { X, CheckCheck, AtSign } from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export default function NotificationsPanel() {
-  const panelRef        = useRef(null)
-  const tasks           = useTaskStore(s => s.tasks)
-  const openEdit        = useUIStore(s => s.openEditTask)
-  const close           = useUIStore(s => s.closeNotifications)
-  const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
-  const dismissAlert    = useUIStore(s => s.dismissAlert)
+  const panelRef         = useRef(null)
+  const navigate         = useNavigate()
+  const tasks            = useTaskStore(s => s.tasks)
+  const openEdit         = useUIStore(s => s.openEditTask)
+  const close            = useUIStore(s => s.closeNotifications)
+  const dismissedAlerts  = useUIStore(s => s.dismissedAlerts)
+  const dismissAlert     = useUIStore(s => s.dismissAlert)
   const dismissAllAlerts = useUIStore(s => s.dismissAllAlerts)
+  const mentions         = useNotificationStore(s => s.mentions)
+  const markRead         = useNotificationStore(s => s.markRead)
+  const markAllRead      = useNotificationStore(s => s.markAllRead)
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -25,7 +32,6 @@ export default function NotificationsPanel() {
     today.setHours(0, 0, 0, 0)
     const limit = new Date(today)
     limit.setDate(today.getDate() + 3)
-
     const overdue = tasks.filter(t => t.status === 'Overdue' && !dismissedAlerts.has(t.id))
     const dueSoon = tasks.filter(t => {
       if (t.status === 'Completed' || t.status === 'Overdue') return false
@@ -36,12 +42,25 @@ export default function NotificationsPanel() {
     return { overdue, dueSoon }
   }, [tasks, dismissedAlerts])
 
-  const allIds  = [...overdue, ...dueSoon].map(t => t.id)
-  const isEmpty = overdue.length === 0 && dueSoon.length === 0
+  const taskAlertIds = [...overdue, ...dueSoon].map(t => t.id)
+  const totalCount   = mentions.length + overdue.length + dueSoon.length
+  const isEmpty      = totalCount === 0
 
-  function handleClick(id) {
-    openEdit(id)
+  async function handleMentionClick(n) {
+    await markRead(n.id)
+    navigate(`/projects?proj=${n.projectId}&task=${n.taskId}`)
     close()
+  }
+
+  async function handleMarkAllRead() {
+    await markAllRead()
+    dismissAllAlerts(taskAlertIds)
+  }
+
+  function fmtTime(iso) {
+    if (!iso) return ''
+    const d = new Date(iso)
+    return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })
   }
 
   return (
@@ -54,15 +73,14 @@ export default function NotificationsPanel() {
           <span className="font-syne text-[13px] font-bold text-white">Notifications</span>
           {!isEmpty && (
             <span className="font-mono text-[10px] bg-violet-500/20 text-violet-300 px-2 py-0.5 rounded-full">
-              {overdue.length + dueSoon.length}
+              {totalCount}
             </span>
           )}
         </div>
         {!isEmpty && (
           <button
-            onClick={() => dismissAllAlerts(allIds)}
+            onClick={handleMarkAllRead}
             className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors"
-            title="Mark all as read"
           >
             <CheckCheck size={13} />
             <span>Mark all read</span>
@@ -76,25 +94,28 @@ export default function NotificationsPanel() {
           <div className="text-[13px] text-white/30">All caught up!</div>
         </div>
       ) : (
-        <div className="max-h-[400px] overflow-y-auto">
-          {overdue.length > 0 && (
+        <div className="max-h-[420px] overflow-y-auto">
+
+          {/* Mentions section */}
+          {mentions.length > 0 && (
             <div>
-              <div className="px-4 py-2 font-mono text-[9px] text-rose-400/60 uppercase tracking-[.08em] bg-rose-500/5">
-                Overdue · {overdue.length}
+              <div className="px-4 py-2 font-mono text-[9px] text-violet-400/60 uppercase tracking-[.08em] bg-violet-500/5 flex items-center gap-1.5">
+                <AtSign size={9} />
+                Mentions · {mentions.length}
               </div>
-              {overdue.map(t => (
-                <div key={t.id} className="flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors">
+              {mentions.map(n => (
+                <div key={n.id} className="flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors">
                   <button
-                    onClick={() => handleClick(t.id)}
+                    onClick={() => handleMentionClick(n)}
                     className="flex-1 text-left px-4 py-3"
                   >
-                    <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
+                    <div className="text-[13px] font-medium text-white leading-snug">{n.taskTitle}</div>
                     <div className="text-[11px] text-white/30 mt-0.5">
-                      {t.creatorName} · <span className="text-rose-400">{t.dueDate}</span>
+                      {n.message} · <span className="text-violet-400/70">{fmtTime(n.createdAt)}</span>
                     </div>
                   </button>
                   <button
-                    onClick={() => dismissAlert(t.id)}
+                    onClick={() => markRead(n.id)}
                     className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
                     title="Dismiss"
                   >
@@ -105,6 +126,29 @@ export default function NotificationsPanel() {
             </div>
           )}
 
+          {/* Overdue */}
+          {overdue.length > 0 && (
+            <div>
+              <div className="px-4 py-2 font-mono text-[9px] text-rose-400/60 uppercase tracking-[.08em] bg-rose-500/5">
+                Overdue · {overdue.length}
+              </div>
+              {overdue.map(t => (
+                <div key={t.id} className="flex items-center border-b border-white/[0.05] group hover:bg-white/[.02] transition-colors">
+                  <button onClick={() => { openEdit(t.id); close() }} className="flex-1 text-left px-4 py-3">
+                    <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
+                    <div className="text-[11px] text-white/30 mt-0.5">
+                      {t.creatorName} · <span className="text-rose-400">{t.dueDate}</span>
+                    </div>
+                  </button>
+                  <button onClick={() => dismissAlert(t.id)} className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0" title="Dismiss">
+                    <X size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {/* Due Soon */}
           {dueSoon.length > 0 && (
             <div>
               <div className="px-4 py-2 font-mono text-[9px] text-amber-400/60 uppercase tracking-[.08em] bg-amber-500/5">
@@ -112,20 +156,13 @@ export default function NotificationsPanel() {
               </div>
               {dueSoon.map(t => (
                 <div key={t.id} className="flex items-center border-b border-white/[0.05] last:border-0 group hover:bg-white/[.02] transition-colors">
-                  <button
-                    onClick={() => handleClick(t.id)}
-                    className="flex-1 text-left px-4 py-3"
-                  >
+                  <button onClick={() => { openEdit(t.id); close() }} className="flex-1 text-left px-4 py-3">
                     <div className="text-[13px] font-medium text-white leading-snug">{t.task}</div>
                     <div className="text-[11px] text-white/30 mt-0.5">
                       {t.creatorName} · <span className="text-amber-400">{t.dueDate}</span>
                     </div>
                   </button>
-                  <button
-                    onClick={() => dismissAlert(t.id)}
-                    className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
-                    title="Dismiss"
-                  >
+                  <button onClick={() => dismissAlert(t.id)} className="px-3 py-3 text-white/20 hover:text-white/60 opacity-0 group-hover:opacity-100 transition-all flex-shrink-0" title="Dismiss">
                     <X size={13} />
                   </button>
                 </div>

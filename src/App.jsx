@@ -30,6 +30,7 @@ import { useCampaignStore } from '@/store/campaignStore'
 import { useBrandStore } from '@/store/brandStore'
 import { useNicheStore } from '@/store/nicheStore'
 import { useInternalProjectStore } from '@/store/internalProjectStore'
+import { useNotificationStore } from '@/store/notificationStore'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -65,6 +66,7 @@ export default function App() {
   const fetchPics         = useAuthStore(s => s.fetchPics)
   const fetchNiches       = useNicheStore(s => s.fetchNiches)
   const fetchIntProjects  = useInternalProjectStore(s => s.fetchProjects)
+  const startPolling = useNotificationStore(s => s.startPolling)
 
   useEffect(() => {
     if (!token || !user) return
@@ -76,6 +78,7 @@ export default function App() {
     fetchPics()
     fetchNiches()
     fetchIntProjects()
+    if (user?.displayName) startPolling(user.displayName)
   }, [token, user]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!token || !user) {
