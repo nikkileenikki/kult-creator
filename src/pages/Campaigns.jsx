@@ -44,6 +44,17 @@ function CreatorView({ campaign, tasks, onTaskClick, openAddTask, canEdit }) {
     })
   }, [tasks, creators])
 
+  // All groups collapsed by default
+  const [collapsed, setCollapsed] = useState(() => new Set(groups.map(g => g.id || 'unassigned')))
+
+  function toggleGroup(key) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
   if (tasks.length === 0) {
     return <div className="flex items-center justify-center h-32 text-white/20 text-[13px]">No tasks yet — add one above</div>
   }
@@ -51,12 +62,17 @@ function CreatorView({ campaign, tasks, onTaskClick, openAddTask, canEdit }) {
   return (
     <div className="space-y-3">
       {groups.map(group => {
+        const groupKey  = group.id || 'unassigned'
+        const isCollapsed = collapsed.has(groupKey)
         const done     = group.tasks.filter(t => t.status === 'Completed').length
         const progress = group.tasks.length > 0 ? Math.round((done / group.tasks.length) * 100) : 0
 
         return (
-          <div key={group.id || 'unassigned'} className="bg-[#1E1E28] border border-white/7 rounded-[14px] overflow-hidden">
-            <div className="flex items-center gap-3 px-4 py-3 border-b border-white/[0.05]">
+          <div key={groupKey} className="bg-[#1E1E28] border border-white/7 rounded-[14px] overflow-hidden">
+            <div
+              className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-white/[.02] transition-colors"
+              onClick={() => toggleGroup(groupKey)}
+            >
               {group.creator ? (
                 <Avatar initials={group.creator.initials} color={group.creator.avatarColor} size="sm" />
               ) : (
@@ -75,32 +91,37 @@ function CreatorView({ campaign, tasks, onTaskClick, openAddTask, canEdit }) {
                   <span className="font-mono text-[9px] text-white/25">{progress}%</span>
                 </div>
               </div>
-              {canEdit && (
-                <button
-                  onClick={() => openAddTask({ project: campaign.name, creatorId: group.id || undefined })}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/7 hover:border-violet-500/30 hover:bg-violet-600/10 text-white/40 hover:text-white/70 text-[11px] font-medium transition-all flex-shrink-0"
-                >
-                  + Add Task
-                </button>
-              )}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {canEdit && (
+                  <button
+                    onClick={e => { e.stopPropagation(); openAddTask({ project: campaign.name, creatorId: group.id || undefined }) }}
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-white/5 border border-white/7 hover:border-violet-500/30 hover:bg-violet-600/10 text-white/40 hover:text-white/70 text-[11px] font-medium transition-all"
+                  >
+                    + Add Task
+                  </button>
+                )}
+                <span className={`text-white/25 text-[10px] transition-transform ${isCollapsed ? '' : 'rotate-180'}`}>▾</span>
+              </div>
             </div>
-            <div>
-              {group.tasks.map(t => (
-                <div
-                  key={t.id}
-                  onClick={() => onTaskClick(t)}
-                  className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] last:border-0 hover:bg-white/[.02] cursor-pointer transition-colors group"
-                >
-                  <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-white/60 group-hover:text-white/80 transition-colors truncate">{t.task}</div>
-                    {t.description && <div className="text-[11px] text-white/25 truncate mt-0.5">{t.description}</div>}
+            {!isCollapsed && (
+              <div className="border-t border-white/[0.05]">
+                {group.tasks.map(t => (
+                  <div
+                    key={t.id}
+                    onClick={() => onTaskClick(t)}
+                    className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] last:border-0 hover:bg-white/[.02] cursor-pointer transition-colors group"
+                  >
+                    <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[12px] text-white/60 group-hover:text-white/80 transition-colors truncate">{t.task}</div>
+                      {t.description && <div className="text-[11px] text-white/25 truncate mt-0.5">{t.description}</div>}
+                    </div>
+                    <Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge>
+                    <span className={`font-mono text-[10px] flex-shrink-0 ${t.status==='Overdue'?'text-rose-400':'text-white/20'}`}>{t.dueDate}</span>
                   </div>
-                  <Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge>
-                  <span className={`font-mono text-[10px] flex-shrink-0 ${t.status==='Overdue'?'text-rose-400':'text-white/20'}`}>{t.dueDate}</span>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            )}
           </div>
         )
       })}
