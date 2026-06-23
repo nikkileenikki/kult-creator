@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { useTaskStore } from '@/store/taskStore'
 import { useUIStore } from '@/store/uiStore'
 import { useNotificationStore } from '@/store/notificationStore'
-import { X, CheckCheck, AtSign } from 'lucide-react'
+import { X, CheckCheck, AtSign, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 export default function NotificationsPanel() {
@@ -18,6 +18,7 @@ export default function NotificationsPanel() {
   const mentions         = useNotificationStore(s => s.mentions)
   const markRead         = useNotificationStore(s => s.markRead)
   const markAllRead      = useNotificationStore(s => s.markAllRead)
+  const clearMentions    = useNotificationStore(s => s.clearMentions)
 
   useEffect(() => {
     function onClickOutside(e) {
@@ -58,6 +59,11 @@ export default function NotificationsPanel() {
     dismissAllAlerts(taskAlertIds)
   }
 
+  async function handleClearAll() {
+    await clearMentions()
+    dismissAllAlerts(taskAlertIds)
+  }
+
   function fmtTime(iso) {
     if (!iso) return ''
     const d = new Date(iso)
@@ -79,13 +85,22 @@ export default function NotificationsPanel() {
           )}
         </div>
         {!isEmpty && (
-          <button
-            onClick={handleMarkAllRead}
-            className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors"
-          >
-            <CheckCheck size={13} />
-            <span>Mark all read</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleMarkAllRead}
+              className="flex items-center gap-1 text-[11px] text-white/30 hover:text-white/70 transition-colors"
+              title="Mark all as read"
+            >
+              <CheckCheck size={13} />
+            </button>
+            <button
+              onClick={handleClearAll}
+              className="flex items-center gap-1 text-[11px] text-white/30 hover:text-rose-400/70 transition-colors"
+              title="Clear all"
+            >
+              <Trash2 size={13} />
+            </button>
+          </div>
         )}
       </div>
 

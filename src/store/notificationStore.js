@@ -11,7 +11,7 @@ export const useNotificationStore = create((set, get) => ({
     if (_timer) clearInterval(_timer)
     set({ _user: user })
     get().poll(user)
-    const timer = setInterval(() => get().poll(user), 10000)
+    const timer = setInterval(() => get().poll(get()._user), 10000)
     set({ _timer: timer })
 
     // Re-poll immediately when the tab becomes visible again
@@ -25,11 +25,21 @@ export const useNotificationStore = create((set, get) => ({
     if (_timer) { clearInterval(_timer); set({ _timer: null }) }
   },
 
+  // Merge incoming server data with local state so read notifications persist
+  // until the user explicitly clears them.
   poll: async (user) => {
     if (!user) return
     try {
       const data = await fetchNotifications(user)
-      set({ mentions: data })
+      set(s => {
+        const byId = new Map(s.mentions.map(n => [n.id, n]))
+        for (const n of data) {
+          const existing = byId.get(n.id)
+          // Preserve local read=true in case server hasn't caught up yet
+          byId.set(n.id, existing ? { ...n, read: n.read || existing.read } : n)
+        }
+        return { mentions: [...byId.values()] }
+      })
     } catch {}
   },
 
@@ -42,5 +52,12 @@ export const useNotificationStore = create((set, get) => ({
     const ids = get().mentions.filter(n => !n.read).map(n => n.id)
     await Promise.all(ids.map(markNotificationRead))
     set(s => ({ mentions: s.mentions.map(n => ({ ...n, read: true })) }))
+  },
+
+  // Mark any unread as read on the server, then wipe local list
+  clearMentions: async () => {
+    const unread = get().mentions.filter(n => !n.read)
+    if (unread.length > 0) await Promise.all(unread.map(n => markNotificationRead(n.id)))
+    set({ mentions: [] })
   },
 }))
