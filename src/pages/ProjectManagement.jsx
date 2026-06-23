@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useInternalProjectStore } from '@/store/internalProjectStore'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -13,8 +13,11 @@ const PROJ_STATUS  = ['Planning', 'Active', 'On Hold', 'Completed']
 const TASK_STATUS  = ['To Do', 'In Progress', 'In Review', 'Blocked', 'Done']
 const PRIORITY_OPT = ['Low', 'Medium', 'High', 'Urgent']
 
-const PRIORITY_DOT = { Urgent:'bg-rose-400', High:'bg-orange-400', Medium:'bg-amber-400', Low:'bg-emerald-400' }
-const PRIORITY_TXT = { Urgent:'text-rose-400', High:'text-orange-400', Medium:'text-amber-400', Low:'text-emerald-400' }
+const PRIORITY_DOT    = { Urgent:'bg-rose-400', High:'bg-orange-400', Medium:'bg-amber-400', Low:'bg-emerald-400' }
+const PRIORITY_TXT    = { Urgent:'text-rose-400', High:'text-orange-400', Medium:'text-amber-400', Low:'text-emerald-400' }
+const PRIORITY_BORDER = { Urgent:'border-l-rose-500', High:'border-l-orange-400', Medium:'border-l-amber-400', Low:'border-l-emerald-400/60' }
+const PRIORITY_BADGE  = { Urgent:'bg-rose-500/15 text-rose-300 border-rose-500/30', High:'bg-orange-500/15 text-orange-300 border-orange-500/30', Medium:'bg-amber-500/15 text-amber-300 border-amber-500/30', Low:'bg-emerald-500/10 text-emerald-300 border-emerald-500/20' }
+const PRIORITY_ROW_BG = { Urgent:'bg-rose-500/[0.04]', High:'', Medium:'', Low:'' }
 const STATUS_COLOR = {
   'To Do':      'text-white/40 bg-white/5 border-white/10',
   'In Progress':'text-blue-300 bg-blue-500/10 border-blue-500/20',
@@ -33,6 +36,94 @@ const PROJ_STATUS_DOT = { Active:'bg-emerald-400', Planning:'bg-amber-400', 'On 
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const LABEL = 'block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5'
+
+// ── Mention Textarea ─────────────────────────────────────────────────────────
+
+function MentionTextarea({ value, onChange, placeholder, rows, className, pics }) {
+  const [mention, setMention] = useState(null) // { query, start } while "@" is active
+  const [idx, setIdx]         = useState(0)
+  const ref = useRef(null)
+
+  const filtered = useMemo(() => {
+    if (!mention) return []
+    return pics.filter(p => p.toLowerCase().includes(mention.query.toLowerCase()))
+  }, [mention, pics])
+
+  function handleChange(e) {
+    const val    = e.target.value
+    const cursor = e.target.selectionStart
+    const before = val.slice(0, cursor)
+    const atIdx  = before.lastIndexOf('@')
+    if (atIdx >= 0) {
+      const afterAt = before.slice(atIdx + 1)
+      if (!/\s/.test(afterAt)) {
+        setMention({ query: afterAt, start: atIdx })
+        setIdx(0)
+        onChange(e)
+        return
+      }
+    }
+    setMention(null)
+    onChange(e)
+  }
+
+  function selectMention(pic) {
+    const ta     = ref.current
+    const before = value.slice(0, mention.start)
+    const after  = value.slice(ta.selectionStart)
+    const next   = `${before}@${pic} ${after}`
+    onChange({ target: { value: next } })
+    setMention(null)
+    setTimeout(() => {
+      const pos = mention.start + pic.length + 2
+      ta.setSelectionRange(pos, pos)
+      ta.focus()
+    }, 0)
+  }
+
+  function handleKeyDown(e) {
+    if (!mention || filtered.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx(i => Math.min(i + 1, filtered.length - 1)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setIdx(i => Math.max(i - 1, 0)) }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); if (filtered[idx]) selectMention(filtered[idx]) }
+    if (e.key === 'Escape')    setMention(null)
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onBlur={() => setTimeout(() => setMention(null), 150)}
+        rows={rows}
+        placeholder={placeholder}
+        className={className}
+      />
+      {mention && filtered.length > 0 && (
+        <div className="absolute z-20 left-0 top-full mt-1 w-52 bg-[#1A1A22] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="px-3 py-1.5 border-b border-white/[0.05]">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider">Tag team member</span>
+          </div>
+          {filtered.map((p, i) => (
+            <button
+              key={p}
+              type="button"
+              onMouseDown={() => selectMention(p)}
+              className={cn('w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center gap-2', i === idx ? 'bg-violet-600/20 text-violet-200' : 'text-white/70 hover:bg-white/5')}
+            >
+              <span className="w-5 h-5 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-[9px] font-bold text-violet-300 flex-shrink-0">
+                {p[0]}
+              </span>
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Project Form Modal ────────────────────────────────────────────────────────
 
@@ -148,8 +239,8 @@ function TaskModal({ open, onClose, initial, projectId, onSave, pics }) {
                   <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Draft content calendar" className={INPUT} required />
                 </div>
                 <div>
-                  <label className={LABEL}>Description <span className="normal-case font-normal text-white/20">(optional)</span></label>
-                  <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="Details, links, or context…" className={cn(INPUT, 'resize-none')} />
+                  <label className={LABEL}>Description <span className="normal-case font-normal text-white/20">(optional · type @ to tag)</span></label>
+                  <MentionTextarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="Details, links, or context… type @ to tag someone" className={cn(INPUT, 'resize-none')} pics={pics} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -312,10 +403,11 @@ export default function ProjectManagement() {
                 key={p.id}
                 onClick={() => setSelectedId(p.id)}
                 className={cn(
-                  'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all border',
+                  'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all border border-l-2',
                   isActive
                     ? 'bg-violet-600/12 border-violet-500/25 text-white'
-                    : 'bg-[#1E1E28] border-white/7 text-white/60 hover:border-white/12 hover:text-white/80'
+                    : 'bg-[#1E1E28] border-white/7 text-white/60 hover:border-white/12 hover:text-white/80',
+                  PRIORITY_BORDER[p.priority],
                 )}
               >
                 <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: p.color }} />
@@ -324,6 +416,7 @@ export default function ProjectManagement() {
                   <div className="flex items-center gap-1.5 mt-0.5">
                     <span className={`w-1 h-1 rounded-full flex-shrink-0 ${PROJ_STATUS_DOT[p.status] ?? 'bg-white/20'}`} />
                     <span className="text-[10px] text-white/30">{p.status}</span>
+                    <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[p.priority])}>{p.priority}</span>
                     {ptasks.length > 0 && (
                       <span className="text-[10px] text-white/20 ml-auto">{done}/{ptasks.length}</span>
                     )}
@@ -342,7 +435,7 @@ export default function ProjectManagement() {
       </div>
 
       {/* ── Task Board ── */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-4">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-white/20">
             <FolderOpen size={36} className="mb-3 opacity-30" />
@@ -414,12 +507,12 @@ export default function ProjectManagement() {
             ) : view === 'kanban' ? (
 
               /* Kanban */
-              <div className="flex gap-3 overflow-x-auto pb-2 flex-1">
+              <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
                 {TASK_STATUS.map(col => {
                   const colTasks = projTasks.filter(t => t.status === col)
                   return (
-                    <div key={col} className="flex-shrink-0 w-56">
-                      <div className={`flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06]`}>
+                    <div key={col} className="flex-shrink-0 w-52 flex flex-col min-h-0">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06] flex-shrink-0">
                         <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
                         <div className="flex items-center gap-1">
                           <span className="font-mono text-[10px] text-white/20">{colTasks.length}</span>
@@ -428,20 +521,22 @@ export default function ProjectManagement() {
                           </button>
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 overflow-y-auto flex-1 pr-0.5">
                         {colTasks.map(t => (
                           <div
                             key={t.id}
-                            className="group bg-[#1E1E28] border border-white/7 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all"
+                            className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all', PRIORITY_BORDER[t.priority])}
                             onClick={() => openEditTask(t)}
                           >
-                            <div className="flex items-start gap-2 mb-1">
-                              <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 mt-1.5 ${PRIORITY_DOT[t.priority]}`} />
+                            <div className="flex items-start gap-2 mb-1.5">
                               <span className="text-[12px] font-medium text-white leading-snug">{t.title}</span>
                             </div>
-                            {t.description && <div className="text-[11px] text-white/30 mb-2 ml-3.5 line-clamp-2">{t.description}</div>}
-                            <div className="flex items-center justify-between ml-3.5 mt-1">
-                              <span className="text-[10px] text-white/30">{t.assignee || 'Unassigned'}</span>
+                            {t.description && <div className="text-[11px] text-white/30 mb-2 line-clamp-2">{t.description}</div>}
+                            <div className="flex items-center justify-between mt-1.5">
+                              <div className="flex items-center gap-1.5">
+                                <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
+                                <span className="text-[10px] text-white/30">{t.assignee || 'Unassigned'}</span>
+                              </div>
                               <div className="flex items-center gap-1.5">
                                 {t.dueDate && <span className="font-mono text-[10px] text-white/20">{t.dueDate}</span>}
                                 <button
@@ -483,10 +578,9 @@ export default function ProjectManagement() {
                   </thead>
                   <tbody>
                     {projTasks.map(t => (
-                      <tr key={t.id} onClick={() => openEditTask(t)} className="border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group">
+                      <tr key={t.id} onClick={() => openEditTask(t)} className={cn('border-b border-white/[0.04] last:border-0 hover:bg-white/[.025] cursor-pointer transition-colors group', PRIORITY_ROW_BG[t.priority])}>
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-2">
-                            <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
                             <div>
                               <div className="text-[13px] text-white/80">{t.title}</div>
                               {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate max-w-xs">{t.description}</div>}
@@ -496,7 +590,9 @@ export default function ProjectManagement() {
                         <td className="px-4 py-3">
                           <span className={`text-[11px] px-2 py-0.5 rounded-full border font-medium ${STATUS_COLOR[t.status]}`}>{t.status}</span>
                         </td>
-                        <td className={`px-4 py-3 text-[12px] font-medium ${PRIORITY_TXT[t.priority]}`}>{t.priority}</td>
+                        <td className="px-4 py-3">
+                          <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
+                        </td>
                         <td className="px-4 py-3 text-[12px] text-white/40">{t.assignee || '—'}</td>
                         <td className="px-4 py-3 font-mono text-[11px] text-white/30">{t.dueDate || '—'}</td>
                         <td className="px-4 py-3">
