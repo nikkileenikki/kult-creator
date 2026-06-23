@@ -35,12 +35,12 @@ export const useNotificationStore = create((set, get) => ({
 
   markRead: async (id) => {
     await markNotificationRead(id)
-    set(s => ({ mentions: s.mentions.filter(n => n.id !== id) }))
+    set(s => ({ mentions: s.mentions.map(n => n.id === id ? { ...n, read: true } : n) }))
   },
 
   markAllRead: async () => {
-    const ids = get().mentions.map(n => n.id)
+    const ids = get().mentions.filter(n => !n.read).map(n => n.id)
     await Promise.all(ids.map(markNotificationRead))
-    set({ mentions: [] })
+    set(s => ({ mentions: s.mentions.map(n => ({ ...n, read: true })) }))
   },
 }))
