@@ -305,6 +305,18 @@ export default function ProjectManagement() {
 
   useEffect(() => { fetchProjects() }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Derived state — declared here so the useEffects below can safely reference them
+  const selected   = projects.find(p => p.id === selectedId)
+  const projTasks  = useMemo(() => tasks.filter(t => t.projectId === selectedId), [tasks, selectedId])
+
+  const stats = useMemo(() => ({
+    total:      projTasks.length,
+    todo:       projTasks.filter(t => t.status === 'To Do').length,
+    inProgress: projTasks.filter(t => t.status === 'In Progress').length,
+    blocked:    projTasks.filter(t => t.status === 'Blocked').length,
+    done:       projTasks.filter(t => t.status === 'Done').length,
+  }), [projTasks])
+
   // Auto-select first project
   useEffect(() => {
     if (projects.length > 0 && !selectedId) setSelectedId(projects[0].id)
@@ -325,18 +337,7 @@ export default function ProjectManagement() {
     if (!openTaskId || projTasks.length === 0) return
     const task = projTasks.find(t => t.id === openTaskId)
     if (task) { openEditTask(task); setSearchParams({}, { replace: true }) }
-  }, [openTaskId, projTasks])
-
-  const selected = projects.find(p => p.id === selectedId)
-  const projTasks = useMemo(() => tasks.filter(t => t.projectId === selectedId), [tasks, selectedId])
-
-  const stats = useMemo(() => ({
-    total:      projTasks.length,
-    todo:       projTasks.filter(t => t.status === 'To Do').length,
-    inProgress: projTasks.filter(t => t.status === 'In Progress').length,
-    blocked:    projTasks.filter(t => t.status === 'Blocked').length,
-    done:       projTasks.filter(t => t.status === 'Done').length,
-  }), [projTasks])
+  }, [openTaskId, projTasks]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSaveProject(form) {
     if (editProject) {
