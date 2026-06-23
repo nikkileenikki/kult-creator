@@ -373,7 +373,7 @@ export default function ProjectManagement() {
     <div className="flex gap-5 h-full min-h-0">
 
       {/* ── Project Sidebar ── */}
-      <div className="w-60 flex-shrink-0 flex flex-col gap-3">
+      <div className="w-44 flex-shrink-0 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-syne text-[14px] font-bold text-white">Projects</h2>
           <button
@@ -403,31 +403,34 @@ export default function ProjectManagement() {
                 key={p.id}
                 onClick={() => setSelectedId(p.id)}
                 className={cn(
-                  'group relative flex items-center gap-2.5 px-3 py-2.5 rounded-xl cursor-pointer transition-all border border-l-2',
+                  'group relative flex gap-2 px-3 py-2.5 rounded-xl cursor-pointer transition-all border border-l-2',
                   isActive
                     ? 'bg-violet-600/12 border-violet-500/25 text-white'
                     : 'bg-[#1E1E28] border-white/7 text-white/60 hover:border-white/12 hover:text-white/80',
                   PRIORITY_BORDER[p.priority],
                 )}
               >
-                <div className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ background: p.color }} />
+                <div className="w-2 h-2 rounded-full flex-shrink-0 mt-1" style={{ background: p.color }} />
                 <div className="flex-1 min-w-0">
-                  <div className="text-[12px] font-semibold truncate">{p.name}</div>
-                  <div className="flex items-center gap-1.5 mt-0.5">
+                  <div className="flex items-start justify-between gap-1">
+                    <div className="text-[11px] font-semibold leading-snug truncate">{p.name}</div>
+                    <button
+                      onClick={e => { e.stopPropagation(); setEditProject(p); setProjModal(true) }}
+                      className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-white/70 transition-all flex-shrink-0 mt-px"
+                    >
+                      <Pencil size={10} />
+                    </button>
+                  </div>
+                  {p.description && <div className="text-[10px] text-white/25 truncate mt-0.5">{p.description}</div>}
+                  <div className="flex items-center gap-1 mt-1 flex-wrap">
                     <span className={`w-1 h-1 rounded-full flex-shrink-0 ${PROJ_STATUS_DOT[p.status] ?? 'bg-white/20'}`} />
-                    <span className="text-[10px] text-white/30">{p.status}</span>
-                    <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[p.priority])}>{p.priority}</span>
+                    <span className="text-[9px] text-white/25">{p.status}</span>
+                    <span className={cn('text-[9px] px-1 py-px rounded border font-medium', PRIORITY_BADGE[p.priority])}>{p.priority}</span>
                     {ptasks.length > 0 && (
-                      <span className="text-[10px] text-white/20 ml-auto">{done}/{ptasks.length}</span>
+                      <span className="text-[9px] text-white/20 ml-auto">{done}/{ptasks.length}</span>
                     )}
                   </div>
                 </div>
-                <button
-                  onClick={e => { e.stopPropagation(); setEditProject(p); setProjModal(true) }}
-                  className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-white/70 transition-all flex-shrink-0"
-                >
-                  <Pencil size={11} />
-                </button>
               </div>
             )
           })}
@@ -507,11 +510,11 @@ export default function ProjectManagement() {
             ) : view === 'kanban' ? (
 
               /* Kanban */
-              <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
+              <div className="flex gap-2 overflow-x-auto pb-2 flex-1 min-h-0">
                 {TASK_STATUS.map(col => {
                   const colTasks = projTasks.filter(t => t.status === col)
                   return (
-                    <div key={col} className="flex-shrink-0 w-52 flex flex-col min-h-0">
+                    <div key={col} className="flex-shrink-0 w-44 flex flex-col min-h-0">
                       <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06] flex-shrink-0">
                         <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
                         <div className="flex items-center gap-1">
@@ -525,13 +528,13 @@ export default function ProjectManagement() {
                         {colTasks.map(t => (
                           <div
                             key={t.id}
-                            className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 rounded-xl p-3 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all', PRIORITY_BORDER[t.priority])}
+                            className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 hover:bg-[#23233A] rounded-xl p-3.5 cursor-pointer hover:shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all', PRIORITY_BORDER[t.priority])}
                             onClick={() => openEditTask(t)}
                           >
-                            <div className="flex items-start gap-2 mb-1.5">
+                            <div className="mb-2">
                               <span className="text-[12px] font-medium text-white leading-snug">{t.title}</span>
                             </div>
-                            {t.description && <div className="text-[11px] text-white/30 mb-2 line-clamp-2">{t.description}</div>}
+                            {t.description && <div className="text-[11px] text-white/50 mb-2.5 line-clamp-3">{t.description}</div>}
                             <div className="flex items-center justify-between mt-1.5">
                               <div className="flex items-center gap-1.5">
                                 <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
