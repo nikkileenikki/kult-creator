@@ -327,7 +327,7 @@ export default function ProjectManagement() {
   // Auto-select oldest project (first in sorted list)
   useEffect(() => {
     if (sortedProjects.length > 0 && !selectedId) setSelectedId(sortedProjects[0].id)
-  }, [sortedProjects, selectedId])
+  }, [sortedProjects.length, selectedId])
 
   // Load tasks when project is selected
   useEffect(() => {
