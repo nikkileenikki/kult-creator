@@ -15,6 +15,20 @@ function mapTask(row) {
   }
 }
 
+async function createMentionNotifications(db, taskId, projectId, taskTitle, mentions) {
+  if (!Array.isArray(mentions) || mentions.length === 0) return
+  const proj = await db.prepare('SELECT name FROM internal_projects WHERE id = ?').bind(projectId).first()
+  const projName = proj?.name ?? ''
+  for (let i = 0; i < mentions.length; i++) {
+    const nid = `n${Date.now()}${i}${Math.random().toString(36).slice(2, 6)}`
+    await db.prepare(
+      'INSERT INTO notifications (id, user_display_name, task_id, project_id, task_title, message) VALUES (?, ?, ?, ?, ?, ?)'
+    ).bind(nid, mentions[i], taskId, projectId, taskTitle,
+      `You were mentioned in "${taskTitle}"${projName ? ` · ${projName}` : ''}`
+    ).run()
+  }
+}
+
 export const onRequestOptions = () => opts()
 
 export async function onRequestGet({ request, env }) {
@@ -40,6 +54,7 @@ export async function onRequestPost({ request, env }) {
       INSERT INTO internal_tasks (id, project_id, title, description, status, priority, assignee, due_date)
       VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `).bind(id, body.projectId, body.title, body.description ?? '', body.status ?? 'To Do', body.priority ?? 'Medium', body.assignee ?? '', body.dueDate ?? '').run()
+    await createMentionNotifications(db, id, body.projectId, body.title, body.mentions)
     const row = await db.prepare('SELECT * FROM internal_tasks WHERE id = ?').bind(id).first()
     return json(mapTask(row), 201)
   } catch (e) {

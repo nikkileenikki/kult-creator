@@ -3,6 +3,7 @@ import { useLocation } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { useTaskStore } from '@/store/taskStore'
+import { useNotificationStore } from '@/store/notificationStore'
 import { useEffect, useMemo } from 'react'
 import NotificationsPanel from './NotificationsPanel'
 
@@ -53,6 +54,7 @@ export default function Topbar() {
 
   const tasks           = useTaskStore(s => s.tasks)
   const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
+  const mentions        = useNotificationStore(s => s.mentions)
   const alertCount = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const limit = new Date(today); limit.setDate(today.getDate() + 3)
@@ -125,7 +127,7 @@ export default function Topbar() {
             className="relative w-[34px] h-[34px] bg-[#1E1E28] border border-white/7 rounded-lg flex items-center justify-center hover:border-white/12 transition-all text-white/40 hover:text-white/80"
           >
             <Bell size={15} strokeWidth={1.8} />
-            {alertCount > 0 && (
+            {(alertCount + mentions.length) > 0 && (
               <span className="absolute top-[7px] right-[7px] w-1.5 h-1.5 bg-violet-500 rounded-full border border-[#111116]" />
             )}
           </button>

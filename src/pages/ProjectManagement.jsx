@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { useInternalProjectStore } from '@/store/internalProjectStore'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -290,6 +291,10 @@ export default function ProjectManagement() {
   const showToast  = useUIStore(s => s.showToast)
   const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
 
+  const [searchParams, setSearchParams] = useSearchParams()
+  const openProjectId = searchParams.get('proj')
+  const openTaskId    = searchParams.get('task')
+
   const [selectedId,  setSelectedId]  = useState(null)
   const [view,        setView]        = useState('kanban')
   const [projModal,   setProjModal]   = useState(false)
@@ -309,6 +314,18 @@ export default function ProjectManagement() {
   useEffect(() => {
     if (selectedId) fetchTasks(selectedId)
   }, [selectedId]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Navigate to project from notification link
+  useEffect(() => {
+    if (openProjectId && projects.length > 0) setSelectedId(openProjectId)
+  }, [openProjectId, projects])
+
+  // Open task modal from notification link once tasks are loaded
+  useEffect(() => {
+    if (!openTaskId || projTasks.length === 0) return
+    const task = projTasks.find(t => t.id === openTaskId)
+    if (task) { openEditTask(task); setSearchParams({}, { replace: true }) }
+  }, [openTaskId, projTasks])
 
   const selected = projects.find(p => p.id === selectedId)
   const projTasks = useMemo(() => tasks.filter(t => t.projectId === selectedId), [tasks, selectedId])
@@ -334,11 +351,12 @@ export default function ProjectManagement() {
   }
 
   async function handleSaveTask(form) {
+    const mentions = (PICS || []).filter(name => (form.description || '').includes(`@${name}`))
     if (editTask) {
-      await updateTask(editTask.id, form)
+      await updateTask(editTask.id, { ...form, mentions })
       showToast('Task updated')
     } else {
-      await addTask({ ...form, status: taskStatus ?? form.status })
+      await addTask({ ...form, status: taskStatus ?? form.status, mentions })
       showToast('Task added')
     }
     setEditTask(null); setTaskStatus(null)
