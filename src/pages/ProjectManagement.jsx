@@ -550,17 +550,22 @@ export default function ProjectManagement() {
                             className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 hover:bg-[#23233A] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all', PRIORITY_BORDER[t.priority])}
                             onClick={() => openEditTask(t)}
                           >
+                            {/* Title */}
+                            <div className="text-[12px] font-semibold text-white leading-snug mb-1.5">{t.title}</div>
+
+                            {/* Description */}
+                            {t.description && <div className="text-[11px] text-white/50 line-clamp-3 mb-3">{t.description}</div>}
+
+                            {/* Priority */}
                             <div className="mb-2">
-                              <span className="text-[12px] font-medium text-white leading-snug">{t.title}</span>
+                              <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
                             </div>
-                            {t.description && <div className="text-[11px] text-white/50 mb-2.5 line-clamp-3">{t.description}</div>}
-                            <div className="flex items-center justify-between mt-1.5">
+
+                            {/* Assignee + Due Date */}
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-white/35">{t.assignee || 'Unassigned'}</span>
                               <div className="flex items-center gap-1.5">
-                                <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
-                                <span className="text-[10px] text-white/30">{t.assignee || 'Unassigned'}</span>
-                              </div>
-                              <div className="flex items-center gap-1.5">
-                                {t.dueDate && <span className="font-mono text-[10px] text-white/20">{t.dueDate}</span>}
+                                {t.dueDate && <span className="font-mono text-[10px] text-white/25">{t.dueDate}</span>}
                                 <button
                                   onClick={e => { e.stopPropagation(); handleDeleteTask(t.id) }}
                                   className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
