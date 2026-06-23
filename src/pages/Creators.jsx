@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { getTier } from '@/lib/tierUtils'
 import { useNicheStore } from '@/store/nicheStore'
 import Avatar from '@/components/shared/Avatar'
@@ -14,10 +15,12 @@ const TIER_ORDER  = ['All', 'Platinum', 'Diamond', 'Gold', 'Silver', 'Bronze']
 const SELECT = 'text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#1E1E28] text-white/50 font-figtree outline-none hover:border-white/12 cursor-pointer transition-all'
 
 export default function Creators() {
-  const creators    = useCreatorStore(s => s.creators)
-  const navigate    = useNavigate()
-  const search      = useUIStore(s => s.globalSearch)
-  const nichesData  = useNicheStore(s => s.niches)
+  const creators        = useCreatorStore(s => s.creators)
+  const navigate        = useNavigate()
+  const search          = useUIStore(s => s.globalSearch)
+  const openAddCreator  = useUIStore(s => s.openAddCreator)
+  const can             = useAuthStore(s => s.can)
+  const nichesData      = useNicheStore(s => s.niches)
 
   const [filterPlatform, setFilterPlatform] = useState('All')
   const [filterTier,     setFilterTier]     = useState('All')
@@ -52,6 +55,15 @@ export default function Creators() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          {/* Add Creator */}
+          {can('creators.edit') && (
+            <button
+              onClick={openAddCreator}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
+            >
+              + Add Creator
+            </button>
+          )}
           {/* Niche filter */}
           <select value={filterNiche} onChange={e => setFilterNiche(e.target.value)} className={SELECT}>
             <option value="All">All Niches</option>

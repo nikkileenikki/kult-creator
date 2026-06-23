@@ -23,7 +23,7 @@ const NAV_BASE = [
   { section: 'Overview', items: [
     { to: '/',          label: 'Dashboard',       icon: LayoutGrid },
     { to: '/campaigns', label: 'Campaigns',        icon: FolderOpen },
-    { to: '/projects',  label: 'Project Mgmt',     icon: Kanban },
+    { to: '/projects',  label: 'Project Management', icon: Kanban },
     { to: '/creators',  label: 'Creators',         icon: Users },
     { to: '/brands',    label: 'Brands',            icon: Briefcase },
   ]},

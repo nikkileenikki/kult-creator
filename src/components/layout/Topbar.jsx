@@ -21,12 +21,12 @@ function getUserInitials(displayName) {
 
 
 const PAGE_META = {
-  '/':          { cta: 'Add Task',     action: 'openAddTask',     placeholder: 'Search tasks…',     permission: 'creators.edit' },
-  '/campaigns': { cta: 'Add Campaign', action: 'openAddCampaign', placeholder: 'Search campaigns…', permission: 'campaigns.manage' },
-  '/creators':  { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search creators…',  permission: 'creators.edit' },
-  '/brands':    { cta: 'New Brand',    action: 'openAddBrand',    placeholder: 'Search brands…',     permission: 'brands.manage' },
-  '/niche':     { cta: 'Add Creator',  action: 'openAddCreator',  placeholder: 'Search niches…',     permission: 'creators.edit' },
-  '/recruit':   { cta: null,           action: null,               placeholder: 'Search requests…',  permission: null },
+  '/':          { cta: null, action: null, placeholder: 'Search tasks…',     permission: null },
+  '/campaigns': { cta: null, action: null, placeholder: 'Search campaigns…', permission: null },
+  '/creators':  { cta: null, action: null, placeholder: 'Search creators…',  permission: null },
+  '/brands':    { cta: null, action: null, placeholder: 'Search brands…',    permission: null },
+  '/niche':     { cta: null, action: null, placeholder: 'Search niches…',    permission: null },
+  '/recruit':   { cta: null, action: null, placeholder: 'Search requests…',  permission: null },
   '/tiering':   { cta: null,           action: null,               placeholder: 'Search creators…',  permission: null },
   '/settings':  { cta: null,           action: null,               placeholder: 'Search…',           permission: null },
   '/users':     { cta: null,           action: null,               placeholder: 'Search users…',     permission: null },

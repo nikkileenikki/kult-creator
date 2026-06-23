@@ -7,13 +7,14 @@ import { useAuthStore } from '@/store/authStore'
 import Avatar from '@/components/shared/Avatar'
 
 export default function Niche() {
-  const creators     = useCreatorStore(s => s.creators)
-  const globalSearch = useUIStore(s => s.globalSearch)
-  const navigate     = useNavigate()
-  const niches       = useNicheStore(s => s.niches)
-  const addNiche     = useNicheStore(s => s.addNiche)
-  const deleteNiche  = useNicheStore(s => s.deleteNiche)
-  const can          = useAuthStore(s => s.can)
+  const creators       = useCreatorStore(s => s.creators)
+  const globalSearch   = useUIStore(s => s.globalSearch)
+  const openAddCreator = useUIStore(s => s.openAddCreator)
+  const navigate       = useNavigate()
+  const niches         = useNicheStore(s => s.niches)
+  const addNiche       = useNicheStore(s => s.addNiche)
+  const deleteNiche    = useNicheStore(s => s.deleteNiche)
+  const can            = useAuthStore(s => s.can)
 
   const [selected,  setSelected]  = useState(null)
   const [showAdd,   setShowAdd]   = useState(false)
@@ -93,14 +94,24 @@ export default function Niche() {
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Niches</h1>
           <p className="text-[12px] text-white/30 mt-1">{niches.length} categories · {creators.length} creators</p>
         </div>
-        {can('campaigns.manage') && (
-          <button
-            onClick={() => setShowAdd(s => !s)}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
-          >
-            + Add Niche
-          </button>
-        )}
+        <div className="flex items-center gap-2">
+          {can('creators.edit') && (
+            <button
+              onClick={openAddCreator}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[13px] font-semibold transition-all"
+            >
+              + Add Creator
+            </button>
+          )}
+          {can('campaigns.manage') && (
+            <button
+              onClick={() => setShowAdd(s => !s)}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
+            >
+              + Add Niche
+            </button>
+          )}
+        </div>
       </div>
 
       {showAdd && (

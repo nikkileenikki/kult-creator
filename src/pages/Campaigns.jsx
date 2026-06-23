@@ -24,7 +24,7 @@ const SEL   = 'text-[11px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#1
 
 // ─── By Creator View ──────────────────────────────────────────────────────────
 
-function CreatorView({ campaign, tasks, openEdit, openAddTask, canEdit }) {
+function CreatorView({ campaign, tasks, onTaskClick, openAddTask, canEdit }) {
   const creators = useCreatorStore(s => s.creators)
 
   const groups = useMemo(() => {
@@ -88,7 +88,7 @@ function CreatorView({ campaign, tasks, openEdit, openAddTask, canEdit }) {
               {group.tasks.map(t => (
                 <div
                   key={t.id}
-                  onClick={() => openEdit(t.id)}
+                  onClick={() => onTaskClick(t)}
                   className="flex items-center gap-3 px-4 py-2.5 border-b border-white/[0.04] last:border-0 hover:bg-white/[.02] cursor-pointer transition-colors group"
                 >
                   <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />
@@ -181,6 +181,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
   const [saving,      setSaving]      = useState(false)
   const [view,        setView]        = useState('creator')
   const [selectedIds, setSelectedIds] = useState(new Set())
+  const [detailTask,  setDetailTask]  = useState(null)
 
   const done     = tasks.filter(t => t.status === 'Completed').length
   const inProg   = tasks.filter(t => t.status === 'In Progress').length
@@ -411,7 +412,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 
       {/* By Creator view */}
       {view === 'creator' && (
-        <CreatorView campaign={campaign} tasks={tasks} openEdit={openEdit} openAddTask={openAddTask} canEdit={can('creators.edit')} />
+        <CreatorView campaign={campaign} tasks={tasks} onTaskClick={setDetailTask} openAddTask={openAddTask} canEdit={can('creators.edit')} />
       )}
 
       {/* Table view */}
@@ -473,7 +474,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                         />
                       )}
                     </td>
-                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}>
+                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}>
                       <div className="flex items-center gap-2">
                         <Avatar initials={(t.creatorName||'?').split(' ').map(n=>n[0]).join('').slice(0,2)} color={AV_COLORS[i % AV_COLORS.length]} size="sm" />
                         <div>
@@ -482,15 +483,15 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                         </div>
                       </div>
                     </td>
-                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}>
+                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}>
                       <div className="text-[13px] text-white/70">{t.task}</div>
                       {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate max-w-[260px]">{t.description}</div>}
                     </td>
-                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}><Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge></td>
-                    <td className="px-3.5 py-3 text-[12px] text-white/40 cursor-pointer" onClick={() => openEdit(t.id)}>{t.pic}</td>
-                    <td className={`px-3.5 py-3 font-mono text-[11px] cursor-pointer ${t.status==='Overdue'?'text-rose-400 font-semibold':'text-white/30'}`} onClick={() => openEdit(t.id)}>{t.dueDate}</td>
-                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => openEdit(t.id)}><span className="flex items-center gap-1.5 text-[12px] text-white/40"><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />{t.priority}</span></td>
-                    <td className={`px-3.5 py-3 font-mono text-[12px] cursor-pointer ${t.status==='Completed'?'text-emerald-400 font-medium':'text-white/30'}`} onClick={() => openEdit(t.id)}>{t.status==='Completed'?`+${t.coins}`:t.coins}</td>
+                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}><Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge></td>
+                    <td className="px-3.5 py-3 text-[12px] text-white/40 cursor-pointer" onClick={() => setDetailTask(t)}>{t.pic}</td>
+                    <td className={`px-3.5 py-3 font-mono text-[11px] cursor-pointer ${t.status==='Overdue'?'text-rose-400 font-semibold':'text-white/30'}`} onClick={() => setDetailTask(t)}>{t.dueDate}</td>
+                    <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}><span className="flex items-center gap-1.5 text-[12px] text-white/40"><span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${PRIORITY_DOT[t.priority]}`} />{t.priority}</span></td>
+                    <td className={`px-3.5 py-3 font-mono text-[12px] cursor-pointer ${t.status==='Completed'?'text-emerald-400 font-medium':'text-white/30'}`} onClick={() => setDetailTask(t)}>{t.status==='Completed'?`+${t.coins}`:t.coins}</td>
                   </tr>
                 ))}
               </tbody>
@@ -511,7 +512,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                   <span className="font-mono text-[10px] bg-white/6 border border-white/7 text-white/25 px-2 py-0.5 rounded-full">{colTasks.length}</span>
                 </div>
                 {colTasks.map(t => (
-                  <div key={t.id} onClick={() => openEdit(t.id)} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
+                  <div key={t.id} onClick={() => setDetailTask(t)} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
                     <div className="text-[12px] font-medium text-white mb-1 leading-snug">{t.task}</div>
                     {t.description && <div className="text-[11px] text-white/30 mb-1 leading-snug line-clamp-2">{t.description}</div>}
                     <div className="text-[11px] text-white/30 mb-2">{t.creatorName || 'Unassigned'} · {t.platform || '—'}</div>
@@ -530,6 +531,78 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
           })}
         </div>
       )}
+
+      {/* Campaign Task Detail Panel */}
+      {detailTask && (
+        <div className="fixed inset-0 z-40 flex justify-end pointer-events-none">
+          <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setDetailTask(null)} />
+          <div className="relative w-[400px] bg-[#111116] border-l border-white/[0.07] flex flex-col shadow-2xl pointer-events-auto animate-[slideInRight_.2s_ease]">
+            <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
+              <div className="flex items-center gap-2 flex-wrap">
+                <Badge variant={TASK_STATUS[detailTask.status]}>{detailTask.status}</Badge>
+                {detailTask.priority && (
+                  <span className={`flex items-center gap-1 text-[11px] font-medium`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[detailTask.priority]}`} />
+                    {detailTask.priority}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                {can('creators.edit') && (
+                  <button
+                    onClick={() => { openEdit(detailTask.id); setDetailTask(null) }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/50 hover:text-white text-[12px] transition-all"
+                  >
+                    <Pencil size={11} /> Edit
+                  </button>
+                )}
+                <button
+                  onClick={() => setDetailTask(null)}
+                  className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
+                >
+                  <X size={14} />
+                </button>
+              </div>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-5 py-5 space-y-5">
+              <div>
+                <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Task / Deliverable</div>
+                <h2 className="font-syne text-[18px] font-bold text-white leading-snug">{detailTask.task}</h2>
+              </div>
+
+              {detailTask.description && (
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Description</div>
+                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{detailTask.description}</p>
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Creator</div>
+                  <div className="text-[13px] text-white/70">{detailTask.creatorName || 'Unassigned'}</div>
+                  {detailTask.platform && <div className="text-[11px] text-white/30 mt-0.5">{detailTask.platform}</div>}
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">PIC</div>
+                  <div className="text-[13px] text-white/70">{detailTask.pic || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Due Date</div>
+                  <div className={`font-mono text-[13px] ${detailTask.status === 'Overdue' ? 'text-rose-400 font-semibold' : 'text-white/70'}`}>{detailTask.dueDate || '—'}</div>
+                </div>
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Coins</div>
+                  <div className={`font-mono text-[13px] ${detailTask.status === 'Completed' ? 'text-emerald-400 font-semibold' : 'text-white/40'}`}>
+                    {detailTask.status === 'Completed' ? `+${detailTask.coins}` : detailTask.coins}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -537,11 +610,13 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 // ─── Main Export ──────────────────────────────────────────────────────────────
 
 export default function Campaigns() {
-  const campaigns    = useCampaignStore(s => s.campaigns)
-  const tasks        = useTaskStore(s => s.tasks)
-  const openEdit     = useUIStore(s => s.openEditTask)
-  const openAddTask  = useUIStore(s => s.openAddTask)
-  const globalSearch = useUIStore(s => s.globalSearch)
+  const campaigns      = useCampaignStore(s => s.campaigns)
+  const tasks          = useTaskStore(s => s.tasks)
+  const openEdit       = useUIStore(s => s.openEditTask)
+  const openAddTask    = useUIStore(s => s.openAddTask)
+  const openAddCampaign = useUIStore(s => s.openAddCampaign)
+  const globalSearch   = useUIStore(s => s.globalSearch)
+  const can            = useAuthStore(s => s.can)
   const location     = useLocation()
   const [selected, setSelected]         = useState(null)
   const [filterStatus, setFilterStatus] = useState('All')
@@ -586,13 +661,23 @@ export default function Campaigns() {
             {filteredCampaigns.length} campaign{filteredCampaigns.length !== 1 ? 's' : ''} · {tasks.filter(t => filteredCampaigns.some(c => c.name === t.project)).length} tasks
           </p>
         </div>
-        <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
-          {['All','Active','Planning','Completed','On Hold'].map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)}
-              className={`px-3 py-1.5 text-[11px] font-medium rounded-md transition-all ${filterStatus===s?'bg-[#1E1E28] text-white':'text-white/30 hover:text-white/60'}`}>
-              {s}
+        <div className="flex items-center gap-2">
+          <div className="flex bg-[#16161C] border border-white/7 rounded-lg overflow-hidden p-0.5 gap-0.5">
+            {['All','Active','Planning','Completed','On Hold'].map(s => (
+              <button key={s} onClick={() => setFilterStatus(s)}
+                className={`px-3 py-1.5 text-[11px] font-medium rounded-md transition-all ${filterStatus===s?'bg-[#1E1E28] text-white':'text-white/30 hover:text-white/60'}`}>
+                {s}
+              </button>
+            ))}
+          </div>
+          {can('campaigns.manage') && (
+            <button
+              onClick={openAddCampaign}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
+            >
+              + Add Campaign
             </button>
-          ))}
+          )}
         </div>
       </div>
 
