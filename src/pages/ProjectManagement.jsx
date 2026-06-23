@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useInternalProjectStore } from '@/store/internalProjectStore'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
@@ -36,6 +36,94 @@ const PROJ_STATUS_DOT = { Active:'bg-emerald-400', Planning:'bg-amber-400', 'On 
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const LABEL = 'block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5'
+
+// ── Mention Textarea ─────────────────────────────────────────────────────────
+
+function MentionTextarea({ value, onChange, placeholder, rows, className, pics }) {
+  const [mention, setMention] = useState(null) // { query, start } while "@" is active
+  const [idx, setIdx]         = useState(0)
+  const ref = useRef(null)
+
+  const filtered = useMemo(() => {
+    if (!mention) return []
+    return pics.filter(p => p.toLowerCase().includes(mention.query.toLowerCase()))
+  }, [mention, pics])
+
+  function handleChange(e) {
+    const val    = e.target.value
+    const cursor = e.target.selectionStart
+    const before = val.slice(0, cursor)
+    const atIdx  = before.lastIndexOf('@')
+    if (atIdx >= 0) {
+      const afterAt = before.slice(atIdx + 1)
+      if (!/\s/.test(afterAt)) {
+        setMention({ query: afterAt, start: atIdx })
+        setIdx(0)
+        onChange(e)
+        return
+      }
+    }
+    setMention(null)
+    onChange(e)
+  }
+
+  function selectMention(pic) {
+    const ta     = ref.current
+    const before = value.slice(0, mention.start)
+    const after  = value.slice(ta.selectionStart)
+    const next   = `${before}@${pic} ${after}`
+    onChange({ target: { value: next } })
+    setMention(null)
+    setTimeout(() => {
+      const pos = mention.start + pic.length + 2
+      ta.setSelectionRange(pos, pos)
+      ta.focus()
+    }, 0)
+  }
+
+  function handleKeyDown(e) {
+    if (!mention || filtered.length === 0) return
+    if (e.key === 'ArrowDown') { e.preventDefault(); setIdx(i => Math.min(i + 1, filtered.length - 1)) }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setIdx(i => Math.max(i - 1, 0)) }
+    if (e.key === 'Enter' || e.key === 'Tab') { e.preventDefault(); if (filtered[idx]) selectMention(filtered[idx]) }
+    if (e.key === 'Escape')    setMention(null)
+  }
+
+  return (
+    <div className="relative">
+      <textarea
+        ref={ref}
+        value={value}
+        onChange={handleChange}
+        onKeyDown={handleKeyDown}
+        onBlur={() => setTimeout(() => setMention(null), 150)}
+        rows={rows}
+        placeholder={placeholder}
+        className={className}
+      />
+      {mention && filtered.length > 0 && (
+        <div className="absolute z-20 left-0 top-full mt-1 w-52 bg-[#1A1A22] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+          <div className="px-3 py-1.5 border-b border-white/[0.05]">
+            <span className="text-[10px] text-white/25 uppercase tracking-wider">Tag team member</span>
+          </div>
+          {filtered.map((p, i) => (
+            <button
+              key={p}
+              type="button"
+              onMouseDown={() => selectMention(p)}
+              className={cn('w-full text-left px-3 py-2 text-[12px] transition-colors flex items-center gap-2', i === idx ? 'bg-violet-600/20 text-violet-200' : 'text-white/70 hover:bg-white/5')}
+            >
+              <span className="w-5 h-5 rounded-full bg-violet-600/20 border border-violet-500/30 flex items-center justify-center text-[9px] font-bold text-violet-300 flex-shrink-0">
+                {p[0]}
+              </span>
+              {p}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
 
 // ── Project Form Modal ────────────────────────────────────────────────────────
 
@@ -151,8 +239,8 @@ function TaskModal({ open, onClose, initial, projectId, onSave, pics }) {
                   <input value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Draft content calendar" className={INPUT} required />
                 </div>
                 <div>
-                  <label className={LABEL}>Description <span className="normal-case font-normal text-white/20">(optional)</span></label>
-                  <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="Details, links, or context…" className={cn(INPUT, 'resize-none')} />
+                  <label className={LABEL}>Description <span className="normal-case font-normal text-white/20">(optional · type @ to tag)</span></label>
+                  <MentionTextarea value={form.description} onChange={e => set('description', e.target.value)} rows={2} placeholder="Details, links, or context… type @ to tag someone" className={cn(INPUT, 'resize-none')} pics={pics} />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
@@ -347,7 +435,7 @@ export default function ProjectManagement() {
       </div>
 
       {/* ── Task Board ── */}
-      <div className="flex-1 min-w-0 flex flex-col gap-4">
+      <div className="flex-1 min-w-0 min-h-0 flex flex-col gap-4">
         {!selected ? (
           <div className="flex-1 flex flex-col items-center justify-center text-white/20">
             <FolderOpen size={36} className="mb-3 opacity-30" />
@@ -419,12 +507,12 @@ export default function ProjectManagement() {
             ) : view === 'kanban' ? (
 
               /* Kanban */
-              <div className="flex gap-3 overflow-x-auto pb-2 flex-1">
+              <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
                 {TASK_STATUS.map(col => {
                   const colTasks = projTasks.filter(t => t.status === col)
                   return (
-                    <div key={col} className="flex-shrink-0 w-56">
-                      <div className={`flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06]`}>
+                    <div key={col} className="flex-shrink-0 w-52 flex flex-col min-h-0">
+                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06] flex-shrink-0">
                         <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
                         <div className="flex items-center gap-1">
                           <span className="font-mono text-[10px] text-white/20">{colTasks.length}</span>
@@ -433,7 +521,7 @@ export default function ProjectManagement() {
                           </button>
                         </div>
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-2 overflow-y-auto flex-1 pr-0.5">
                         {colTasks.map(t => (
                           <div
                             key={t.id}
