@@ -54,7 +54,7 @@ export default function Topbar() {
 
   const tasks           = useTaskStore(s => s.tasks)
   const dismissedAlerts = useUIStore(s => s.dismissedAlerts)
-  const mentions        = useNotificationStore(s => s.mentions.filter(n => !n.read))
+  const unreadMentionCount = useNotificationStore(s => s.mentions.filter(n => !n.read).length)
   const alertCount = useMemo(() => {
     const today = new Date(); today.setHours(0, 0, 0, 0)
     const limit = new Date(today); limit.setDate(today.getDate() + 3)
@@ -124,12 +124,12 @@ export default function Topbar() {
         <div className="relative">
           <button
             onClick={toggleNotifications}
-            className={`relative w-[34px] h-[34px] bg-[#1E1E28] border rounded-lg flex items-center justify-center transition-all ${(alertCount + mentions.length) > 0 ? 'border-violet-500/40 text-violet-300 hover:border-violet-400/60 hover:text-violet-200' : 'border-white/7 text-white/40 hover:border-white/12 hover:text-white/80'}`}
+            className={`relative w-[34px] h-[34px] bg-[#1E1E28] border rounded-lg flex items-center justify-center transition-all ${(alertCount + unreadMentionCount) > 0 ? 'border-violet-500/40 text-violet-300 hover:border-violet-400/60 hover:text-violet-200' : 'border-white/7 text-white/40 hover:border-white/12 hover:text-white/80'}`}
           >
             <Bell size={15} strokeWidth={1.8} />
-            {(alertCount + mentions.length) > 0 && (
+            {(alertCount + unreadMentionCount) > 0 && (
               <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-[16px] px-1 bg-violet-500 rounded-full border border-[#111116] flex items-center justify-center font-mono text-[9px] font-bold text-white animate-pulse">
-                {alertCount + mentions.length}
+                {alertCount + unreadMentionCount}
               </span>
             )}
           </button>

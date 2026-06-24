@@ -1,10 +1,26 @@
 import { verifyJWT } from './_jwt'
-import { err } from './_helpers'
+import { getDB, err } from './_helpers'
 
 export async function getAuthUser(request, env) {
   const header = request.headers.get('Authorization') ?? ''
   if (!header.startsWith('Bearer ')) return null
-  return verifyJWT(header.slice(7), env)
+  const payload = await verifyJWT(header.slice(7), env)
+  if (!payload) return null
+
+  // Verify token_version and disabled status on every request
+  const db = getDB(env)
+  if (db) {
+    let row
+    try {
+      row = await db.prepare('SELECT token_version, disabled FROM users WHERE id = ?').bind(payload.sub).first()
+    } catch { return null }
+    if (!row) return null
+    if (row.disabled) return null
+    // token_version check: if it's in the JWT, it must match the DB
+    if (payload.token_version !== undefined && row.token_version !== payload.token_version) return null
+  }
+
+  return payload
 }
 
 export async function requireAuth(request, env) {

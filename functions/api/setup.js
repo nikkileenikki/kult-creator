@@ -146,6 +146,13 @@ export async function onRequestGet({ env }) {
     { name: 'Add live_experience to recruit_requests',   sql: `ALTER TABLE recruit_requests ADD COLUMN live_experience   TEXT NOT NULL DEFAULT ''` },
     { name: 'Add collab_preference to recruit_requests', sql: `ALTER TABLE recruit_requests ADD COLUMN collab_preference TEXT NOT NULL DEFAULT '[]'` },
     { name: 'Add video_link to recruit_requests',        sql: `ALTER TABLE recruit_requests ADD COLUMN video_link        TEXT NOT NULL DEFAULT ''` },
+    { name: 'Add disabled to users',        sql: `ALTER TABLE users ADD COLUMN disabled         INTEGER NOT NULL DEFAULT 0` },
+    { name: 'Add token_version to users',   sql: `ALTER TABLE users ADD COLUMN token_version    INTEGER NOT NULL DEFAULT 0` },
+    { name: 'Add last_login_at to users',   sql: `ALTER TABLE users ADD COLUMN last_login_at    TEXT` },
+    { name: 'Add last_login_ip to users',   sql: `ALTER TABLE users ADD COLUMN last_login_ip    TEXT` },
+    { name: 'Add last_login_device to users', sql: `ALTER TABLE users ADD COLUMN last_login_device TEXT` },
+    { name: 'Add last_login_country to users', sql: `ALTER TABLE users ADD COLUMN last_login_country TEXT` },
+    { name: 'Add last_login_city to users', sql: `ALTER TABLE users ADD COLUMN last_login_city  TEXT` },
   ]
 
   for (const step of steps) {

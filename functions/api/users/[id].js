@@ -6,9 +6,23 @@ import { ROLE_PERMISSIONS } from '../_permissions'
 export const onRequestOptions = () => opts()
 
 function mapUser(r) {
-  return { id: r.id, username: r.username, displayName: r.display_name, role: r.role, permissions: JSON.parse(r.permissions ?? '[]'), createdAt: r.created_at }
+  return {
+    id:              r.id,
+    username:        r.username,
+    displayName:     r.display_name,
+    role:            r.role,
+    permissions:     JSON.parse(r.permissions ?? '[]'),
+    createdAt:       r.created_at,
+    disabled:        !!r.disabled,
+    lastLoginAt:     r.last_login_at     ?? null,
+    lastLoginIp:     r.last_login_ip     ?? null,
+    lastLoginDevice: r.last_login_device ?? null,
+    lastLoginCountry:r.last_login_country ?? null,
+    lastLoginCity:   r.last_login_city   ?? null,
+  }
 }
 
+// PATCH /api/users/:id — update user fields
 export async function onRequestPatch({ params, request, env }) {
   const { authError } = await requireAdmin(request, env)
   if (authError) return authError
@@ -34,12 +48,27 @@ export async function onRequestPatch({ params, request, env }) {
     sets.push('permissions = ?'); vals.push(JSON.stringify(body.permissions))
   }
   if (body.password) { sets.push('password_hash = ?'); vals.push(await hashPassword(body.password)) }
+  if (body.disabled !== undefined) { sets.push('disabled = ?'); vals.push(body.disabled ? 1 : 0) }
   if (!sets.length) return err('Nothing to update', 400)
   await db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).bind(...vals, params.id).run()
-  const updated = await db.prepare('SELECT id,username,display_name,role,permissions,created_at FROM users WHERE id = ?').bind(params.id).first()
+  const updated = await db.prepare(
+    'SELECT id,username,display_name,role,permissions,created_at,disabled,last_login_at,last_login_ip,last_login_device,last_login_country,last_login_city FROM users WHERE id = ?'
+  ).bind(params.id).first()
   return json(mapUser(updated))
 }
 
+// POST /api/users/:id — sign out from all devices (increment token_version)
+export async function onRequestPost({ params, request, env }) {
+  const { authError, user: caller } = await requireAdmin(request, env)
+  if (authError) return authError
+  const db = getDB(env)
+  const existing = await db.prepare('SELECT id FROM users WHERE id = ?').bind(params.id).first()
+  if (!existing) return err('User not found', 404)
+  await db.prepare('UPDATE users SET token_version = token_version + 1 WHERE id = ?').bind(params.id).run()
+  return json({ success: true })
+}
+
+// DELETE /api/users/:id — delete user
 export async function onRequestDelete({ params, request, env }) {
   const { authError, user: caller } = await requireAdmin(request, env)
   if (authError) return authError

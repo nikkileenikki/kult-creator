@@ -4,7 +4,7 @@ import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { request } from '@/lib/api'
 import { ROLES, PERMISSIONS, ROLE_PERMISSIONS, ROLE_COLOR } from '@/lib/permissions'
-import { Search, Plus, Pencil, Trash2, Check, Eye, EyeOff } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Check, Eye, EyeOff, Ban, Power, LogOut, Monitor, MapPin, Clock } from 'lucide-react'
 
 const INPUT = 'w-full bg-[#16161C] border border-white/[0.07] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/15 transition-all'
 const LABEL = 'block text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1'
@@ -20,6 +20,13 @@ function getInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
+function fmtDateTime(iso) {
+  if (!iso) return null
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+}
+
 function EditForm({ user, onSave, onCancel }) {
   const [displayName, setDisplayName] = useState(user.displayName)
   const [username,    setUsername]    = useState(user.username)
@@ -32,12 +39,6 @@ function EditForm({ user, onSave, onCancel }) {
 
   function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []) }
   function togglePerm(key) { setPerms(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]) }
-
-  const permGroups = PERMISSIONS.reduce((acc, p) => {
-    acc[p.group] = acc[p.group] ?? []
-    acc[p.group].push(p)
-    return acc
-  }, {})
 
   async function handleSave() {
     setError('')
@@ -162,6 +163,29 @@ export default function Users() {
     fetchUsers()
   }
 
+  async function handleToggleDisable(u) {
+    const action = u.disabled ? 'Enable' : 'Disable'
+    if (!confirm(`${action} "${u.displayName}"?${u.disabled ? '' : ' They will be signed out immediately.'}`)) return
+    try {
+      await request('PATCH', `/users/${u.id}`, { disabled: !u.disabled })
+      if (!u.disabled) await request('POST', `/users/${u.id}`) // sign out all devices
+      showToast(`${u.displayName} ${u.disabled ? 'enabled' : 'disabled'}`)
+      fetchUsers()
+    } catch (e) {
+      showToast(e.message, 'error')
+    }
+  }
+
+  async function handleSignOutAll(u) {
+    if (!confirm(`Sign "${u.displayName}" out from all devices?`)) return
+    try {
+      await request('POST', `/users/${u.id}`)
+      showToast(`${u.displayName} signed out from all devices`)
+    } catch (e) {
+      showToast(e.message, 'error')
+    }
+  }
+
   async function handleDelete(u) {
     if (!confirm(`Delete user "${u.displayName}"? This cannot be undone.`)) return
     try {
@@ -214,20 +238,28 @@ export default function Users() {
         ) : (
           <div className="divide-y divide-white/[0.05]">
             {filtered.map(u => (
-              <div key={u.id}>
+              <div key={u.id} className={u.disabled ? 'opacity-50' : ''}>
                 <div className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[.02] transition-colors">
                   {/* Avatar */}
-                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${ROLE_AVATAR[u.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0`}>
+                  <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${ROLE_AVATAR[u.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0 relative`}>
                     {getInitials(u.displayName)}
+                    {u.disabled && (
+                      <div className="absolute inset-0 rounded-full bg-black/60 flex items-center justify-center">
+                        <Ban size={10} className="text-rose-400" />
+                      </div>
+                    )}
                   </div>
 
                   {/* Info */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[13px] font-medium text-white">{u.displayName}</span>
                       <span className="font-mono text-[11px] text-white/25">@{u.username}</span>
                       {u.id === authUser?.sub && (
                         <span className="text-[10px] text-violet-400/60 bg-violet-400/10 border border-violet-400/15 px-1.5 py-0.5 rounded-full">You</span>
+                      )}
+                      {u.disabled && (
+                        <span className="text-[10px] text-rose-400/80 bg-rose-500/10 border border-rose-500/20 px-1.5 py-0.5 rounded-full">Disabled</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -243,6 +275,31 @@ export default function Users() {
                         <span className="text-[10px] text-white/20">+{u.permissions.length - 3} more</span>
                       )}
                     </div>
+
+                    {/* Last login info */}
+                    {u.lastLoginAt && (
+                      <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+                        <span className="flex items-center gap-1 text-[10px] text-white/20">
+                          <Clock size={9} className="flex-shrink-0" />
+                          {fmtDateTime(u.lastLoginAt)}
+                        </span>
+                        {u.lastLoginDevice && (
+                          <span className="flex items-center gap-1 text-[10px] text-white/20">
+                            <Monitor size={9} className="flex-shrink-0" />
+                            {u.lastLoginDevice}
+                          </span>
+                        )}
+                        {(u.lastLoginCity || u.lastLoginCountry) && (
+                          <span className="flex items-center gap-1 text-[10px] text-white/20">
+                            <MapPin size={9} className="flex-shrink-0" />
+                            {[u.lastLoginCity, u.lastLoginCountry].filter(Boolean).join(', ')}
+                          </span>
+                        )}
+                        {u.lastLoginIp && (
+                          <span className="font-mono text-[10px] text-white/15">{u.lastLoginIp}</span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Actions */}
@@ -251,16 +308,36 @@ export default function Users() {
                       <button
                         onClick={() => setEditingId(editingId === u.id ? null : u.id)}
                         className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editingId === u.id ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70'}`}
+                        title="Edit user"
                       >
                         <Pencil size={11} />
                       </button>
                       {u.id !== authUser?.sub && (
-                        <button
-                          onClick={() => handleDelete(u)}
-                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
-                        >
-                          <Trash2 size={11} />
-                        </button>
+                        <>
+                          <button
+                            onClick={() => handleSignOutAll(u)}
+                            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-amber-500/15 flex items-center justify-center text-white/30 hover:text-amber-400 transition-all"
+                            title="Sign out all devices"
+                          >
+                            <LogOut size={11} />
+                          </button>
+                          <button
+                            onClick={() => handleToggleDisable(u)}
+                            className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${u.disabled
+                              ? 'bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25'
+                              : 'bg-white/5 hover:bg-rose-500/15 text-white/30 hover:text-rose-400'}`}
+                            title={u.disabled ? 'Enable account' : 'Disable account'}
+                          >
+                            {u.disabled ? <Power size={11} /> : <Ban size={11} />}
+                          </button>
+                          <button
+                            onClick={() => handleDelete(u)}
+                            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
+                            title="Delete user"
+                          >
+                            <Trash2 size={11} />
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
