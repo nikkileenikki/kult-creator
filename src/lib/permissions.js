@@ -23,8 +23,8 @@ export const PERMISSIONS = [
 ]
 
 export const ROLE_COLOR = {
-  admin:   { bg: 'bg-amber-400/12  border-amber-400/20  text-amber-300'  },
-  manager: { bg: 'bg-violet-400/12 border-violet-400/20 text-violet-300' },
-  pic:     { bg: 'bg-blue-400/12   border-blue-400/20   text-blue-300'   },
-  viewer:  { bg: 'bg-white/5       border-white/10      text-white/40'   },
+  admin:   { bg: 'bg-amber-400/12   border-amber-400/20   text-amber-300'   },
+  manager: { bg: 'bg-violet-400/12  border-violet-400/20  text-violet-300'  },
+  pic:     { bg: 'bg-blue-400/12    border-blue-400/20    text-blue-300'    },
+  viewer:  { bg: 'bg-white/5        border-white/10       text-white/40'    },
 }

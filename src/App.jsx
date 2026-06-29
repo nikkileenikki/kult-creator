@@ -1,6 +1,6 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import Dashboard from '@/pages/Dashboard'
@@ -16,6 +16,9 @@ import Settings from '@/pages/Settings'
 import Users from '@/pages/Users'
 import NewUser from '@/pages/NewUser'
 import Login from '@/pages/Login'
+import CreatorLogin from '@/pages/CreatorLogin'
+import CreatorPortal from '@/pages/CreatorPortal'
+import CreatorAccounts from '@/pages/CreatorAccounts'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
@@ -31,6 +34,7 @@ import { useBrandStore } from '@/store/brandStore'
 import { useNicheStore } from '@/store/nicheStore'
 import { useInternalProjectStore } from '@/store/internalProjectStore'
 import { useNotificationStore } from '@/store/notificationStore'
+import { creatorAuthClient } from '@/lib/creatorAuth'
 import { cn } from '@/lib/utils'
 
 const TOAST_STYLES = {
@@ -54,7 +58,61 @@ function Toast() {
   )
 }
 
+function CreatorPortalShell() {
+  const [session,   setSession]   = useState(undefined) // undefined = loading
+  const [isPending, setIsPending] = useState(true)
+
+  useEffect(() => {
+    creatorAuthClient.getSession()
+      .then(s => setSession(s?.user ?? null))
+      .catch(() => setSession(null))
+      .finally(() => setIsPending(false))
+  }, [])
+
+  if (isPending) {
+    return (
+      <div className="min-h-screen bg-[#0D0D10] flex items-center justify-center">
+        <div className="text-white/30 text-[13px]">Loading…</div>
+      </div>
+    )
+  }
+
+  if (!session) return <Navigate to="/login" replace />
+
+  return (
+    <div className="min-h-screen bg-[#0D0D10]">
+      <div className="max-w-5xl mx-auto px-6 py-8">
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-violet-600 to-violet-400 flex items-center justify-center shadow-[0_0_16px_rgba(108,92,231,.4)]">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <span className="font-syne text-[16px] font-extrabold text-white tracking-tight">Creator Engine</span>
+          </div>
+          <button
+            onClick={() => creatorAuthClient.signOut().then(() => { window.location.href = '/login' })}
+            className="text-[12px] text-white/30 hover:text-white/60 transition-colors"
+          >
+            Sign out
+          </button>
+        </div>
+        <CreatorPortal session={session} />
+      </div>
+      <Toast />
+    </div>
+  )
+}
+
 export default function App() {
+  const { pathname } = useLocation()
+
+  // Creator-facing routes — completely separate from internal app
+  if (pathname === '/login') return <><CreatorLogin /><Toast /></>
+  if (pathname.startsWith('/portal')) return <CreatorPortalShell />
+
+  // Internal app
   const token = useAuthStore(s => s.token)
   const user  = useAuthStore(s => s.user)
 
@@ -92,18 +150,20 @@ export default function App() {
         <Sidebar />
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route path="/"            element={<Dashboard />} />
-            <Route path="/campaigns"   element={<Campaigns />} />
-            <Route path="/projects"    element={<ProjectManagement />} />
-            <Route path="/creators"    element={<Creators />} />
-            <Route path="/brands"      element={<Brands />} />
-            <Route path="/recruit"     element={<Recruit />} />
-            <Route path="/tiering"     element={<Tiering />} />
-            <Route path="/niche"       element={<Niche />} />
-            <Route path="/creator/:id" element={<Persona />} />
-            <Route path="/settings"    element={<Settings />} />
-            <Route path="/users"       element={<Users />} />
-            <Route path="/users/new"   element={<NewUser />} />
+            <Route path="/"                 element={<Dashboard />} />
+            <Route path="/campaigns"        element={<Campaigns />} />
+            <Route path="/projects"         element={<ProjectManagement />} />
+            <Route path="/creators"         element={<Creators />} />
+            <Route path="/brands"           element={<Brands />} />
+            <Route path="/recruit"          element={<Recruit />} />
+            <Route path="/tiering"          element={<Tiering />} />
+            <Route path="/niche"            element={<Niche />} />
+            <Route path="/creator/:id"      element={<Persona />} />
+            <Route path="/settings"         element={<Settings />} />
+            <Route path="/users"            element={<Users />} />
+            <Route path="/users/new"        element={<NewUser />} />
+            <Route path="/creator-accounts" element={<CreatorAccounts />} />
+            <Route path="*"                 element={<Navigate to="/" replace />} />
           </Routes>
         </main>
       </div>
@@ -115,7 +175,6 @@ export default function App() {
       <AddBrandModal />
       <EditTaskModal />
 
-      {/* Toast */}
       <Toast />
     </div>
   )

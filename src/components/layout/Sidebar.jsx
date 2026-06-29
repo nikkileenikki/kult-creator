@@ -45,7 +45,8 @@ export default function Sidebar() {
 
   const NAV = can('users.manage')
     ? [...NAV_BASE, { section: 'Admin', items: [
-        { to: '/users', label: 'Users', icon: ShieldCheck },
+        { to: '/users',            label: 'Users',            icon: ShieldCheck },
+        { to: '/creator-accounts', label: 'Creator Accounts', icon: User },
       ]}]
     : NAV_BASE
 

@@ -1,0 +1,1 @@
+-- Creator portal: no users-table changes needed (creator auth uses separate Better Auth tables)
