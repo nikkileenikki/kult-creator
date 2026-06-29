@@ -12,6 +12,7 @@ const ROLE_AVATAR_COLOR = {
   manager: 'from-violet-500 to-violet-400',
   pic:     'from-blue-500 to-blue-400',
   viewer:  'from-white/20 to-white/10',
+  creator: 'from-emerald-500 to-emerald-400',
 }
 
 function getUserInitials(displayName) {
@@ -43,11 +44,21 @@ export default function Sidebar() {
   const authUser       = useAuthStore(s => s.user)
   const can            = useAuthStore(s => s.can)
 
-  const NAV = can('users.manage')
-    ? [...NAV_BASE, { section: 'Admin', items: [
-        { to: '/users', label: 'Users', icon: ShieldCheck },
-      ]}]
-    : NAV_BASE
+  const isCreator = authUser?.role === 'creator'
+
+  const CREATOR_NAV = [
+    { section: 'My Account', items: [
+      { to: '/portal', label: 'My Profile', icon: User },
+    ]},
+  ]
+
+  const NAV = isCreator
+    ? CREATOR_NAV
+    : can('users.manage')
+      ? [...NAV_BASE, { section: 'Admin', items: [
+          { to: '/users', label: 'Users', icon: ShieldCheck },
+        ]}]
+      : NAV_BASE
 
   return (
     <aside className={cn(

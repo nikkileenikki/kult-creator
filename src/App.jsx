@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom'
+import { Routes, Route, Navigate } from 'react-router-dom'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react'
 import { useEffect } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
@@ -16,6 +16,7 @@ import Settings from '@/pages/Settings'
 import Users from '@/pages/Users'
 import NewUser from '@/pages/NewUser'
 import Login from '@/pages/Login'
+import CreatorPortal from '@/pages/CreatorPortal'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
@@ -92,18 +93,28 @@ export default function App() {
         <Sidebar />
         <main className="flex-1 overflow-y-auto p-6">
           <Routes>
-            <Route path="/"            element={<Dashboard />} />
-            <Route path="/campaigns"   element={<Campaigns />} />
-            <Route path="/projects"    element={<ProjectManagement />} />
-            <Route path="/creators"    element={<Creators />} />
-            <Route path="/brands"      element={<Brands />} />
-            <Route path="/recruit"     element={<Recruit />} />
-            <Route path="/tiering"     element={<Tiering />} />
-            <Route path="/niche"       element={<Niche />} />
-            <Route path="/creator/:id" element={<Persona />} />
-            <Route path="/settings"    element={<Settings />} />
-            <Route path="/users"       element={<Users />} />
-            <Route path="/users/new"   element={<NewUser />} />
+            {user?.role === 'creator' ? (
+              <>
+                <Route path="/portal"   element={<CreatorPortal />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="*"         element={<Navigate to="/portal" replace />} />
+              </>
+            ) : (
+              <>
+                <Route path="/"            element={<Dashboard />} />
+                <Route path="/campaigns"   element={<Campaigns />} />
+                <Route path="/projects"    element={<ProjectManagement />} />
+                <Route path="/creators"    element={<Creators />} />
+                <Route path="/brands"      element={<Brands />} />
+                <Route path="/recruit"     element={<Recruit />} />
+                <Route path="/tiering"     element={<Tiering />} />
+                <Route path="/niche"       element={<Niche />} />
+                <Route path="/creator/:id" element={<Persona />} />
+                <Route path="/settings"    element={<Settings />} />
+                <Route path="/users"       element={<Users />} />
+                <Route path="/users/new"   element={<NewUser />} />
+              </>
+            )}
           </Routes>
         </main>
       </div>

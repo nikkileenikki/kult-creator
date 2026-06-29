@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/store/authStore'
+import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
 import { request } from '@/lib/api'
 import { ROLES, PERMISSIONS, ROLE_PERMISSIONS, ROLE_COLOR } from '@/lib/permissions'
@@ -14,6 +15,7 @@ const ROLE_AVATAR = {
   manager: 'from-violet-500 to-violet-400',
   pic:     'from-blue-500 to-blue-400',
   viewer:  'from-white/20 to-white/10',
+  creator: 'from-emerald-500 to-emerald-400',
 }
 
 function getInitials(name) {
@@ -21,16 +23,18 @@ function getInitials(name) {
 }
 
 function EditForm({ user, onSave, onCancel }) {
+  const creators   = useCreatorStore(s => s.creators)
   const [displayName, setDisplayName] = useState(user.displayName)
   const [username,    setUsername]    = useState(user.username)
   const [password,    setPassword]    = useState('')
   const [showPw,      setShowPw]      = useState(false)
   const [role,        setRole]        = useState(user.role)
   const [perms,       setPerms]       = useState(user.permissions)
+  const [creatorId,   setCreatorId]   = useState(user.creatorId ?? '')
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
 
-  function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []) }
+  function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []); if (r !== 'creator') setCreatorId('') }
   function togglePerm(key) { setPerms(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]) }
 
   const permGroups = PERMISSIONS.reduce((acc, p) => {
@@ -43,7 +47,7 @@ function EditForm({ user, onSave, onCancel }) {
     setError('')
     setSaving(true)
     try {
-      const body = { displayName, role, permissions: perms }
+      const body = { displayName, role, permissions: perms, creatorId: creatorId || null }
       if (password) body.password = password
       if (username !== user.username) body.username = username
       await onSave(body)
@@ -96,6 +100,18 @@ function EditForm({ user, onSave, onCancel }) {
         </div>
         <p className="text-[11px] text-white/25 mt-1.5">{ROLES.find(r => r.key === role)?.desc}</p>
       </div>
+
+      {role === 'creator' && (
+        <div>
+          <label className={LABEL}>Linked Creator Profile</label>
+          <select value={creatorId} onChange={e => setCreatorId(e.target.value)} className={INPUT + ' cursor-pointer'}>
+            <option value="">— Select a creator —</option>
+            {creators.filter(c => c.status !== 'Rejected').map(c => (
+              <option key={c.id} value={c.id}>{c.name} ({c.platform})</option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <div>
         <label className={LABEL}>Permissions</label>

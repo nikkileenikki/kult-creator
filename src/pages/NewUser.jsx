@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUIStore } from '@/store/uiStore'
+import { useCreatorStore } from '@/store/creatorStore'
 import { request } from '@/lib/api'
 import { ROLES, PERMISSIONS, ROLE_PERMISSIONS, ROLE_COLOR } from '@/lib/permissions'
 import { ArrowLeft, Check, Eye, EyeOff } from 'lucide-react'
@@ -11,6 +12,7 @@ const LABEL = 'block text-[10px] font-semibold text-white/30 uppercase tracking-
 export default function NewUser() {
   const navigate   = useNavigate()
   const showToast  = useUIStore(s => s.showToast)
+  const creators   = useCreatorStore(s => s.creators)
 
   const [displayName, setDisplayName] = useState('')
   const [username,    setUsername]    = useState('')
@@ -18,10 +20,11 @@ export default function NewUser() {
   const [showPw,      setShowPw]      = useState(false)
   const [role,        setRole]        = useState('viewer')
   const [perms,       setPerms]       = useState(ROLE_PERMISSIONS['viewer'] ?? [])
+  const [creatorId,   setCreatorId]   = useState('')
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
 
-  function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []) }
+  function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []); if (r !== 'creator') setCreatorId('') }
   function togglePerm(key) { setPerms(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]) }
 
   const permGroups = PERMISSIONS.reduce((acc, p) => {
@@ -34,7 +37,7 @@ export default function NewUser() {
     setError('')
     setSaving(true)
     try {
-      await request('POST', '/users', { username, displayName, password, role, permissions: perms })
+      await request('POST', '/users', { username, displayName, password, role, permissions: perms, creatorId: creatorId || null })
       showToast(`User ${displayName} created`)
       navigate('/users')
     } catch (e) {
@@ -130,6 +133,24 @@ export default function NewUser() {
           </div>
           <p className="text-[11px] text-white/25 mt-1.5">{ROLES.find(r => r.key === role)?.desc}</p>
         </div>
+
+        {/* Creator link (only for creator role) */}
+        {role === 'creator' && (
+          <div>
+            <label className={LABEL}>Linked Creator Profile</label>
+            <select
+              value={creatorId}
+              onChange={e => setCreatorId(e.target.value)}
+              className={INPUT + ' cursor-pointer'}
+            >
+              <option value="">— Select a creator —</option>
+              {creators.filter(c => c.status !== 'Rejected').map(c => (
+                <option key={c.id} value={c.id}>{c.name} ({c.platform})</option>
+              ))}
+            </select>
+            <p className="text-[11px] text-white/25 mt-1.5">This creator's profile will be shown in their portal.</p>
+          </div>
+        )}
 
         {/* Permissions */}
         <div>
