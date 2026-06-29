@@ -68,7 +68,6 @@ export default function Dashboard() {
   const navigate     = useNavigate()
   const authUser     = useAuthStore(s => s.user)
   const can          = useAuthStore(s => s.can)
-  const openAddTask  = useUIStore(s => s.openAddTask)
 
   const [metrics, setMetrics]       = useState(null)
   const [tierCounts, setTierCounts] = useState([])
@@ -91,14 +90,6 @@ export default function Dashboard() {
             {getMonthYear()} · {pendingRecruits} pending recruit request{pendingRecruits !== 1 ? 's' : ''}
           </p>
         </div>
-        {can('creators.edit') && (
-          <button
-            onClick={openAddTask}
-            className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[13px] font-semibold transition-all"
-          >
-            + Add Task
-          </button>
-        )}
       </div>
 
       <MetricsGrid

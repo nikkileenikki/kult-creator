@@ -12,6 +12,20 @@ const TIER_BADGE  = { Platinum:'platinum', Diamond:'diamond', Gold:'gold', Silve
 const TIER_EMOJI  = { Platinum:'👑', Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
 const TIER_ORDER  = ['All', 'Platinum', 'Diamond', 'Gold', 'Silver', 'Bronze']
 
+const PLATFORM_URL = {
+  'TikTok':     u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
+  'YouTube':    u => `https://www.youtube.com/@${u.replace(/^@/, '')}`,
+  'Instagram':  u => `https://www.instagram.com/${u.replace(/^@/, '')}`,
+  'X / Twitter':u => `https://x.com/${u.replace(/^@/, '')}`,
+  'LinkedIn':   u => `https://www.linkedin.com/in/${u.replace(/^@/, '')}`,
+}
+
+function profileUrl(platform, username) {
+  if (!username) return null
+  const builder = PLATFORM_URL[platform]
+  return builder ? builder(username) : null
+}
+
 const SELECT = 'text-[12px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#1E1E28] text-white/50 font-figtree outline-none hover:border-white/12 cursor-pointer transition-all'
 
 export default function Creators() {
@@ -40,7 +54,12 @@ export default function Creators() {
       if (!niches.includes(filterNiche)) return false
     }
     if (filterPic !== 'All' && c.pic !== filterPic) return false
-    if (search && !c.name.toLowerCase().includes(search.toLowerCase())) return false
+    if (search) {
+      const q = search.toLowerCase()
+      const matchName     = c.name.toLowerCase().includes(q)
+      const matchUsername = c.platformUsername?.toLowerCase().includes(q.replace(/^@/, ''))
+      if (!matchName && !matchUsername) return false
+    }
     return true
   }), [creators, filterPlatform, filterTier, filterStatus, filterNiche, filterPic, search])
 
@@ -116,6 +135,22 @@ export default function Creators() {
                   <Avatar initials={c.initials} color={c.avatarColor} size="md" />
                   <div className="flex-1">
                     <div className="font-syne text-[15px] font-bold text-white tracking-tight">{c.name}</div>
+                    {c.platformUsername && (() => {
+                      const url = profileUrl(c.platform, c.platformUsername)
+                      return url ? (
+                        <a
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5 block"
+                        >
+                          {c.platformUsername.startsWith('@') ? c.platformUsername : `@${c.platformUsername}`}
+                        </a>
+                      ) : (
+                        <div className="text-[11px] text-white/30 mt-0.5">{c.platformUsername}</div>
+                      )
+                    })()}
                     <div className="text-[11px] text-white/30 mt-0.5">{c.platform} · {[c.niche, c.secondaryNiche].filter(Boolean).join(', ')}</div>
                     <div className="flex items-center gap-2 mt-1.5">
                       {isRejected ? (
