@@ -1,7 +1,4 @@
-import { useState } from 'react'
-import { useAuthStore } from '@/store/authStore'
-import { useCreatorStore } from '@/store/creatorStore'
-import { useTaskStore } from '@/store/taskStore'
+import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import Avatar from '@/components/shared/Avatar'
@@ -34,6 +31,16 @@ const PRIORITY_DOT = {
   High:   'bg-amber-400',
   Medium: 'bg-blue-400',
   Low:    'bg-emerald-400',
+}
+
+function camel(row) {
+  if (!row) return row
+  const out = {}
+  for (const [k, v] of Object.entries(row)) {
+    const key = k.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+    out[key] = v
+  }
+  return out
 }
 
 function TaskCard({ task, onAccept, accepting }) {
@@ -95,33 +102,55 @@ function TaskCard({ task, onAccept, accepting }) {
   )
 }
 
-export default function CreatorPortal() {
-  const user       = useAuthStore(s => s.user)
-  const creators   = useCreatorStore(s => s.creators)
-  const tasks      = useTaskStore(s => s.tasks)
-  const updateTask = useTaskStore(s => s.updateTask)
-  const showToast  = useUIStore(s => s.showToast)
+export default function CreatorPortal({ session }) {
+  const showToast = useUIStore(s => s.showToast)
 
+  const [creator,   setCreator]   = useState(null)
+  const [tasks,     setTasks]     = useState([])
+  const [loading,   setLoading]   = useState(true)
   const [accepting, setAccepting] = useState(null)
 
-  const creatorId = user?.creatorId
-  const creator   = creators.find(c => c.id === creatorId)
-
-  const myTasks     = tasks.filter(t => t.creatorId === creatorId)
-  const available   = myTasks.filter(t => t.status === 'Not Started')
-  const inProgress  = myTasks.filter(t => t.status === 'In Progress')
-  const completed   = myTasks.filter(t => t.status === 'Completed')
+  useEffect(() => {
+    async function load() {
+      setLoading(true)
+      try {
+        const [meRes, tasksRes] = await Promise.all([
+          fetch('/api/creator-portal/me'),
+          fetch('/api/creator-portal/tasks'),
+        ])
+        const meData    = await meRes.json()
+        const tasksData = await tasksRes.json()
+        setCreator(meData.creator ? camel(meData.creator) : null)
+        setTasks((tasksData ?? []).map(camel))
+      } catch (e) {
+        showToast('Failed to load portal: ' + e.message, 'error')
+      } finally {
+        setLoading(false)
+      }
+    }
+    load()
+  }, [session]) // eslint-disable-line react-hooks/exhaustive-deps
 
   async function acceptTask(taskId) {
     setAccepting(taskId)
     try {
-      await updateTask(taskId, { status: 'In Progress' })
+      const res = await fetch(`/api/creator-portal/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'In Progress' }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'In Progress' } : t))
       showToast('Task accepted — good luck!')
     } catch {
       showToast('Failed to accept task', 'error')
     } finally {
       setAccepting(null)
     }
+  }
+
+  if (loading) {
+    return <div className="flex items-center justify-center h-64 text-white/30 text-[13px]">Loading…</div>
   }
 
   if (!creator) {
@@ -133,10 +162,14 @@ export default function CreatorPortal() {
     )
   }
 
-  const tier     = getTier(creator.coins)
-  const progress = getProgress(creator.coins)
-  const toNext   = coinsToNextTier(creator.coins)
-  const tierEmoji = { Platinum: '👑', Diamond: '💎', Gold: '🥇', Silver: '🥈', Bronze: '🥉' }
+  const available  = tasks.filter(t => t.status === 'Not Started')
+  const inProgress = tasks.filter(t => t.status === 'In Progress')
+  const completed  = tasks.filter(t => t.status === 'Completed')
+
+  const tier       = getTier(creator.coins)
+  const progress   = getProgress(creator.coins)
+  const toNext     = coinsToNextTier(creator.coins)
+  const tierEmoji  = { Platinum: '👑', Diamond: '💎', Gold: '🥇', Silver: '🥈', Bronze: '🥉' }
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
@@ -199,7 +232,6 @@ export default function CreatorPortal() {
             ))}
           </div>
 
-          {/* Coins summary */}
           <div className="p-4">
             <div className="bg-white/3 border border-white/7 rounded-xl p-3 text-center">
               <div className="font-mono text-[10px] text-white/25 uppercase tracking-wider mb-1">Total Coins Earned</div>
@@ -212,7 +244,6 @@ export default function CreatorPortal() {
         {/* Tasks */}
         <div className="space-y-5">
 
-          {/* Available tasks */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="font-mono text-[10px] text-white/25 uppercase tracking-[.08em]">Available Tasks</span>
@@ -235,7 +266,6 @@ export default function CreatorPortal() {
             )}
           </div>
 
-          {/* In Progress */}
           {inProgress.length > 0 && (
             <div>
               <div className="flex items-center gap-2 mb-3">
@@ -252,7 +282,6 @@ export default function CreatorPortal() {
             </div>
           )}
 
-          {/* Completed */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="font-mono text-[10px] text-white/25 uppercase tracking-[.08em]">Completed</span>

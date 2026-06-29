@@ -34,10 +34,6 @@ export const useAuthStore = create((set, get) => ({
     set({ token: null, user: null })
   },
 
-  isCreator() {
-    return get().user?.role === 'creator'
-  },
-
   can(permission) {
     return get().user?.permissions?.includes(permission) ?? false
   },

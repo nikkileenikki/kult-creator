@@ -26,7 +26,6 @@ export async function onRequestPost({ request, env }) {
   const ok = await verifyPassword(password, user.password_hash)
   if (!ok) return err('Invalid credentials', 401)
   const permissions = JSON.parse(user.permissions ?? '[]')
-  const creatorId = user.creator_id ?? null
-  const token = await signJWT({ sub: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions, creatorId }, env)
-  return json({ token, user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions, creatorId } })
+  const token = await signJWT({ sub: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions }, env)
+  return json({ token, user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions } })
 }

@@ -6,7 +6,7 @@ import { ROLE_PERMISSIONS } from '../_permissions'
 export const onRequestOptions = () => opts()
 
 function mapUser(r) {
-  return { id: r.id, username: r.username, displayName: r.display_name, role: r.role, permissions: JSON.parse(r.permissions ?? '[]'), createdAt: r.created_at, creatorId: r.creator_id ?? null }
+  return { id: r.id, username: r.username, displayName: r.display_name, role: r.role, permissions: JSON.parse(r.permissions ?? '[]'), createdAt: r.created_at }
 }
 
 export async function onRequestPatch({ params, request, env }) {
@@ -34,10 +34,9 @@ export async function onRequestPatch({ params, request, env }) {
     sets.push('permissions = ?'); vals.push(JSON.stringify(body.permissions))
   }
   if (body.password) { sets.push('password_hash = ?'); vals.push(await hashPassword(body.password)) }
-  if (body.creatorId !== undefined) { sets.push('creator_id = ?'); vals.push(body.creatorId || null) }
   if (!sets.length) return err('Nothing to update', 400)
   await db.prepare(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`).bind(...vals, params.id).run()
-  const updated = await db.prepare('SELECT id,username,display_name,role,permissions,created_at,creator_id FROM users WHERE id = ?').bind(params.id).first()
+  const updated = await db.prepare('SELECT id,username,display_name,role,permissions,created_at FROM users WHERE id = ?').bind(params.id).first()
   return json(mapUser(updated))
 }
 

@@ -3,7 +3,6 @@ export const ROLE_PERMISSIONS = {
   manager: ['contacts.view_all', 'creators.edit', 'campaigns.manage', 'brands.manage', 'recruits.approve'],
   pic:     ['contacts.view_assigned', 'creators.edit'],
   viewer:  [],
-  creator: ['creator.self'],
 }
 
 export const ROLES = [
@@ -11,7 +10,6 @@ export const ROLES = [
   { key: 'manager', label: 'Manager', color: 'violet', desc: 'Full access except user management' },
   { key: 'pic',     label: 'PIC',     color: 'blue',   desc: 'Manage assigned creators, view their contacts' },
   { key: 'viewer',  label: 'Viewer',  color: 'gray',   desc: 'Read-only, no contact info' },
-  { key: 'creator', label: 'Creator', color: 'emerald', desc: 'Creator portal — own profile and tasks only' },
 ]
 
 export const PERMISSIONS = [
@@ -29,5 +27,4 @@ export const ROLE_COLOR = {
   manager: { bg: 'bg-violet-400/12  border-violet-400/20  text-violet-300'  },
   pic:     { bg: 'bg-blue-400/12    border-blue-400/20    text-blue-300'    },
   viewer:  { bg: 'bg-white/5        border-white/10       text-white/40'    },
-  creator: { bg: 'bg-emerald-400/12 border-emerald-400/20 text-emerald-300' },
 }
