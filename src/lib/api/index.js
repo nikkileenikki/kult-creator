@@ -3,6 +3,20 @@ export const USE_MOCK = false
 
 export const delay = (ms = 400) => new Promise(res => setTimeout(res, ms))
 
+function toCamel(str) {
+  return str.replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+}
+
+function camelizeKeys(val) {
+  if (Array.isArray(val)) return val.map(camelizeKeys)
+  if (val !== null && typeof val === 'object') {
+    return Object.fromEntries(
+      Object.entries(val).map(([k, v]) => [toCamel(k), camelizeKeys(v)])
+    )
+  }
+  return val
+}
+
 export async function request(method, path, body) {
   const token = localStorage.getItem('ce_auth_token')
   const res = await fetch(`${BASE_URL}${path}`, {
@@ -22,5 +36,5 @@ export async function request(method, path, body) {
     const errBody = await res.json().catch(() => ({}))
     throw new Error(errBody.error ?? `${method} ${path} → ${res.status}`)
   }
-  return res.json()
+  return res.json().then(camelizeKeys)
 }
