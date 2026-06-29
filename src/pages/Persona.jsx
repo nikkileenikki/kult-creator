@@ -290,22 +290,24 @@ export default function Persona() {
             ) : (
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
-                {creator.platformUsername && (() => {
-                  const url = profileUrl(creator.platform, creator.platformUsername)
-                  return url ? (
-                    <a
-                      href={url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5"
-                    >
+                {creator.platformUsername && (
+                  <div className="inline-flex items-center gap-1 mt-0.5">
+                    <span className="text-[12px] text-white/40">
                       {creator.platformUsername.startsWith('@') ? creator.platformUsername : `@${creator.platformUsername}`}
-                      <ExternalLink size={11} className="opacity-60" />
-                    </a>
-                  ) : (
-                    <div className="text-[12px] text-white/30 mt-0.5">{creator.platformUsername}</div>
-                  )
-                })()}
+                    </span>
+                    {profileUrl(creator.platform, creator.platformUsername) && (
+                      <a
+                        href={profileUrl(creator.platform, creator.platformUsername)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-violet-400/50 hover:text-violet-300 transition-colors"
+                        title="Open profile"
+                      >
+                        <ExternalLink size={11} />
+                      </a>
+                    )}
+                  </div>
+                )}
                 <div className="text-[12px] text-white/30 mt-1">
                   {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {[creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')}
                 </div>

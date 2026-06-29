@@ -136,23 +136,25 @@ export default function Creators() {
                   <Avatar initials={c.initials} color={c.avatarColor} size="md" />
                   <div className="flex-1">
                     <div className="font-syne text-[15px] font-bold text-white tracking-tight">{c.name}</div>
-                    {c.platformUsername && (() => {
-                      const url = profileUrl(c.platform, c.platformUsername)
-                      return url ? (
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          onClick={e => e.stopPropagation()}
-                          className="inline-flex items-center gap-1 text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5"
-                        >
+                    {c.platformUsername && (
+                      <div className="inline-flex items-center gap-1 mt-0.5">
+                        <span className="text-[11px] text-white/40">
                           {c.platformUsername.startsWith('@') ? c.platformUsername : `@${c.platformUsername}`}
-                          <ExternalLink size={10} className="opacity-60" />
-                        </a>
-                      ) : (
-                        <div className="text-[11px] text-white/30 mt-0.5">{c.platformUsername}</div>
-                      )
-                    })()}
+                        </span>
+                        {profileUrl(c.platform, c.platformUsername) && (
+                          <a
+                            href={profileUrl(c.platform, c.platformUsername)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={e => e.stopPropagation()}
+                            className="text-violet-400/50 hover:text-violet-300 transition-colors"
+                            title="Open profile"
+                          >
+                            <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
+                    )}
                     <div className="text-[11px] text-white/30 mt-0.5">{c.platform} · {[c.niche, c.secondaryNiche].filter(Boolean).join(', ')}</div>
                     <div className="flex items-center gap-2 mt-1.5">
                       {isRejected ? (
