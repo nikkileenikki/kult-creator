@@ -1,4 +1,4 @@
-import { json, err, opts, getDB } from '../_helpers.js'
+import { json, opts, getDB } from '../_helpers.js'
 import { verifyCreatorToken } from '../_creator_auth.js'
 
 export const onRequestOptions = () => opts()
@@ -8,11 +8,29 @@ export async function onRequestGet({ request, env }) {
   if (sessionError) return sessionError
 
   const creatorId = session.creatorId ?? null
-  if (!creatorId) return json([])
-
   const db = getDB(env)
-  const { results } = await db.prepare(
-    'SELECT * FROM tasks WHERE creator_id = ? ORDER BY created_at DESC'
-  ).bind(creatorId).all()
-  return json(results)
+
+  // Fetch campaigns for enrichment
+  const { results: campaigns } = await db.prepare('SELECT id, name, color FROM campaigns').all()
+  const campaignMap = Object.fromEntries(campaigns.map(c => [c.name, c]))
+
+  // Tasks assigned to this creator
+  const myTasks = creatorId
+    ? (await db.prepare('SELECT * FROM tasks WHERE creator_id = ? ORDER BY created_at DESC').bind(creatorId).all()).results
+    : []
+
+  // Open tasks: not started + unassigned (available for anyone to pick up)
+  const { results: openTasks } = await db.prepare(
+    "SELECT * FROM tasks WHERE creator_id IS NULL AND status = 'Not Started' ORDER BY created_at DESC"
+  ).all()
+
+  function enrich(t) {
+    const campaign = campaignMap[t.project] ?? null
+    return { ...t, campaign_color: campaign?.color ?? null }
+  }
+
+  return json({
+    myTasks:   myTasks.map(enrich),
+    openTasks: openTasks.map(enrich),
+  })
 }

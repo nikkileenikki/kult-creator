@@ -21,10 +21,10 @@ function profileUrl(platform, username) {
 }
 
 const PRIORITY_STYLE = {
-  Urgent: { dot: 'bg-rose-400',    badge: 'text-rose-300 bg-rose-500/10 border-rose-500/20',       label: 'Urgent' },
-  High:   { dot: 'bg-amber-400',   badge: 'text-amber-300 bg-amber-500/10 border-amber-500/20',     label: 'High'   },
-  Medium: { dot: 'bg-blue-400',    badge: 'text-blue-300 bg-blue-500/10 border-blue-500/20',        label: 'Medium' },
-  Low:    { dot: 'bg-emerald-400', badge: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', label: 'Low'  },
+  Urgent: { dot: 'bg-rose-400',    badge: 'text-rose-300 bg-rose-500/10 border-rose-500/20',         label: 'Urgent' },
+  High:   { dot: 'bg-amber-400',   badge: 'text-amber-300 bg-amber-500/10 border-amber-500/20',       label: 'High'   },
+  Medium: { dot: 'bg-blue-400',    badge: 'text-blue-300 bg-blue-500/10 border-blue-500/20',          label: 'Medium' },
+  Low:    { dot: 'bg-emerald-400', badge: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', label: 'Low'    },
 }
 
 const STATUS_STYLE = {
@@ -50,17 +50,19 @@ function MarketplaceCard({ task, onAccept, accepting }) {
 
   return (
     <div className="group relative bg-[#1A1A24] border border-white/8 rounded-[16px] overflow-hidden flex flex-col hover:border-violet-500/30 hover:shadow-[0_0_24px_rgba(109,40,217,.08)] transition-all duration-200">
-      {/* top accent bar */}
       <div className={`h-[3px] w-full ${task.priority === 'Urgent' ? 'bg-gradient-to-r from-rose-500 to-rose-400' : task.priority === 'High' ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-violet-600 to-violet-400'}`} />
 
       <div className="p-5 flex flex-col flex-1">
-        {/* header row */}
         <div className="flex items-start justify-between gap-3 mb-3">
           <div className="flex-1 min-w-0">
             <div className="font-syne text-[15px] font-bold text-white leading-snug mb-1">{task.task}</div>
-            <div className="text-[11px] text-white/30 font-medium">{task.project}</div>
+            <div className="flex items-center gap-1.5 text-[11px] text-white/30 font-medium">
+              {task.campaignColor && (
+                <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />
+              )}
+              {task.project}
+            </div>
           </div>
-          {/* coin reward */}
           {task.coins > 0 && (
             <div className="flex-shrink-0 flex flex-col items-center bg-amber-400/8 border border-amber-400/15 rounded-xl px-3 py-2 min-w-[64px]">
               <span className="text-[18px] leading-none">🪙</span>
@@ -70,12 +72,10 @@ function MarketplaceCard({ task, onAccept, accepting }) {
           )}
         </div>
 
-        {/* description */}
         {task.description && (
           <p className="text-[12px] text-white/40 leading-relaxed line-clamp-2 mb-3">{task.description}</p>
         )}
 
-        {/* meta row */}
         <div className="flex items-center gap-2 flex-wrap mb-4">
           <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${p.badge}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${p.dot}`} />
@@ -89,7 +89,6 @@ function MarketplaceCard({ task, onAccept, accepting }) {
           )}
         </div>
 
-        {/* accept button — always at bottom */}
         <div className="mt-auto">
           <button
             onClick={() => onAccept(task.id)}
@@ -99,7 +98,7 @@ function MarketplaceCard({ task, onAccept, accepting }) {
             {isAccepting ? (
               <>
                 <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                Accepting…
+                Accepting...
               </>
             ) : (
               <>
@@ -123,7 +122,12 @@ function MyTaskRow({ task }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="text-[13px] font-medium text-white truncate">{task.task}</div>
-        <div className="text-[11px] text-white/30 mt-0.5">{task.project}</div>
+        <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
+          {task.campaignColor && (
+            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />
+          )}
+          {task.project}
+        </div>
         {isCompleted && task.review && (
           <div className="mt-1.5 text-[11px] text-white/30 italic">"{task.review}"</div>
         )}
@@ -144,7 +148,8 @@ export default function CreatorPortal({ session }) {
   const showToast = useUIStore(s => s.showToast)
 
   const [creator,   setCreator]   = useState(null)
-  const [tasks,     setTasks]     = useState([])
+  const [myTasks,   setMyTasks]   = useState([])
+  const [openTasks, setOpenTasks] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [accepting, setAccepting] = useState(null)
   const [filter,    setFilter]    = useState('All')
@@ -163,7 +168,8 @@ export default function CreatorPortal({ session }) {
         const meData    = await meRes.json()
         const tasksData = await tasksRes.json()
         setCreator(meData.creator ? camel(meData.creator) : null)
-        setTasks((tasksData ?? []).map(camel))
+        setMyTasks((tasksData.myTasks ?? []).map(camel))
+        setOpenTasks((tasksData.openTasks ?? []).map(camel))
       } catch (e) {
         showToast('Failed to load portal: ' + e.message, 'error')
       } finally {
@@ -182,8 +188,16 @@ export default function CreatorPortal({ session }) {
         body: JSON.stringify({ status: 'In Progress' }),
       })
       if (!res.ok) throw new Error(await res.text())
-      setTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'In Progress' } : t))
-      showToast('Task accepted — good luck!')
+      const updated = camel(await res.json())
+      setOpenTasks(prev => {
+        if (prev.some(t => t.id === taskId)) {
+          setMyTasks(m => [{ ...updated }, ...m])
+          return prev.filter(t => t.id !== taskId)
+        }
+        return prev
+      })
+      setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'In Progress' } : t))
+      showToast('Task accepted - good luck!')
     } catch {
       showToast('Failed to accept task', 'error')
     } finally {
@@ -192,7 +206,7 @@ export default function CreatorPortal({ session }) {
   }
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64 text-white/30 text-[13px]">Loading…</div>
+    return <div className="flex items-center justify-center h-64 text-white/30 text-[13px]">Loading...</div>
   }
 
   if (!creator) {
@@ -204,23 +218,18 @@ export default function CreatorPortal({ session }) {
     )
   }
 
-  const available  = tasks.filter(t => t.status === 'Not Started')
-  const inProgress = tasks.filter(t => t.status === 'In Progress')
-  const completed  = tasks.filter(t => t.status === 'Completed')
-  const myTasks    = [...inProgress, ...completed]
-
+  const completed = myTasks.filter(t => t.status === 'Completed')
   const PRIORITIES = ['All', 'Urgent', 'High', 'Medium', 'Low']
-  const filtered = filter === 'All' ? available : available.filter(t => t.priority === filter)
+  const filtered = filter === 'All' ? openTasks : openTasks.filter(t => t.priority === filter)
 
-  const tier     = getTier(creator.coins)
-  const progress = getProgress(creator.coins)
-  const toNext   = coinsToNextTier(creator.coins)
-  const tierEmoji = { Platinum: '👑', Diamond: '💎', Gold: '🥇', Silver: '🥈', Bronze: '🥉' }
+  const tier      = getTier(creator.coins)
+  const progress  = getProgress(creator.coins)
+  const toNext    = coinsToNextTier(creator.coins)
+  const tierEmoji = { Platinum: '\u{1F451}', Diamond: '\u{1F48E}', Gold: '\u{1F947}', Silver: '\u{1F948}', Bronze: '\u{1F949}' }
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
 
-      {/* ── Profile strip ── */}
       <div className="flex items-center gap-4 mb-6 p-4 bg-[#1A1A24] border border-white/7 rounded-[16px]">
         <Avatar initials={creator.initials} color={creator.avatarColor} size="lg" className="flex-shrink-0" />
         <div className="flex-1 min-w-0">
@@ -247,7 +256,7 @@ export default function CreatorPortal({ session }) {
               <ProgressBar value={progress} tierColor={tier.name.toLowerCase()} height="h-[4px]" />
             </div>
             <span className="font-mono text-[11px] text-white/30">
-              {creator.coins.toLocaleString()} 🪙 {toNext > 0 && `· ${toNext.toLocaleString()} to next`}
+              {creator.coins.toLocaleString()} {toNext > 0 && `· ${toNext.toLocaleString()} to next`}
             </span>
           </div>
         </div>
@@ -258,21 +267,18 @@ export default function CreatorPortal({ session }) {
         </div>
       </div>
 
-      {/* ── Marketplace ── */}
       <div className="mb-6">
         <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
           <div className="flex items-center gap-2">
             <ShoppingBag size={15} className="text-violet-400" />
             <span className="font-syne font-bold text-[16px] text-white">Task Marketplace</span>
-            {available.length > 0 && (
+            {openTasks.length > 0 && (
               <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
-                {available.length} available
+                {openTasks.length} available
               </span>
             )}
           </div>
-
-          {/* priority filter */}
-          {available.length > 0 && (
+          {openTasks.length > 0 && (
             <div className="flex items-center gap-1.5">
               <Filter size={11} className="text-white/25" />
               {PRIORITIES.map(p => (
@@ -295,7 +301,7 @@ export default function CreatorPortal({ session }) {
         {filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-36 rounded-[14px] bg-[#1A1A24] border border-white/7 text-white/20">
             <ShoppingBag size={24} className="mb-2 opacity-30" />
-            <span className="text-[13px]">{available.length === 0 ? 'No tasks available right now' : 'No tasks match this filter'}</span>
+            <span className="text-[13px]">{openTasks.length === 0 ? 'No tasks available right now' : 'No tasks match this filter'}</span>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -306,7 +312,6 @@ export default function CreatorPortal({ session }) {
         )}
       </div>
 
-      {/* ── My Tasks ── */}
       {myTasks.length > 0 && (
         <div>
           <div className="flex items-center gap-2 mb-3">
