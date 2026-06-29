@@ -38,9 +38,8 @@ export async function onRequestPost({ request, env }) {
   if (existing) return err('Email already in use', 409)
 
   try {
-    const response = await auth.api.signUpEmail({ body: { email, name, password } })
-    const data = await response.json().catch(() => null)
-    const userId = data?.user?.id
+    const result = await auth.api.signUpEmail({ body: { email, name, password } })
+    const userId = result?.user?.id ?? result?.id
 
     if (creatorId && userId) {
       await db.prepare('UPDATE ca_user SET creator_id = ? WHERE id = ?').bind(creatorId, userId).run()
