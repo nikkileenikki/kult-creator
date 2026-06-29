@@ -7,6 +7,7 @@ import { getTier } from '@/lib/tierUtils'
 import { useNicheStore } from '@/store/nicheStore'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
+import { ExternalLink } from 'lucide-react'
 
 const TIER_BADGE  = { Platinum:'platinum', Diamond:'diamond', Gold:'gold', Silver:'silver', Bronze:'bronze' }
 const TIER_EMOJI  = { Platinum:'👑', Diamond:'💎', Gold:'🥇', Silver:'🥈', Bronze:'🥉' }
@@ -143,9 +144,10 @@ export default function Creators() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={e => e.stopPropagation()}
-                          className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5 block"
+                          className="inline-flex items-center gap-1 text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5"
                         >
                           {c.platformUsername.startsWith('@') ? c.platformUsername : `@${c.platformUsername}`}
+                          <ExternalLink size={10} className="opacity-60" />
                         </a>
                       ) : (
                         <div className="text-[11px] text-white/30 mt-0.5">{c.platformUsername}</div>
