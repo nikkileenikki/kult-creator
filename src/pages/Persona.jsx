@@ -10,8 +10,21 @@ import { useNicheStore } from '@/store/nicheStore'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
-import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock, Trash2 } from 'lucide-react'
+import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock, Trash2, ExternalLink } from 'lucide-react'
 import { cn } from '@/lib/utils'
+
+const PLATFORM_URL = {
+  'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
+  'YouTube':     u => `https://www.youtube.com/@${u.replace(/^@/, '')}`,
+  'Instagram':   u => `https://www.instagram.com/${u.replace(/^@/, '')}`,
+  'X / Twitter': u => `https://x.com/${u.replace(/^@/, '')}`,
+  'LinkedIn':    u => `https://www.linkedin.com/in/${u.replace(/^@/, '')}`,
+}
+function profileUrl(platform, username) {
+  if (!username) return null
+  const builder = PLATFORM_URL[platform]
+  return builder ? builder(username) : null
+}
 
 const TAG_COLORS = ['tag-teal','tag-purple','tag-amber','tag-blue','tag-coral','tag-green']
 const TAG_STYLE  = {
@@ -277,6 +290,22 @@ export default function Persona() {
             ) : (
               <>
                 <div className="font-syne text-[18px] font-extrabold text-white mt-3 tracking-tight">{creator.name}</div>
+                {creator.platformUsername && (() => {
+                  const url = profileUrl(creator.platform, creator.platformUsername)
+                  return url ? (
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors mt-0.5"
+                    >
+                      {creator.platformUsername.startsWith('@') ? creator.platformUsername : `@${creator.platformUsername}`}
+                      <ExternalLink size={11} className="opacity-60" />
+                    </a>
+                  ) : (
+                    <div className="text-[12px] text-white/30 mt-0.5">{creator.platformUsername}</div>
+                  )
+                })()}
                 <div className="text-[12px] text-white/30 mt-1">
                   {creator.platform}{creator.secondaryPlatform && <span className="opacity-60"> / {creator.secondaryPlatform}</span>} · {[creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')}
                 </div>
