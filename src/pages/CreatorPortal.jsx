@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
+import { creatorAuthHeaders } from '@/lib/creatorAuth'
 import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
@@ -152,10 +153,13 @@ export default function CreatorPortal({ session }) {
     async function load() {
       setLoading(true)
       try {
+        const headers = creatorAuthHeaders()
         const [meRes, tasksRes] = await Promise.all([
-          fetch('/api/creator-portal/me'),
-          fetch('/api/creator-portal/tasks'),
+          fetch('/api/creator-portal/me',    { headers }),
+          fetch('/api/creator-portal/tasks', { headers }),
         ])
+        if (!meRes.ok)    throw new Error(await meRes.text())
+        if (!tasksRes.ok) throw new Error(await tasksRes.text())
         const meData    = await meRes.json()
         const tasksData = await tasksRes.json()
         setCreator(meData.creator ? camel(meData.creator) : null)
@@ -174,7 +178,7 @@ export default function CreatorPortal({ session }) {
     try {
       const res = await fetch(`/api/creator-portal/tasks/${taskId}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...creatorAuthHeaders() },
         body: JSON.stringify({ status: 'In Progress' }),
       })
       if (!res.ok) throw new Error(await res.text())
