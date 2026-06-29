@@ -153,12 +153,12 @@ export const CREATORS = [
 ]
 
 export const TASKS = [
-  { id: 't1', creatorId: '1', creatorName: 'Siti Rania', platform: 'TikTok', task: 'Film Lifestyle Reel', project: 'Ramadan Campaign', status: 'In Progress', pic: 'Sarah K.', dueDate: '2026-04-18', priority: 'High', coins: 100 },
-  { id: 't2', creatorId: '2', creatorName: 'Hafiz Zaki', platform: 'YouTube', task: 'Submit Draft Caption', project: 'Brand Launch Q2', status: 'Under Review', pic: 'Lina M.', dueDate: '2026-04-16', priority: 'Medium', coins: 100 },
-  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100, rating: 5, review: 'Delivered on time, great quality reel. Engagement was above average.' },
-  { id: 't4', creatorId: '4', creatorName: 'Farah Hana', platform: 'TikTok', task: 'Record TikTok GRWM', project: 'Ramadan Campaign', status: 'Overdue', pic: 'Lina M.', dueDate: '2026-04-10', priority: 'Urgent', coins: 100 },
-  { id: 't5', creatorId: '5', creatorName: 'Razif Idham', platform: 'YouTube', task: 'Brand Mention in Vlog', project: 'Brand Launch Q2', status: 'Not Started', pic: 'Sarah K.', dueDate: '2026-04-25', priority: 'Medium', coins: 100 },
-  { id: 't6', creatorId: '6', creatorName: 'Nur Zulaikha', platform: 'Instagram', task: 'Skincare GRWM Video', project: 'Skincare Series', status: 'In Progress', pic: 'Lina M.', dueDate: '2026-04-20', priority: 'High', coins: 100 },
+  { id: 't1', creatorId: '1', creatorName: 'Siti Rania', platform: 'TikTok', task: 'Film Lifestyle Reel', project: 'Ramadan Campaign', status: 'In Progress', pic: 'Sarah K.', dueDate: '2026-04-18', priority: 'High', coins: 100, createdAt: '2026-03-28T09:00:00.000Z' },
+  { id: 't2', creatorId: '2', creatorName: 'Hafiz Zaki', platform: 'YouTube', task: 'Submit Draft Caption', project: 'Brand Launch Q2', status: 'Under Review', pic: 'Lina M.', dueDate: '2026-04-16', priority: 'Medium', coins: 100, createdAt: '2026-03-30T10:45:00.000Z' },
+  { id: 't3', creatorId: '3', creatorName: 'Aina Nadia', platform: 'Instagram', task: 'Post IG Reel', project: 'Skincare Series', status: 'Completed', pic: 'Sarah K.', dueDate: '2026-04-12', priority: 'Low', coins: 100, rating: 5, review: 'Delivered on time, great quality reel. Engagement was above average.', createdAt: '2026-04-01T08:20:00.000Z' },
+  { id: 't4', creatorId: '4', creatorName: 'Farah Hana', platform: 'TikTok', task: 'Record TikTok GRWM', project: 'Ramadan Campaign', status: 'Overdue', pic: 'Lina M.', dueDate: '2026-04-10', priority: 'Urgent', coins: 100, createdAt: '2026-03-25T14:30:00.000Z' },
+  { id: 't5', creatorId: '5', creatorName: 'Razif Idham', platform: 'YouTube', task: 'Brand Mention in Vlog', project: 'Brand Launch Q2', status: 'Not Started', pic: 'Sarah K.', dueDate: '2026-04-25', priority: 'Medium', coins: 100, createdAt: '2026-04-05T11:00:00.000Z' },
+  { id: 't6', creatorId: '6', creatorName: 'Nur Zulaikha', platform: 'Instagram', task: 'Skincare GRWM Video', project: 'Skincare Series', status: 'In Progress', pic: 'Lina M.', dueDate: '2026-04-20', priority: 'High', coins: 100, createdAt: '2026-04-03T16:15:00.000Z' },
 ]
 
 export const CAMPAIGNS = [

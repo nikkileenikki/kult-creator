@@ -38,6 +38,13 @@ const PROJ_STATUS_DOT = { Active:'bg-emerald-400', Planning:'bg-amber-400', 'On 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const LABEL = 'block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5'
 
+function fmtCreatedAt(iso) {
+  if (!iso) return null
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })
+}
+
 // ── Mention Textarea ─────────────────────────────────────────────────────────
 
 function MentionTextarea({ value, onChange, placeholder, rows, className, pics }) {
@@ -456,6 +463,9 @@ export default function ProjectManagement() {
                       <span className="text-[10px] text-white/25 ml-auto">{done}/{ptasks.length}</span>
                     )}
                   </div>
+                  {p.createdAt && (
+                    <div className="text-[9px] text-white/20 font-mono mt-1 truncate">{fmtCreatedAt(p.createdAt)}</div>
+                  )}
                 </div>
               </div>
             )
@@ -718,6 +728,12 @@ export default function ProjectManagement() {
                   <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Priority</div>
                   <div className={`text-[13px] font-medium ${PRIORITY_TXT[detailTask.priority]}`}>{detailTask.priority}</div>
                 </div>
+                {detailTask.createdAt && (
+                  <div className="col-span-2">
+                    <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Created</div>
+                    <div className="font-mono text-[12px] text-white/40">{fmtCreatedAt(detailTask.createdAt)}</div>
+                  </div>
+                )}
               </div>
             </div>
 

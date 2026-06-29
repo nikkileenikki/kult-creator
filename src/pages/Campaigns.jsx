@@ -12,6 +12,13 @@ import { Pencil, ChevronRight, Check, X, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 const CAMP_STATUS  = { Active:'green', Planning:'amber', Completed:'blue', 'On Hold':'gray' }
+
+function fmtCreatedAt(iso) {
+  if (!iso) return null
+  const d = new Date(iso)
+  return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ' · ' + d.toLocaleTimeString('en-MY', { hour: '2-digit', minute: '2-digit' })
+}
 const TASK_STATUS  = { 'In Progress':'blue','Under Review':'amber','Completed':'green','Overdue':'red','Not Started':'gray' }
 const PRIORITY_DOT = { Urgent:'bg-rose-400 shadow-[0_0_4px_rgba(248,113,113,.5)]', High:'bg-orange-400', Medium:'bg-amber-400', Low:'bg-emerald-400' }
 const KANBAN_COLS  = ['Not Started','In Progress','Under Review','Completed','Overdue']
@@ -182,6 +189,11 @@ function CampaignCard({ campaign, tasks, onClick }) {
             {campaign.budget > 0 && <span className="text-emerald-400/70 font-mono font-medium">RM {campaign.budget.toLocaleString()}</span>}
           </div>
         </div>
+        {campaign.createdAt && (
+          <div className="mt-2 pt-2 border-t border-white/[0.04] text-[10px] text-white/20 font-mono">
+            Created {fmtCreatedAt(campaign.createdAt)}
+          </div>
+        )}
       </div>
     </div>
   )
@@ -371,6 +383,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                     {campaign.brandName && <span className="text-violet-400 font-medium">{campaign.brandName}</span>}
                     {campaign.budget > 0 && <span className="text-emerald-400 font-mono font-medium">RM {campaign.budget.toLocaleString()} budget</span>}
                     {campaign.startDate && <span className="text-white/30 font-mono">{campaign.startDate} → {campaign.endDate || '—'}</span>}
+                    {campaign.createdAt && <span className="text-white/20 font-mono text-[11px]">Created {fmtCreatedAt(campaign.createdAt)}</span>}
                   </div>
                 </div>
                 <div className="text-right flex-shrink-0">
@@ -621,6 +634,12 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                     {detailTask.status === 'Completed' ? `+${detailTask.coins}` : detailTask.coins}
                   </div>
                 </div>
+                {detailTask.createdAt && (
+                  <div className="col-span-2">
+                    <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1">Created</div>
+                    <div className="font-mono text-[12px] text-white/40">{fmtCreatedAt(detailTask.createdAt)}</div>
+                  </div>
+                )}
               </div>
             </div>
           </div>

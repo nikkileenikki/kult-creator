@@ -23,7 +23,7 @@ export async function fetchTasks(filters = {}) {
 export async function createTask(payload) {
   if (USE_MOCK) {
     await delay(300)
-    return { ...payload, id: `t${Date.now()}` }
+    return { createdAt: new Date().toISOString(), ...payload, id: `t${Date.now()}` }
   }
   return request('POST', '/tasks', payload)
 }

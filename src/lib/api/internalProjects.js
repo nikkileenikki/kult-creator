@@ -6,7 +6,7 @@ export async function fetchInternalProjects() {
 }
 
 export async function createInternalProject(data) {
-  if (USE_MOCK) { await delay(300); return { id: `ip${Date.now()}`, ...data } }
+  if (USE_MOCK) { await delay(300); return { id: `ip${Date.now()}`, createdAt: new Date().toISOString(), ...data } }
   return request('POST', '/internal-projects', data)
 }
 
@@ -26,7 +26,7 @@ export async function fetchInternalTasks(projectId) {
 }
 
 export async function createInternalTask(data) {
-  if (USE_MOCK) { await delay(300); return { id: `it${Date.now()}`, ...data } }
+  if (USE_MOCK) { await delay(300); return { id: `it${Date.now()}`, createdAt: new Date().toISOString(), ...data } }
   return request('POST', '/internal-tasks', data)
 }
 
