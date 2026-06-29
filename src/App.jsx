@@ -1,6 +1,6 @@
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { CheckCircle2, AlertCircle, Info } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import Sidebar from '@/components/layout/Sidebar'
 import Topbar from '@/components/layout/Topbar'
 import Dashboard from '@/pages/Dashboard'
@@ -59,7 +59,15 @@ function Toast() {
 }
 
 function CreatorPortalShell() {
-  const { data: session, isPending } = creatorAuthClient.useSession()
+  const [session,   setSession]   = useState(undefined) // undefined = loading
+  const [isPending, setIsPending] = useState(true)
+
+  useEffect(() => {
+    creatorAuthClient.getSession()
+      .then(s => setSession(s?.user ?? null))
+      .catch(() => setSession(null))
+      .finally(() => setIsPending(false))
+  }, [])
 
   if (isPending) {
     return (

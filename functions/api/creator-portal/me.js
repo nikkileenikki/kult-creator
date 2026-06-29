@@ -1,17 +1,16 @@
-import { createAuth } from '../_creator_auth.js'
 import { json, err, opts, getDB } from '../_helpers.js'
+import { verifyCreatorToken } from '../_creator_auth.js'
 
 export const onRequestOptions = () => opts()
 
 export async function onRequestGet({ request, env }) {
-  const auth = createAuth(env)
-  const session = await auth.api.getSession({ headers: request.headers })
-  if (!session?.user) return err('Unauthorized', 401)
+  const { session, sessionError } = await verifyCreatorToken(request, env)
+  if (sessionError) return sessionError
 
-  const creatorId = session.user.creatorId ?? null
-  if (!creatorId) return json({ creator: null, user: { id: session.user.id, name: session.user.name, email: session.user.email } })
+  const creatorId = session.creatorId ?? null
+  if (!creatorId) return json({ creator: null, user: { id: session.sub, name: session.name, email: session.email } })
 
   const db = getDB(env)
   const creator = await db.prepare('SELECT * FROM creators WHERE id = ?').bind(creatorId).first()
-  return json({ creator: creator ?? null, user: { id: session.user.id, name: session.user.name, email: session.user.email } })
+  return json({ creator: creator ?? null, user: { id: session.sub, name: session.name, email: session.email } })
 }

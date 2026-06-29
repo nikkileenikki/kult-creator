@@ -14,12 +14,8 @@ export default function CreatorLogin() {
     setError('')
     setLoading(true)
     try {
-      const { error: authError } = await creatorAuthClient.signIn.email({ email, password })
-      if (authError) {
-        setError(authError.message ?? 'Invalid email or password')
-      } else {
-        navigate('/portal')
-      }
+      await creatorAuthClient.signIn({ email, password })
+      navigate('/portal')
     } catch (e) {
       setError(e?.message ?? 'Invalid email or password')
     } finally {

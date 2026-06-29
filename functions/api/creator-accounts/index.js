@@ -1,6 +1,6 @@
 import { json, err, opts, getDB } from '../_helpers.js'
 import { requireAuth } from '../_auth.js'
-import { createAuth } from '../_creator_auth.js'
+import { hashPassword } from '../_passwords.js'
 
 export const onRequestOptions = () => opts()
 
@@ -30,23 +30,21 @@ export async function onRequestPost({ request, env }) {
   const { email, name, password, creatorId } = body ?? {}
   if (!email || !name || !password) return err('email, name and password required', 400)
 
-  const db  = getDB(env)
-  const auth = createAuth(env)
-
-  // Check if email already used
-  const existing = await db.prepare('SELECT id FROM ca_user WHERE email = ?').bind(email.toLowerCase()).first()
+  const db = getDB(env)
+  const existing = await db.prepare('SELECT id FROM ca_user WHERE email = ?').bind(email.toLowerCase().trim()).first()
   if (existing) return err('Email already in use', 409)
 
+  const id   = `ca${Date.now()}`
+  const hash = await hashPassword(password)
+
   try {
-    const result = await auth.api.signUpEmail({ body: { email, name, password } })
-    const userId = result?.user?.id ?? result?.id
-
-    if (creatorId && userId) {
-      await db.prepare('UPDATE ca_user SET creator_id = ? WHERE id = ?').bind(creatorId, userId).run()
-    }
-
-    return json({ id: userId, name, email, creatorId: creatorId ?? null }, 201)
+    await db.prepare(
+      'INSERT INTO ca_user (id, name, email, password_hash, creator_id, email_verified, created_at, updated_at) VALUES (?,?,?,?,?,1,datetime(\'now\'),datetime(\'now\'))'
+    ).bind(id, name.trim(), email.toLowerCase().trim(), hash, creatorId || null).run()
   } catch (e) {
-    return err(e?.message ?? 'Failed to create creator account', 500)
+    if (e.message?.includes('UNIQUE')) return err('Email already in use', 409)
+    return err('Server error: ' + e.message, 500)
   }
+
+  return json({ id, name, email: email.toLowerCase().trim(), creatorId: creatorId ?? null }, 201)
 }

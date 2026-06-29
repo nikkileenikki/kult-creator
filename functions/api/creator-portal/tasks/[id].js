@@ -1,14 +1,13 @@
-import { createAuth } from '../../_creator_auth.js'
 import { json, err, opts, getDB } from '../../_helpers.js'
+import { verifyCreatorToken } from '../../_creator_auth.js'
 
 export const onRequestOptions = () => opts()
 
 export async function onRequestPatch({ params, request, env }) {
-  const auth = createAuth(env)
-  const session = await auth.api.getSession({ headers: request.headers })
-  if (!session?.user) return err('Unauthorized', 401)
+  const { session, sessionError } = await verifyCreatorToken(request, env)
+  if (sessionError) return sessionError
 
-  const creatorId = session.user.creatorId ?? null
+  const creatorId = session.creatorId ?? null
   if (!creatorId) return err('No creator profile linked', 403)
 
   const db = getDB(env)
@@ -20,7 +19,6 @@ export async function onRequestPatch({ params, request, env }) {
   try { body = await request.json() } catch { return err('Invalid JSON', 400) }
   const { status } = body ?? {}
   if (!status) return err('status required', 400)
-  // Creators can only move Not Started → In Progress
   if (task.status !== 'Not Started' || status !== 'In Progress') return err('Invalid status transition', 400)
 
   await db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, params.id).run()
