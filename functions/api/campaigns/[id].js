@@ -18,6 +18,8 @@ export async function onRequestDelete({ params, env }) {
   if (!db) return err('DB binding not found', 500)
   const existing = await campaignQ.byId(db, params.id)
   if (!existing) return err('Campaign not found', 404)
-  await db.prepare('UPDATE campaigns SET deleted_at = ? WHERE id = ?').bind(new Date().toISOString(), params.id).run()
+  const now = new Date().toISOString()
+  await db.prepare('UPDATE campaigns SET deleted_at = ? WHERE id = ?').bind(now, params.id).run()
+  await db.prepare('UPDATE tasks SET deleted_at = ? WHERE project = (SELECT name FROM campaigns WHERE id = ?) AND deleted_at IS NULL').bind(now, params.id).run()
   return json({ success: true })
 }
