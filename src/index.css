@@ -36,7 +36,9 @@
     overflow: hidden;
   }
 
-  html.portal-route, html.portal-route body, html.portal-route #root {
+  html.portal-route,
+  html.portal-route body,
+  html.portal-route #root {
     height: auto;
     overflow: visible;
   }
