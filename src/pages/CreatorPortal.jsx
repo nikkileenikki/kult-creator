@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { creatorAuthHeaders } from '@/lib/creatorAuth'
-import { getTier, getProgress, coinsToNextTier } from '@/lib/tierUtils'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
-import ProgressBar from '@/components/shared/ProgressBar'
-import { ExternalLink, Clock, Zap, CheckCircle2, CircleDot, ShoppingBag, Filter } from 'lucide-react'
+import { ExternalLink, Clock, Zap, CheckCircle2, CircleDot, AlertCircle, ChevronDown, ChevronUp, Users } from 'lucide-react'
 
 const PLATFORM_URL = {
   'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
@@ -21,17 +19,25 @@ function profileUrl(platform, username) {
 }
 
 const PRIORITY_STYLE = {
-  Urgent: { dot: 'bg-rose-400',    badge: 'text-rose-300 bg-rose-500/10 border-rose-500/20',         label: 'Urgent' },
-  High:   { dot: 'bg-amber-400',   badge: 'text-amber-300 bg-amber-500/10 border-amber-500/20',       label: 'High'   },
-  Medium: { dot: 'bg-blue-400',    badge: 'text-blue-300 bg-blue-500/10 border-blue-500/20',          label: 'Medium' },
-  Low:    { dot: 'bg-emerald-400', badge: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', label: 'Low'    },
+  Urgent: { bar: 'from-rose-500 to-rose-400',   badge: 'text-rose-300 bg-rose-500/10 border-rose-500/20',         dot: 'bg-rose-400'    },
+  High:   { bar: 'from-amber-500 to-amber-400',  badge: 'text-amber-300 bg-amber-500/10 border-amber-500/20',       dot: 'bg-amber-400'   },
+  Medium: { bar: 'from-violet-600 to-violet-400', badge: 'text-violet-300 bg-violet-500/10 border-violet-500/20',   dot: 'bg-violet-400'  },
+  Low:    { bar: 'from-emerald-600 to-emerald-400', badge: 'text-emerald-300 bg-emerald-500/10 border-emerald-500/20', dot: 'bg-emerald-400' },
 }
 
 const STATUS_STYLE = {
-  'Not Started': 'text-white/40 bg-white/5 border-white/10',
-  'In Progress': 'text-blue-300 bg-blue-500/10 border-blue-500/20',
-  'Completed':   'text-emerald-300 bg-emerald-500/10 border-emerald-500/20',
-  'Overdue':     'text-rose-300 bg-rose-500/10 border-rose-500/20',
+  'Not Started':  'text-white/40 bg-white/5 border-white/10',
+  'In Progress':  'text-blue-300 bg-blue-500/10 border-blue-500/20',
+  'Under Review': 'text-amber-300 bg-amber-500/10 border-amber-500/20',
+  'Completed':    'text-emerald-300 bg-emerald-500/10 border-emerald-500/20',
+  'Overdue':      'text-rose-300 bg-rose-500/10 border-rose-500/20',
+}
+
+function formatFollowers(n) {
+  if (!n) return null
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`
+  return String(n)
 }
 
 function camel(row) {
@@ -44,13 +50,26 @@ function camel(row) {
   return out
 }
 
+function FollowerBadge({ min, max }) {
+  if (!min && !max) return null
+  const parts = []
+  if (min > 0) parts.push(`min ${formatFollowers(min)}`)
+  if (max > 0) parts.push(`max ${formatFollowers(max)}`)
+  return (
+    <span className="inline-flex items-center gap-1 text-[10px] text-violet-300/70 bg-violet-500/8 border border-violet-500/15 px-2 py-0.5 rounded-full">
+      <Users size={9} />
+      {parts.join(' · ')}
+    </span>
+  )
+}
+
 function MarketplaceCard({ task, onAccept, accepting }) {
   const p = PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.Medium
   const isAccepting = accepting === task.id
 
   return (
     <div className="group relative bg-[#1A1A24] border border-white/8 rounded-[16px] overflow-hidden flex flex-col hover:border-violet-500/30 hover:shadow-[0_0_24px_rgba(109,40,217,.08)] transition-all duration-200">
-      <div className={`h-[3px] w-full ${task.priority === 'Urgent' ? 'bg-gradient-to-r from-rose-500 to-rose-400' : task.priority === 'High' ? 'bg-gradient-to-r from-amber-500 to-amber-400' : 'bg-gradient-to-r from-violet-600 to-violet-400'}`} />
+      <div className={`h-[3px] w-full bg-gradient-to-r ${p.bar}`} />
 
       <div className="p-5 flex flex-col flex-1">
         <div className="flex items-start justify-between gap-3 mb-3">
@@ -63,23 +82,16 @@ function MarketplaceCard({ task, onAccept, accepting }) {
               {task.project}
             </div>
           </div>
-          {task.coins > 0 && (
-            <div className="flex-shrink-0 flex flex-col items-center bg-amber-400/8 border border-amber-400/15 rounded-xl px-3 py-2 min-w-[64px]">
-              <span className="text-[18px] leading-none">🪙</span>
-              <span className="font-syne font-extrabold text-[15px] text-amber-300 mt-0.5">{task.coins.toLocaleString()}</span>
-              <span className="text-[9px] text-amber-400/50 uppercase tracking-wider">coins</span>
-            </div>
-          )}
         </div>
 
         {task.description && (
           <p className="text-[12px] text-white/40 leading-relaxed line-clamp-2 mb-3">{task.description}</p>
         )}
 
-        <div className="flex items-center gap-2 flex-wrap mb-4">
+        <div className="flex items-center gap-2 flex-wrap mb-3">
           <span className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-full border ${p.badge}`}>
             <span className={`w-1.5 h-1.5 rounded-full ${p.dot}`} />
-            {p.label}
+            {task.priority}
           </span>
           {task.dueDate && (
             <span className="inline-flex items-center gap-1 text-[10px] text-white/30 bg-white/5 border border-white/8 px-2 py-0.5 rounded-full">
@@ -87,7 +99,12 @@ function MarketplaceCard({ task, onAccept, accepting }) {
               {task.dueDate}
             </span>
           )}
+          <FollowerBadge min={task.followerMin} max={task.followerMax} />
         </div>
+
+        {task.notes && (
+          <p className="text-[11px] text-white/25 italic border-l-2 border-white/10 pl-2 mb-3 line-clamp-2">{task.notes}</p>
+        )}
 
         <div className="mt-auto">
           <button
@@ -113,33 +130,90 @@ function MarketplaceCard({ task, onAccept, accepting }) {
   )
 }
 
-function MyTaskRow({ task }) {
-  const isCompleted = task.status === 'Completed'
+function MyTaskRow({ task, onSubmitProof }) {
+  const [expanded, setExpanded] = useState(false)
+  const [proof, setProof] = useState('')
+  const [submitting, setSubmitting] = useState(false)
+  const showToast = useUIStore(s => s.showToast)
+
+  const isCompleted  = task.status === 'Completed'
+  const isInProgress = task.status === 'In Progress'
+  const isUnderReview = task.status === 'Under Review'
+
+  async function handleSubmit() {
+    if (!proof.trim()) { showToast('Please describe what you completed', 'error'); return }
+    setSubmitting(true)
+    try {
+      await onSubmitProof(task.id, proof.trim())
+      setExpanded(false)
+      setProof('')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
   return (
-    <div className={`flex items-start gap-3 p-3.5 rounded-[12px] border transition-colors ${isCompleted ? 'border-white/5 bg-white/2' : 'border-blue-500/15 bg-blue-500/5'}`}>
-      <div className={`mt-0.5 flex-shrink-0 ${isCompleted ? 'text-emerald-400' : 'text-blue-400'}`}>
-        {isCompleted ? <CheckCircle2 size={15} /> : <CircleDot size={15} />}
-      </div>
-      <div className="flex-1 min-w-0">
-        <div className="text-[13px] font-medium text-white truncate">{task.task}</div>
-        <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
-          {task.campaignColor && (
-            <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />
-          )}
-          {task.project}
+    <div className={`rounded-[12px] border transition-colors ${isCompleted ? 'border-white/5 bg-white/2' : isUnderReview ? 'border-amber-500/15 bg-amber-500/4' : 'border-blue-500/15 bg-blue-500/5'}`}>
+      <div className="flex items-start gap-3 p-3.5">
+        <div className={`mt-0.5 flex-shrink-0 ${isCompleted ? 'text-emerald-400' : isUnderReview ? 'text-amber-400' : 'text-blue-400'}`}>
+          {isCompleted ? <CheckCircle2 size={15} /> : isUnderReview ? <AlertCircle size={15} /> : <CircleDot size={15} />}
         </div>
-        {isCompleted && task.review && (
-          <div className="mt-1.5 text-[11px] text-white/30 italic">"{task.review}"</div>
-        )}
+        <div className="flex-1 min-w-0">
+          <div className="text-[13px] font-medium text-white truncate">{task.task}</div>
+          <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
+            {task.campaignColor && (
+              <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />
+            )}
+            {task.project}
+          </div>
+          {isCompleted && task.review && (
+            <div className="mt-1.5 text-[11px] text-white/30 italic">"{task.review}"</div>
+          )}
+          {isUnderReview && (
+            <div className="mt-1.5 text-[10px] text-amber-400/60">Proof submitted — awaiting review</div>
+          )}
+        </div>
+        <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
+          <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${STATUS_STYLE[task.status] ?? STATUS_STYLE['Not Started']}`}>
+            {task.status}
+          </span>
+          {isInProgress && (
+            <button
+              onClick={() => setExpanded(v => !v)}
+              className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-0.5 transition-colors mt-0.5"
+            >
+              Submit proof {expanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+            </button>
+          )}
+        </div>
       </div>
-      <div className="flex-shrink-0 flex flex-col items-end gap-1.5">
-        <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${STATUS_STYLE[task.status] ?? STATUS_STYLE['Not Started']}`}>
-          {task.status}
-        </span>
-        {task.coins > 0 && (
-          <span className="text-[10px] text-amber-300/60 font-mono">+{task.coins.toLocaleString()} 🪙</span>
-        )}
-      </div>
+
+      {isInProgress && expanded && (
+        <div className="px-3.5 pb-3.5 pt-0">
+          <div className="border-t border-white/5 pt-3">
+            <p className="text-[11px] text-white/30 mb-2">Describe what you completed or paste a link as proof:</p>
+            <textarea
+              value={proof}
+              onChange={e => setProof(e.target.value)}
+              rows={3}
+              placeholder="e.g. Posted TikTok reel at https://tiktok.com/... — 12k views in 24h"
+              className="w-full bg-[#111116] border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 resize-none transition-all"
+            />
+            <div className="flex items-center justify-end gap-2 mt-2">
+              <button onClick={() => { setExpanded(false); setProof('') }} className="text-[12px] text-white/30 hover:text-white/60 transition-colors px-3 py-1.5">
+                Cancel
+              </button>
+              <button
+                onClick={handleSubmit}
+                disabled={submitting || !proof.trim()}
+                className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/25 text-amber-300 text-[12px] font-semibold transition-all disabled:opacity-40"
+              >
+                {submitting ? 'Submitting...' : 'Submit for Review'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -152,7 +226,6 @@ export default function CreatorPortal({ session }) {
   const [openTasks, setOpenTasks] = useState([])
   const [loading,   setLoading]   = useState(true)
   const [accepting, setAccepting] = useState(null)
-  const [filter,    setFilter]    = useState('All')
 
   useEffect(() => {
     async function load() {
@@ -189,19 +262,29 @@ export default function CreatorPortal({ session }) {
       })
       if (!res.ok) throw new Error(await res.text())
       const updated = camel(await res.json())
-      setOpenTasks(prev => {
-        if (prev.some(t => t.id === taskId)) {
-          setMyTasks(m => [{ ...updated }, ...m])
-          return prev.filter(t => t.id !== taskId)
-        }
-        return prev
-      })
-      setMyTasks(prev => prev.map(t => t.id === taskId ? { ...t, status: 'In Progress' } : t))
-      showToast('Task accepted - good luck!')
+      setOpenTasks(prev => prev.filter(t => t.id !== taskId))
+      setMyTasks(prev => [updated, ...prev])
+      showToast('Task accepted — good luck!')
     } catch {
       showToast('Failed to accept task', 'error')
     } finally {
       setAccepting(null)
+    }
+  }
+
+  async function submitProof(taskId, proof) {
+    try {
+      const res = await fetch(`/api/creator-portal/tasks/${taskId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', ...creatorAuthHeaders() },
+        body: JSON.stringify({ status: 'Under Review', proof }),
+      })
+      if (!res.ok) throw new Error(await res.text())
+      const updated = camel(await res.json())
+      setMyTasks(prev => prev.map(t => t.id === taskId ? updated : t))
+      showToast('Proof submitted — awaiting review!')
+    } catch {
+      showToast('Failed to submit proof', 'error')
     }
   }
 
@@ -218,24 +301,26 @@ export default function CreatorPortal({ session }) {
     )
   }
 
-  const completed = myTasks.filter(t => t.status === 'Completed')
-  const PRIORITIES = ['All', 'Urgent', 'High', 'Medium', 'Low']
-  const filtered = filter === 'All' ? openTasks : openTasks.filter(t => t.priority === filter)
+  // Group open tasks by campaign
+  const campaignGroups = openTasks.reduce((acc, t) => {
+    const key = t.project || 'General'
+    if (!acc[key]) acc[key] = { color: t.campaignColor, tasks: [] }
+    acc[key].tasks.push(t)
+    return acc
+  }, {})
 
-  const tier      = getTier(creator.coins)
-  const progress  = getProgress(creator.coins)
-  const toNext    = coinsToNextTier(creator.coins)
-  const tierEmoji = { Platinum: '\u{1F451}', Diamond: '\u{1F48E}', Gold: '\u{1F947}', Silver: '\u{1F948}', Bronze: '\u{1F949}' }
+  const completedCount = myTasks.filter(t => t.status === 'Completed').length
+  const activeCount    = myTasks.filter(t => t.status !== 'Completed').length
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
 
+      {/* Profile strip */}
       <div className="flex items-center gap-4 mb-6 p-4 bg-[#1A1A24] border border-white/7 rounded-[16px]">
         <Avatar initials={creator.initials} color={creator.avatarColor} size="lg" className="flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-syne text-[18px] font-extrabold text-white">{creator.name}</span>
-            <Badge variant={tier.name.toLowerCase()}>{tierEmoji[tier.name]} {tier.name}</Badge>
             <Badge variant={creator.status === 'Active' ? 'green' : creator.status === 'Pending to sign' ? 'amber' : 'red'}>
               {creator.status}
             </Badge>
@@ -251,82 +336,71 @@ export default function CreatorPortal({ session }) {
               <ExternalLink size={10} />
             </a>
           )}
-          <div className="mt-2 flex items-center gap-3">
-            <div className="flex-1 max-w-[200px]">
-              <ProgressBar value={progress} tierColor={tier.name.toLowerCase()} height="h-[4px]" />
-            </div>
-            <span className="font-mono text-[11px] text-white/30">
-              {creator.coins.toLocaleString()} {toNext > 0 && `· ${toNext.toLocaleString()} to next`}
-            </span>
-          </div>
         </div>
-        <div className="hidden sm:flex flex-col items-center gap-1 px-4 py-3 bg-white/3 border border-white/7 rounded-xl flex-shrink-0">
-          <span className="font-mono text-[10px] text-white/25 uppercase tracking-wider">Completed</span>
-          <span className="font-syne text-[22px] font-extrabold text-white">{completed.length}</span>
-          <span className="font-mono text-[9px] text-white/25">tasks</span>
+        <div className="hidden sm:flex items-center gap-3">
+          <div className="flex flex-col items-center gap-0.5 px-4 py-3 bg-white/3 border border-white/7 rounded-xl">
+            <span className="font-mono text-[9px] text-white/25 uppercase tracking-wider">Active</span>
+            <span className="font-syne text-[20px] font-extrabold text-white">{activeCount}</span>
+          </div>
+          <div className="flex flex-col items-center gap-0.5 px-4 py-3 bg-white/3 border border-white/7 rounded-xl">
+            <span className="font-mono text-[9px] text-white/25 uppercase tracking-wider">Done</span>
+            <span className="font-syne text-[20px] font-extrabold text-emerald-300">{completedCount}</span>
+          </div>
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
-          <div className="flex items-center gap-2">
-            <ShoppingBag size={15} className="text-violet-400" />
-            <span className="font-syne font-bold text-[16px] text-white">Task Marketplace</span>
-            {openTasks.length > 0 && (
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
-                {openTasks.length} available
-              </span>
-            )}
-          </div>
-          {openTasks.length > 0 && (
-            <div className="flex items-center gap-1.5">
-              <Filter size={11} className="text-white/25" />
-              {PRIORITIES.map(p => (
-                <button
-                  key={p}
-                  onClick={() => setFilter(p)}
-                  className={`text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all ${
-                    filter === p
-                      ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
-                      : 'text-white/30 hover:text-white/60 border border-transparent hover:border-white/10'
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-
-        {filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-36 rounded-[14px] bg-[#1A1A24] border border-white/7 text-white/20">
-            <ShoppingBag size={24} className="mb-2 opacity-30" />
-            <span className="text-[13px]">{openTasks.length === 0 ? 'No tasks available right now' : 'No tasks match this filter'}</span>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map(t => (
-              <MarketplaceCard key={t.id} task={t} onAccept={acceptTask} accepting={accepting} />
-            ))}
-          </div>
-        )}
-      </div>
-
+      {/* My Tasks — above available tasks */}
       {myTasks.length > 0 && (
-        <div>
+        <div className="mb-8">
           <div className="flex items-center gap-2 mb-3">
-            <span className="font-syne font-bold text-[15px] text-white">My Tasks</span>
+            <span className="font-syne font-bold text-[16px] text-white">My Tasks</span>
             <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/8">
               {myTasks.length}
             </span>
           </div>
           <div className="space-y-2">
             {myTasks.map(t => (
-              <MyTaskRow key={t.id} task={t} />
+              <MyTaskRow key={t.id} task={t} onSubmitProof={submitProof} />
             ))}
           </div>
         </div>
       )}
+
+      {/* Available Tasks — grouped by campaign */}
+      <div>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="font-syne font-bold text-[16px] text-white">Available Tasks</span>
+          {openTasks.length > 0 && (
+            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-300 border border-violet-500/20">
+              {openTasks.length} open
+            </span>
+          )}
+        </div>
+
+        {openTasks.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-36 rounded-[14px] bg-[#1A1A24] border border-white/7 text-white/20">
+            <Zap size={24} className="mb-2 opacity-30" />
+            <span className="text-[13px]">No tasks available right now</span>
+          </div>
+        ) : (
+          <div className="space-y-6">
+            {Object.entries(campaignGroups).map(([campaign, { color, tasks }]) => (
+              <div key={campaign}>
+                <div className="flex items-center gap-2 mb-3">
+                  {color && <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: color }} />}
+                  <span className="text-[13px] font-semibold text-white/60">{campaign}</span>
+                  <span className="text-[10px] text-white/25 font-mono">{tasks.length} task{tasks.length !== 1 ? 's' : ''}</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                  {tasks.map(t => (
+                    <MarketplaceCard key={t.id} task={t} onAccept={acceptTask} accepting={accepting} />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   )
 }

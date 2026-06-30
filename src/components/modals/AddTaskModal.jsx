@@ -21,8 +21,10 @@ const schema = z.object({
   priority:  z.enum(['Low', 'Medium', 'High', 'Urgent']),
   pic:       z.string().min(1, 'PIC is required'),
   dueDate:   z.string().min(1, 'Due date is required'),
-  coins:     z.coerce.number().min(0, 'Min 0').max(10000, 'Max 10,000'),
-  notes:     z.string().default(''),
+  coins:       z.coerce.number().min(0, 'Min 0').max(10000, 'Max 10,000'),
+  notes:       z.string().default(''),
+  followerMin: z.coerce.number().min(0).default(0),
+  followerMax: z.coerce.number().min(0).default(0),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -59,8 +61,10 @@ export default function AddTaskModal() {
       priority:  'Medium',
       pic:       PICS[0],
       dueDate:   '',
-      coins:     100,
-      notes:     '',
+      coins:       100,
+      notes:       '',
+      followerMin: 0,
+      followerMax: 0,
     },
   })
 
@@ -75,8 +79,10 @@ export default function AddTaskModal() {
         priority:  'Medium',
         pic:       PICS[0],
         dueDate:   '',
-        coins:     100,
-        notes:     '',
+        coins:       100,
+        notes:       '',
+        followerMin: 0,
+        followerMax: 0,
       })
     }
   }, [open, prefill, defaultProject]) // eslint-disable-line react-hooks/exhaustive-deps
@@ -105,6 +111,8 @@ export default function AddTaskModal() {
         dueDate:     data.dueDate,
         coins:       data.coins,
         notes:       data.notes,
+        followerMin: data.followerMin,
+        followerMax: data.followerMax,
       })
       showToast(creator ? `Task added for ${creator.name}` : 'Task added (unassigned)')
       onClose()
@@ -252,6 +260,22 @@ export default function AddTaskModal() {
                         <input type="number" {...register('coins')} min={0} max={10000} className={INPUT} />
                         {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
                       </div>
+                    </div>
+
+                    {/* Follower Requirement */}
+                    <div>
+                      <label className={LABEL}>Follower Requirement <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <input type="number" {...register('followerMin')} min={0} placeholder="Min (e.g. 5000)" className={INPUT} />
+                          {errors.followerMin && <p className={ERR}>{errors.followerMin.message}</p>}
+                        </div>
+                        <div>
+                          <input type="number" {...register('followerMax')} min={0} placeholder="Max (e.g. 50000)" className={INPUT} />
+                          {errors.followerMax && <p className={ERR}>{errors.followerMax.message}</p>}
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-white/20 mt-1">Leave at 0 for no requirement</p>
                     </div>
                   </div>
 

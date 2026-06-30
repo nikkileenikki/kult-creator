@@ -20,10 +20,12 @@ const schema = z.object({
   priority:  z.enum(['Low', 'Medium', 'High', 'Urgent']),
   pic:       z.string().min(1, 'PIC is required'),
   dueDate:   z.string().min(1, 'Due date is required'),
-  coins:     z.coerce.number().min(0).max(10000),
-  notes:     z.string().default(''),
-  rating:    z.coerce.number().min(0).max(5).default(0),
-  review:    z.string().default(''),
+  coins:       z.coerce.number().min(0).max(10000),
+  notes:       z.string().default(''),
+  rating:      z.coerce.number().min(0).max(5).default(0),
+  review:      z.string().default(''),
+  followerMin: z.coerce.number().min(0).default(0),
+  followerMax: z.coerce.number().min(0).default(0),
 })
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
@@ -64,9 +66,11 @@ export default function EditTaskModal() {
       pic:       task.pic,
       dueDate:   task.dueDate,
       coins:     task.coins,
-      notes:     task.notes ?? '',
-      rating:    task.rating ?? 0,
-      review:    task.review ?? '',
+      notes:       task.notes ?? '',
+      rating:      task.rating ?? 0,
+      review:      task.review ?? '',
+      followerMin: task.followerMin ?? 0,
+      followerMax: task.followerMax ?? 0,
     })
   }, [task, reset])
 
@@ -232,6 +236,20 @@ export default function EditTaskModal() {
                         <input type="number" {...register('coins')} readOnly={!canEdit} min={0} max={10000} className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
                         {errors.coins && <p className={ERR}>{errors.coins.message}</p>}
                       </div>
+                    </div>
+
+                    {/* Follower Requirement */}
+                    <div>
+                      <label className={LABEL}>Follower Requirement <span className="text-white/20 normal-case font-normal">(optional)</span></label>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <input type="number" {...register('followerMin')} readOnly={!canEdit} min={0} placeholder="Min (e.g. 5000)" className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
+                        </div>
+                        <div>
+                          <input type="number" {...register('followerMax')} readOnly={!canEdit} min={0} placeholder="Max (e.g. 50000)" className={cn(INPUT, !canEdit && 'opacity-60 cursor-not-allowed')} />
+                        </div>
+                      </div>
+                      <p className="text-[10px] text-white/20 mt-1">Leave at 0 for no requirement</p>
                     </div>
                   </div>
 
