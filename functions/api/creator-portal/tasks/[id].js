@@ -19,16 +19,25 @@ export async function onRequestPatch({ params, request, env }) {
 
   let body
   try { body = await request.json() } catch { return err('Invalid JSON', 400) }
-  const { status } = body ?? {}
+  const { status, proof } = body ?? {}
   if (!status) return err('status required', 400)
-  if (task.status !== 'Not Started' || status !== 'In Progress') return err('Invalid status transition', 400)
+
+  const VALID_TRANSITIONS = {
+    'Not Started': ['In Progress'],
+    'In Progress': ['Under Review'],
+  }
+  if (!VALID_TRANSITIONS[task.status]?.includes(status)) return err('Invalid status transition', 400)
 
   if (task.creator_id === null) {
-    // Accepting an open task — fetch creator name and assign it
+    // Accepting an open task — assign it to the creator
     const creator = await db.prepare('SELECT name FROM creators WHERE id = ?').bind(creatorId).first()
     const creatorName = creator?.name ?? ''
     await db.prepare('UPDATE tasks SET status = ?, creator_id = ?, creator_name = ? WHERE id = ?')
       .bind(status, creatorId, creatorName, params.id).run()
+  } else if (status === 'Under Review') {
+    // Submitting proof — store in notes
+    await db.prepare('UPDATE tasks SET status = ?, notes = ? WHERE id = ?')
+      .bind(status, proof ?? '', params.id).run()
   } else {
     await db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, params.id).run()
   }
