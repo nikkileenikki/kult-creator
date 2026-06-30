@@ -36,6 +36,11 @@
     overflow: hidden;
   }
 
+  html.portal-route, html.portal-route body, html.portal-route #root {
+    height: auto;
+    overflow: visible;
+  }
+
   body {
     background: var(--bg);
     color: var(--text);
