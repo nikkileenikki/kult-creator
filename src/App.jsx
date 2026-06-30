@@ -80,7 +80,7 @@ function CreatorPortalShell() {
   if (!session) return <Navigate to="/login" replace />
 
   return (
-    <div className="min-h-screen bg-[#0D0D10]">
+    <div className="min-h-screen bg-[#0D0D10] overflow-y-auto">
       <div className="max-w-5xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-2.5">

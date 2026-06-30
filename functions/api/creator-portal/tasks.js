@@ -10,18 +10,15 @@ export async function onRequestGet({ request, env }) {
   const creatorId = session.creatorId ?? null
   const db = getDB(env)
 
-  // Fetch campaigns for enrichment
   const { results: campaigns } = await db.prepare('SELECT id, name, color FROM campaigns').all()
   const campaignMap = Object.fromEntries(campaigns.map(c => [c.name, c]))
 
-  // Tasks assigned to this creator
   const myTasks = creatorId
-    ? (await db.prepare('SELECT * FROM tasks WHERE creator_id = ? ORDER BY created_at DESC').bind(creatorId).all()).results
+    ? (await db.prepare('SELECT * FROM tasks WHERE creator_id = ? AND deleted_at IS NULL ORDER BY created_at DESC').bind(creatorId).all()).results
     : []
 
-  // Open tasks: not started + unassigned (available for anyone to pick up)
   const { results: openTasks } = await db.prepare(
-    "SELECT * FROM tasks WHERE creator_id IS NULL AND status = 'Not Started' ORDER BY created_at DESC"
+    "SELECT * FROM tasks WHERE creator_id IS NULL AND status = 'Not Started' AND deleted_at IS NULL ORDER BY created_at DESC"
   ).all()
 
   function enrich(t) {
