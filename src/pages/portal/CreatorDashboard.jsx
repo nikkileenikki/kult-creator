@@ -4,7 +4,7 @@ import { useUIStore } from '@/store/uiStore'
 import { creatorAuthHeaders } from '@/lib/creatorAuth'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
-import { ExternalLink, ListTodo, CheckCircle2, Clock, ArrowRight } from 'lucide-react'
+import { ExternalLink, ListTodo, CheckCircle2, Clock, ArrowRight, AlertTriangle, Users } from 'lucide-react'
 
 const PLATFORM_URL = {
   'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
@@ -28,12 +28,27 @@ function camel(row) {
   return out
 }
 
+function formatFollowers(n) {
+  if (!n) return null
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000)     return `${(n / 1_000).toFixed(0)}K`
+  return String(n)
+}
+
+function daysUntil(dateStr) {
+  if (!dateStr) return null
+  const due  = new Date(dateStr)
+  const now  = new Date()
+  now.setHours(0, 0, 0, 0)
+  return Math.round((due - now) / 86400000)
+}
+
 export default function CreatorDashboard({ session }) {
   const showToast = useUIStore(s => s.showToast)
-  const [creator,  setCreator]  = useState(null)
-  const [myTasks,  setMyTasks]  = useState([])
+  const [creator,   setCreator]   = useState(null)
+  const [myTasks,   setMyTasks]   = useState([])
   const [openCount, setOpenCount] = useState(0)
-  const [loading,  setLoading]  = useState(true)
+  const [loading,   setLoading]   = useState(true)
 
   useEffect(() => {
     async function load() {
@@ -70,15 +85,23 @@ export default function CreatorDashboard({ session }) {
     )
   }
 
-  const completed = myTasks.filter(t => t.status === 'Completed').length
-  const inProgress = myTasks.filter(t => t.status === 'In Progress').length
+  const completed   = myTasks.filter(t => t.status === 'Completed').length
+  const inProgress  = myTasks.filter(t => t.status === 'In Progress').length
   const underReview = myTasks.filter(t => t.status === 'Under Review').length
   const url = creator.platformUsername ? profileUrl(creator.platform, creator.platformUsername) : null
 
+  // Upcoming deadlines: active tasks with a due date, sorted soonest first
+  const upcoming = myTasks
+    .filter(t => t.status !== 'Completed' && t.dueDate)
+    .map(t => ({ ...t, daysLeft: daysUntil(t.dueDate) }))
+    .sort((a, b) => a.daysLeft - b.daysLeft)
+    .slice(0, 5)
+
   return (
     <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
+
       {/* Profile card */}
-      <div className="flex items-center gap-5 p-6 bg-[#1A1A24] border border-white/7 rounded-[20px] mb-6">
+      <div className="flex items-start gap-5 p-6 bg-[#1A1A24] border border-white/7 rounded-[20px] mb-6">
         <Avatar initials={creator.initials} color={creator.avatarColor} size="lg" className="flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -87,13 +110,17 @@ export default function CreatorDashboard({ session }) {
               {creator.status}
             </Badge>
           </div>
-          <div className="text-[13px] text-white/30">{creator.platform} · {creator.niche}</div>
+          <div className="text-[13px] text-white/40 mb-1">
+            {creator.platform}
+            {creator.niche ? ` · ${creator.niche}` : ''}
+            {creator.followers ? ` · ${formatFollowers(creator.followers)} followers` : ''}
+          </div>
           {url && (
             <a
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors mt-1"
+              className="inline-flex items-center gap-1 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors"
             >
               {creator.platformUsername?.startsWith('@') ? creator.platformUsername : `@${creator.platformUsername}`}
               <ExternalLink size={10} />
@@ -105,9 +132,9 @@ export default function CreatorDashboard({ session }) {
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-6">
         {[
-          { label: 'Completed', value: completed,   icon: CheckCircle2, color: 'text-emerald-300', bg: 'bg-emerald-500/8 border-emerald-500/15' },
-          { label: 'In Progress', value: inProgress + underReview, icon: Clock, color: 'text-blue-300', bg: 'bg-blue-500/8 border-blue-500/15' },
-          { label: 'Available', value: openCount,   icon: ListTodo,     color: 'text-violet-300', bg: 'bg-violet-500/8 border-violet-500/15' },
+          { label: 'Completed',   value: completed,              icon: CheckCircle2, color: 'text-emerald-300', bg: 'bg-emerald-500/8 border-emerald-500/15' },
+          { label: 'In Progress', value: inProgress + underReview, icon: Clock,       color: 'text-blue-300',    bg: 'bg-blue-500/8 border-blue-500/15' },
+          { label: 'Available',   value: openCount,              icon: ListTodo,     color: 'text-violet-300',  bg: 'bg-violet-500/8 border-violet-500/15' },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <div key={label} className={`flex flex-col items-center gap-1.5 p-4 rounded-[14px] border ${bg}`}>
             <Icon size={16} className={color} />
@@ -117,8 +144,47 @@ export default function CreatorDashboard({ session }) {
         ))}
       </div>
 
-      {/* Quick links */}
-      <div className="space-y-2">
+      {/* Upcoming deadlines */}
+      {upcoming.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Clock size={13} className="text-white/30" />
+            <span className="font-syne font-bold text-[14px] text-white">Upcoming Deadlines</span>
+          </div>
+          <div className="space-y-2">
+            {upcoming.map(t => {
+              const overdue  = t.daysLeft < 0
+              const dueToday = t.daysLeft === 0
+              const urgent   = t.daysLeft <= 2 && t.daysLeft >= 0
+              return (
+                <div key={t.id} className={`flex items-center justify-between px-4 py-3 rounded-[12px] border ${overdue ? 'border-rose-500/20 bg-rose-500/5' : urgent ? 'border-amber-500/15 bg-amber-500/4' : 'border-white/7 bg-[#1A1A24]'}`}>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-[13px] font-medium text-white truncate">{t.task}</div>
+                    <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
+                      {t.campaignColor && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: t.campaignColor }} />}
+                      {t.project}
+                    </div>
+                  </div>
+                  <div className="flex-shrink-0 ml-4 flex items-center gap-2">
+                    {overdue ? (
+                      <span className="flex items-center gap-1 text-[11px] font-semibold text-rose-400">
+                        <AlertTriangle size={11} /> Overdue
+                      </span>
+                    ) : (
+                      <span className={`text-[11px] font-mono font-medium ${dueToday ? 'text-rose-300' : urgent ? 'text-amber-300' : 'text-white/30'}`}>
+                        {dueToday ? 'Due today' : `${t.daysLeft}d left`}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* Quick link to Tasks */}
+      <div>
         <Link
           to="/portal/tasks"
           className="flex items-center justify-between px-5 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-violet-500/30 hover:bg-violet-500/5 transition-all group"

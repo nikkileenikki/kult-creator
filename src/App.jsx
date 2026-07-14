@@ -99,7 +99,7 @@ function CreatorPortalShell() {
           <Route path="/portal"           element={<Navigate to="/portal/dashboard" replace />} />
           <Route path="/portal/dashboard" element={<CreatorDashboard session={session} />} />
           <Route path="/portal/tasks"     element={<CreatorTasks session={session} />} />
-          <Route path="/portal/account"   element={<CreatorAccount />} />
+          <Route path="/portal/account"   element={<CreatorAccount session={session} />} />
           <Route path="*"                 element={<Navigate to="/portal/dashboard" replace />} />
         </Routes>
       </main>

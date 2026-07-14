@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useUIStore } from '@/store/uiStore'
 import { creatorAuthHeaders } from '@/lib/creatorAuth'
-import { Clock, Zap, CheckCircle2, CircleDot, AlertCircle, ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { Clock, Zap, CheckCircle2, CircleDot, AlertCircle, ChevronDown, ChevronUp, Users, Info } from 'lucide-react'
 
 const PRIORITY_STYLE = {
   Urgent: { bar: 'from-rose-500 to-rose-400',     badge: 'text-rose-300 bg-rose-500/10 border-rose-500/20',         dot: 'bg-rose-400'    },
@@ -48,6 +48,7 @@ function FollowerBadge({ min, max }) {
 }
 
 function MarketplaceCard({ task, onAccept, accepting }) {
+  const [detailOpen, setDetailOpen] = useState(false)
   const p = PRIORITY_STYLE[task.priority] ?? PRIORITY_STYLE.Medium
   const isAccepting = accepting === task.id
 
@@ -56,15 +57,33 @@ function MarketplaceCard({ task, onAccept, accepting }) {
       <div className={`h-[3px] w-full bg-gradient-to-r ${p.bar}`} />
       <div className="p-5 flex flex-col flex-1">
         <div className="mb-3">
-          <div className="font-syne text-[15px] font-bold text-white leading-snug mb-1">{task.task}</div>
-          <div className="flex items-center gap-1.5 text-[11px] text-white/30 font-medium">
+          <div className="flex items-start justify-between gap-2">
+            <div className="font-syne text-[15px] font-bold text-white leading-snug">{task.task}</div>
+            <button
+              onClick={() => setDetailOpen(v => !v)}
+              title="Show details"
+              className="flex-shrink-0 mt-0.5 text-white/20 hover:text-white/60 transition-colors"
+            >
+              <Info size={14} />
+            </button>
+          </div>
+          <div className="flex items-center gap-1.5 text-[11px] text-white/30 font-medium mt-1">
             {task.campaignColor && <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />}
             {task.project}
           </div>
         </div>
 
-        {task.description && (
+        {task.description && !detailOpen && (
           <p className="text-[12px] text-white/40 leading-relaxed line-clamp-2 mb-3">{task.description}</p>
+        )}
+
+        {detailOpen && (
+          <div className="mb-3 space-y-2 text-[12px] text-white/40 leading-relaxed border-t border-white/5 pt-3">
+            {task.description && <p>{task.description}</p>}
+            {task.notes && (
+              <p className="border-l-2 border-violet-500/30 pl-2 text-white/30 italic">{task.notes}</p>
+            )}
+          </div>
         )}
 
         <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -80,10 +99,6 @@ function MarketplaceCard({ task, onAccept, accepting }) {
           )}
           <FollowerBadge min={task.followerMin} max={task.followerMax} />
         </div>
-
-        {task.notes && (
-          <p className="text-[11px] text-white/25 italic border-l-2 border-white/10 pl-2 mb-3 line-clamp-2">{task.notes}</p>
-        )}
 
         <div className="mt-auto">
           <button
@@ -104,7 +119,7 @@ function MarketplaceCard({ task, onAccept, accepting }) {
 }
 
 function MyTaskRow({ task, onSubmitProof }) {
-  const [expanded,   setExpanded]   = useState(false)
+  const [mode,       setMode]       = useState('view') // 'view' | 'proof' | 'detail'
   const [proof,      setProof]      = useState('')
   const [submitting, setSubmitting] = useState(false)
   const showToast = useUIStore(s => s.showToast)
@@ -118,7 +133,7 @@ function MyTaskRow({ task, onSubmitProof }) {
     setSubmitting(true)
     try {
       await onSubmitProof(task.id, proof.trim())
-      setExpanded(false)
+      setMode('view')
       setProof('')
     } finally {
       setSubmitting(false)
@@ -136,6 +151,7 @@ function MyTaskRow({ task, onSubmitProof }) {
           <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
             {task.campaignColor && <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: task.campaignColor }} />}
             {task.project}
+            {task.dueDate && <span className="text-white/20">· due {task.dueDate}</span>}
           </div>
           {isCompleted && task.review && (
             <div className="mt-1.5 text-[11px] text-white/30 italic">"{task.review}"</div>
@@ -148,18 +164,42 @@ function MyTaskRow({ task, onSubmitProof }) {
           <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${STATUS_STYLE[task.status] ?? STATUS_STYLE['Not Started']}`}>
             {task.status}
           </span>
-          {isInProgress && (
+          <div className="flex items-center gap-2 mt-0.5">
             <button
-              onClick={() => setExpanded(v => !v)}
-              className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-0.5 transition-colors mt-0.5"
+              onClick={() => setMode(m => m === 'detail' ? 'view' : 'detail')}
+              className="text-[10px] text-white/30 hover:text-white/60 flex items-center gap-0.5 transition-colors"
             >
-              Submit proof {expanded ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              {mode === 'detail' ? 'Hide' : 'Details'} {mode === 'detail' ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
             </button>
-          )}
+            {isInProgress && (
+              <button
+                onClick={() => setMode(m => m === 'proof' ? 'view' : 'proof')}
+                className="text-[10px] text-amber-400/60 hover:text-amber-300 flex items-center gap-0.5 transition-colors"
+              >
+                Submit proof {mode === 'proof' ? <ChevronUp size={10} /> : <ChevronDown size={10} />}
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {isInProgress && expanded && (
+      {/* Detail panel */}
+      {mode === 'detail' && (
+        <div className="px-3.5 pb-3.5 pt-0">
+          <div className="border-t border-white/5 pt-3 space-y-2 text-[12px]">
+            {task.description && <p className="text-white/40 leading-relaxed">{task.description}</p>}
+            {task.notes && (
+              <p className="border-l-2 border-violet-500/25 pl-2 text-white/30 italic leading-relaxed">{task.notes}</p>
+            )}
+            {!task.description && !task.notes && (
+              <p className="text-white/20 italic">No additional details.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Proof panel */}
+      {mode === 'proof' && isInProgress && (
         <div className="px-3.5 pb-3.5 pt-0">
           <div className="border-t border-white/5 pt-3">
             <p className="text-[11px] text-white/30 mb-2">Describe what you completed or paste a link as proof:</p>
@@ -171,7 +211,7 @@ function MyTaskRow({ task, onSubmitProof }) {
               className="w-full bg-[#111116] border border-white/10 rounded-lg px-3 py-2 text-[12px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 resize-none transition-all"
             />
             <div className="flex items-center justify-end gap-2 mt-2">
-              <button onClick={() => { setExpanded(false); setProof('') }} className="text-[12px] text-white/30 hover:text-white/60 transition-colors px-3 py-1.5">
+              <button onClick={() => { setMode('view'); setProof('') }} className="text-[12px] text-white/30 hover:text-white/60 transition-colors px-3 py-1.5">
                 Cancel
               </button>
               <button
@@ -189,12 +229,15 @@ function MyTaskRow({ task, onSubmitProof }) {
   )
 }
 
+const MY_TASK_FILTERS = ['All', 'In Progress', 'Under Review', 'Completed']
+
 export default function CreatorTasks({ session }) {
   const showToast = useUIStore(s => s.showToast)
-  const [myTasks,   setMyTasks]   = useState([])
-  const [openTasks, setOpenTasks] = useState([])
-  const [loading,   setLoading]   = useState(true)
-  const [accepting, setAccepting] = useState(null)
+  const [myTasks,    setMyTasks]    = useState([])
+  const [openTasks,  setOpenTasks]  = useState([])
+  const [loading,    setLoading]    = useState(true)
+  const [accepting,  setAccepting]  = useState(null)
+  const [taskFilter, setTaskFilter] = useState('All')
 
   useEffect(() => {
     async function load() {
@@ -253,6 +296,8 @@ export default function CreatorTasks({ session }) {
 
   if (loading) return <div className="flex items-center justify-center h-64 text-white/30 text-[13px]">Loading…</div>
 
+  const filteredMyTasks = taskFilter === 'All' ? myTasks : myTasks.filter(t => t.status === taskFilter)
+
   const campaignGroups = openTasks.reduce((acc, t) => {
     const key = t.project || 'General'
     if (!acc[key]) acc[key] = { color: t.campaignColor, tasks: [] }
@@ -266,13 +311,36 @@ export default function CreatorTasks({ session }) {
       {/* My Tasks */}
       {myTasks.length > 0 && (
         <div className="mb-8">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="font-syne font-bold text-[16px] text-white">My Tasks</span>
-            <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/8">{myTasks.length}</span>
+          <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="font-syne font-bold text-[16px] text-white">My Tasks</span>
+              <span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-white/5 text-white/30 border border-white/8">{myTasks.length}</span>
+            </div>
+            <div className="flex items-center gap-1">
+              {MY_TASK_FILTERS.map(f => (
+                <button
+                  key={f}
+                  onClick={() => setTaskFilter(f)}
+                  className={`text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all ${
+                    taskFilter === f
+                      ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'
+                      : 'text-white/30 hover:text-white/60 border border-transparent hover:border-white/10'
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
-          <div className="space-y-2">
-            {myTasks.map(t => <MyTaskRow key={t.id} task={t} onSubmitProof={submitProof} />)}
-          </div>
+          {filteredMyTasks.length === 0 ? (
+            <div className="flex items-center justify-center h-20 rounded-[12px] bg-[#1A1A24] border border-white/7 text-white/20 text-[13px]">
+              No {taskFilter.toLowerCase()} tasks
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {filteredMyTasks.map(t => <MyTaskRow key={t.id} task={t} onSubmitProof={submitProof} />)}
+            </div>
+          )}
         </div>
       )}
 
