@@ -3,7 +3,7 @@ import { useUIStore } from '@/store/uiStore'
 import { creatorAuthHeaders } from '@/lib/creatorAuth'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
-import { ExternalLink, Clock, Zap, CheckCircle2, CircleDot, AlertCircle, ChevronDown, ChevronUp, Users } from 'lucide-react'
+import { ExternalLink, Clock, Zap, CheckCircle2, CircleDot, AlertCircle, ChevronDown, ChevronUp, Users, Lock } from 'lucide-react'
 
 const PLATFORM_URL = {
   'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
@@ -218,6 +218,82 @@ function MyTaskRow({ task, onSubmitProof }) {
   )
 }
 
+const CP_INPUT = 'w-full bg-[#111116] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
+const CP_LABEL = 'block text-[11px] font-semibold text-white/40 uppercase tracking-wider mb-1.5'
+
+function ChangePasswordSection() {
+  const showToast = useUIStore(s => s.showToast)
+  const [form, setForm] = useState({ current: '', next: '', confirm: '' })
+  const [saving, setSaving] = useState(false)
+  const [open, setOpen] = useState(false)
+
+  async function handleSubmit(e) {
+    e.preventDefault()
+    if (form.next !== form.confirm) { showToast('New passwords do not match', 'error'); return }
+    if (form.next.length < 8) { showToast('Password must be at least 8 characters', 'error'); return }
+    setSaving(true)
+    try {
+      const res = await fetch('/api/creator-portal/password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...creatorAuthHeaders() },
+        body: JSON.stringify({ currentPassword: form.current, newPassword: form.next }),
+      })
+      if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? await res.text())
+      showToast('Password changed successfully')
+      setForm({ current: '', next: '', confirm: '' })
+      setOpen(false)
+    } catch (e) {
+      showToast(e.message ?? 'Failed to change password', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="mt-8 bg-[#1A1A24] border border-white/7 rounded-[16px] overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-white/2 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Lock size={13} className="text-white/30" />
+          <span className="text-[13px] font-semibold text-white/60">Change Password</span>
+        </div>
+        <ChevronDown size={14} className={`text-white/25 transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && (
+        <form onSubmit={handleSubmit} className="px-5 pb-5 space-y-3 max-w-sm border-t border-white/7 pt-4">
+          <div>
+            <label className={CP_LABEL}>Current Password</label>
+            <input type="password" value={form.current} onChange={e => setForm(f => ({ ...f, current: e.target.value }))} placeholder="Enter current password" className={CP_INPUT} />
+          </div>
+          <div>
+            <label className={CP_LABEL}>New Password</label>
+            <input type="password" value={form.next} onChange={e => setForm(f => ({ ...f, next: e.target.value }))} placeholder="Min 8 characters" className={CP_INPUT} />
+          </div>
+          <div>
+            <label className={CP_LABEL}>Confirm New Password</label>
+            <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} placeholder="Repeat new password" className={CP_INPUT} />
+          </div>
+          <div className="pt-1 flex items-center gap-3">
+            <button
+              type="submit"
+              disabled={saving || !form.current || !form.next || !form.confirm}
+              className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all disabled:opacity-40"
+            >
+              {saving ? 'Saving…' : 'Change Password'}
+            </button>
+            <button type="button" onClick={() => setOpen(false)} className="text-[12px] text-white/30 hover:text-white/60 transition-colors">
+              Cancel
+            </button>
+          </div>
+        </form>
+      )}
+    </div>
+  )
+}
+
 export default function CreatorPortal({ session }) {
   const showToast = useUIStore(s => s.showToast)
 
@@ -401,6 +477,8 @@ export default function CreatorPortal({ session }) {
           </div>
         )}
       </div>
+
+      <ChangePasswordSection />
     </div>
   )
 }
