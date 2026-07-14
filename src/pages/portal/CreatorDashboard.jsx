@@ -132,16 +132,6 @@ export default function CreatorDashboard({ session }) {
           </div>
           <ArrowRight size={14} className="text-white/20 group-hover:text-violet-400 transition-colors" />
         </Link>
-        <Link
-          to="/portal/account"
-          className="flex items-center justify-between px-5 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-white/15 transition-all group"
-        >
-          <div className="flex items-center gap-3">
-            <span className="text-[16px]">⚙️</span>
-            <div className="text-[13px] font-semibold text-white">Account Settings</div>
-          </div>
-          <ArrowRight size={14} className="text-white/20 group-hover:text-white/50 transition-colors" />
-        </Link>
       </div>
     </div>
   )
