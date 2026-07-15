@@ -75,7 +75,7 @@ export default function CreatorAccount({ session }) {
   }
 
   return (
-    <div className="animate-[fadeUp_.3s_ease] max-w-lg">
+    <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
       <div className="mb-6">
         <h1 className="font-syne text-[20px] font-extrabold text-white tracking-tight">Account Settings</h1>
         <p className="text-[12px] text-white/30 mt-1">Your profile and login credentials</p>
