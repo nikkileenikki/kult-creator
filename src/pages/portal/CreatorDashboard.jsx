@@ -98,10 +98,10 @@ export default function CreatorDashboard({ session }) {
     .slice(0, 5)
 
   return (
-    <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
+    <div id="creator-dashboard" className="animate-[fadeUp_.3s_ease] max-w-2xl">
 
       {/* Profile card */}
-      <div className="flex items-start gap-5 p-6 bg-[#1A1A24] border border-white/7 rounded-[20px] mb-6">
+      <div id="creator-profile-card" className="flex items-start gap-5 p-6 bg-[#1A1A24] border border-white/7 rounded-[20px] mb-6">
         <Avatar initials={creator.initials} color={creator.avatarColor} size="lg" className="flex-shrink-0" />
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -130,7 +130,7 @@ export default function CreatorDashboard({ session }) {
       </div>
 
       {/* Stats row */}
-      <div className="grid grid-cols-3 gap-3 mb-6">
+      <div id="creator-stats-row" className="grid grid-cols-3 gap-3 mb-6">
         {[
           { label: 'Completed',   value: completed,              icon: CheckCircle2, color: 'text-emerald-300', bg: 'bg-emerald-500/8 border-emerald-500/15' },
           { label: 'In Progress', value: inProgress + underReview, icon: Clock,       color: 'text-blue-300',    bg: 'bg-blue-500/8 border-blue-500/15' },
@@ -146,7 +146,7 @@ export default function CreatorDashboard({ session }) {
 
       {/* Upcoming deadlines */}
       {upcoming.length > 0 && (
-        <div className="mb-6">
+        <div id="creator-upcoming-deadlines" className="mb-6">
           <div className="flex items-center gap-2 mb-3">
             <Clock size={13} className="text-white/30" />
             <span className="font-syne font-bold text-[14px] text-white">Upcoming Deadlines</span>
@@ -184,7 +184,7 @@ export default function CreatorDashboard({ session }) {
       )}
 
       {/* Quick links */}
-      <div className="grid grid-cols-2 gap-3">
+      <div id="creator-quick-links" className="grid grid-cols-2 gap-3">
         <Link
           to="/portal/my-tasks"
           className="flex items-center justify-between px-4 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group"

@@ -87,7 +87,10 @@ function MyTaskRow({ task, onSubmitProof }) {
             <span>{task.project}</span>
             {task.brandName && <><span className="text-white/15">·</span><span className="text-white/40">{task.brandName}</span></>}
           </div>
-          {isUnderReview && (
+          {isUnderReview && task.proofText && (
+            <div className="mt-1.5 text-[11px] text-amber-300/60 italic">"{task.proofText}"</div>
+          )}
+          {isUnderReview && !task.proofText && (
             <div className="mt-1.5 text-[10px] text-amber-400/60">Proof submitted — awaiting review</div>
           )}
         </div>
@@ -211,7 +214,7 @@ export default function CreatorMyTasks({ session }) {
   }
 
   return (
-    <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
+    <div id="creator-my-tasks" className="animate-[fadeUp_.3s_ease] max-w-2xl">
       <div className="mb-6">
         <h1 className="font-syne text-[20px] font-extrabold text-white tracking-tight">My Tasks</h1>
         <p className="text-[12px] text-white/30 mt-1">Tasks you have accepted</p>
@@ -224,11 +227,12 @@ export default function CreatorMyTasks({ session }) {
         </div>
       ) : (
         <>
-          <div className="flex items-center gap-1 mb-4 flex-wrap">
+          <div id="my-tasks-filter-bar" className="flex items-center gap-1 mb-4 flex-wrap">
             {FILTERS.map(f => (
               <button
                 key={f}
                 onClick={() => setTaskFilter(f)}
+                id={`filter-${f.toLowerCase().replace(/\s+/g, '-')}`}
                 className={`text-[11px] font-medium px-2.5 py-1 rounded-lg transition-all ${
                   taskFilter === f
                     ? 'bg-violet-600/20 text-violet-300 border border-violet-500/30'

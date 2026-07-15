@@ -75,7 +75,7 @@ export default function CreatorAccount({ session }) {
   }
 
   return (
-    <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
+    <div id="creator-account" className="animate-[fadeUp_.3s_ease] max-w-2xl">
       <div className="mb-6">
         <h1 className="font-syne text-[20px] font-extrabold text-white tracking-tight">Account Settings</h1>
         <p className="text-[12px] text-white/30 mt-1">Your profile and login credentials</p>
@@ -85,7 +85,7 @@ export default function CreatorAccount({ session }) {
 
         {/* Profile Info */}
         {creator && (
-          <div className="bg-[#1A1A24] border border-white/7 rounded-[16px] overflow-hidden">
+          <div id="creator-profile-section" className="bg-[#1A1A24] border border-white/7 rounded-[16px] overflow-hidden">
             <div className="px-5 py-3.5 border-b border-white/7 flex items-center gap-2">
               <User size={12} className="text-white/25" />
               <span className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em]">My Profile</span>
@@ -111,23 +111,23 @@ export default function CreatorAccount({ session }) {
         )}
 
         {/* Change Password */}
-        <div className="bg-[#1A1A24] border border-white/7 rounded-[16px] overflow-hidden">
+        <div id="creator-password-section" className="bg-[#1A1A24] border border-white/7 rounded-[16px] overflow-hidden">
           <div className="px-5 py-3.5 border-b border-white/7 flex items-center gap-2">
             <Lock size={12} className="text-white/25" />
             <span className="font-mono text-[10px] font-medium text-white/25 uppercase tracking-[.08em]">Change Password</span>
           </div>
-          <form onSubmit={handleSubmit} className="p-5 space-y-3 max-w-sm">
+          <form id="creator-change-password-form" onSubmit={handleSubmit} className="p-5 space-y-3 max-w-sm">
             <div>
               <label className={LABEL}>Current Password</label>
-              <input type="password" value={form.current} onChange={e => setForm(f => ({ ...f, current: e.target.value }))} placeholder="Enter current password" className={INPUT} />
+              <input id="current-password" name="current_password" type="password" value={form.current} onChange={e => setForm(f => ({ ...f, current: e.target.value }))} placeholder="Enter current password" className={INPUT} />
             </div>
             <div>
               <label className={LABEL}>New Password</label>
-              <input type="password" value={form.next} onChange={e => setForm(f => ({ ...f, next: e.target.value }))} placeholder="Min 8 characters" className={INPUT} />
+              <input id="new-password" name="new_password" type="password" value={form.next} onChange={e => setForm(f => ({ ...f, next: e.target.value }))} placeholder="Min 8 characters" className={INPUT} />
             </div>
             <div>
               <label className={LABEL}>Confirm New Password</label>
-              <input type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} placeholder="Repeat new password" className={INPUT} />
+              <input id="confirm-password" name="confirm_password" type="password" value={form.confirm} onChange={e => setForm(f => ({ ...f, confirm: e.target.value }))} placeholder="Repeat new password" className={INPUT} />
             </div>
             <div className="pt-1">
               <button

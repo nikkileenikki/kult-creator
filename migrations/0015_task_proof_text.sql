@@ -1,0 +1,1 @@
+ALTER TABLE tasks ADD COLUMN proof_text TEXT NOT NULL DEFAULT '';
