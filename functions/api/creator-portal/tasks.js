@@ -10,7 +10,7 @@ export async function onRequestGet({ request, env }) {
   const creatorId = session.creatorId ?? null
   const db = getDB(env)
 
-  const { results: campaigns } = await db.prepare('SELECT id, name, color FROM campaigns').all()
+  const { results: campaigns } = await db.prepare('SELECT id, name, color, brand_name FROM campaigns').all()
   const campaignMap = Object.fromEntries(campaigns.map(c => [c.name, c]))
 
   const myTasks = creatorId
@@ -23,7 +23,7 @@ export async function onRequestGet({ request, env }) {
 
   function enrich(t) {
     const campaign = campaignMap[t.project] ?? null
-    return { ...t, campaign_color: campaign?.color ?? null }
+    return { ...t, campaign_color: campaign?.color ?? null, brand_name: campaign?.brand_name ?? null }
   }
 
   return json({

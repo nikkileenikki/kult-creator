@@ -19,6 +19,7 @@ import NewUser from '@/pages/NewUser'
 import Login from '@/pages/Login'
 import CreatorLogin from '@/pages/CreatorLogin'
 import CreatorDashboard from '@/pages/portal/CreatorDashboard'
+import CreatorMyTasks from '@/pages/portal/CreatorMyTasks'
 import CreatorTasks from '@/pages/portal/CreatorTasks'
 import CreatorAccount from '@/pages/portal/CreatorAccount'
 import CreatorAccounts from '@/pages/CreatorAccounts'
@@ -96,11 +97,13 @@ function CreatorPortalShell() {
       <CreatorSidebar />
       <main className="flex-1 overflow-y-auto p-6">
         <Routes>
-          <Route path="/portal"           element={<Navigate to="/portal/dashboard" replace />} />
-          <Route path="/portal/dashboard" element={<CreatorDashboard session={session} />} />
-          <Route path="/portal/tasks"     element={<CreatorTasks session={session} />} />
-          <Route path="/portal/account"   element={<CreatorAccount session={session} />} />
-          <Route path="*"                 element={<Navigate to="/portal/dashboard" replace />} />
+          <Route path="/portal"              element={<Navigate to="/portal/dashboard" replace />} />
+          <Route path="/portal/dashboard"  element={<CreatorDashboard session={session} />} />
+          <Route path="/portal/my-tasks"   element={<CreatorMyTasks session={session} />} />
+          <Route path="/portal/browse"     element={<CreatorTasks session={session} />} />
+          <Route path="/portal/tasks"      element={<Navigate to="/portal/my-tasks" replace />} />
+          <Route path="/portal/account"    element={<CreatorAccount session={session} />} />
+          <Route path="*"                  element={<Navigate to="/portal/dashboard" replace />} />
         </Routes>
       </main>
       <Toast />
