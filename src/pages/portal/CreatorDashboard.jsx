@@ -4,7 +4,7 @@ import { useUIStore } from '@/store/uiStore'
 import { creatorAuthHeaders } from '@/lib/creatorAuth'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
-import { ExternalLink, ListTodo, CheckCircle2, Clock, ArrowRight, AlertTriangle, Users } from 'lucide-react'
+import { ExternalLink, ListTodo, ShoppingBag, CheckCircle2, Clock, ArrowRight, AlertTriangle } from 'lucide-react'
 
 const PLATFORM_URL = {
   'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
@@ -157,7 +157,7 @@ export default function CreatorDashboard({ session }) {
               const dueToday = t.daysLeft === 0
               const urgent   = t.daysLeft <= 2 && t.daysLeft >= 0
               return (
-                <div key={t.id} className={`flex items-center justify-between px-4 py-3 rounded-[12px] border ${overdue ? 'border-rose-500/20 bg-rose-500/5' : urgent ? 'border-amber-500/15 bg-amber-500/4' : 'border-white/7 bg-[#1A1A24]'}`}>
+                <Link key={t.id} to="/portal/my-tasks" className={`flex items-center justify-between px-4 py-3 rounded-[12px] border transition-colors ${overdue ? 'border-rose-500/20 bg-rose-500/5 hover:border-rose-500/35' : urgent ? 'border-amber-500/15 bg-amber-500/4 hover:border-amber-500/30' : 'border-white/7 bg-[#1A1A24] hover:border-white/15'}`}>
                   <div className="flex-1 min-w-0">
                     <div className="text-[13px] font-medium text-white truncate">{t.task}</div>
                     <div className="flex items-center gap-1.5 text-[11px] text-white/30 mt-0.5">
@@ -176,27 +176,40 @@ export default function CreatorDashboard({ session }) {
                       </span>
                     )}
                   </div>
-                </div>
+                </Link>
               )
             })}
           </div>
         </div>
       )}
 
-      {/* Quick link to Tasks */}
-      <div>
+      {/* Quick links */}
+      <div className="grid grid-cols-2 gap-3">
         <Link
-          to="/portal/tasks"
-          className="flex items-center justify-between px-5 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-violet-500/30 hover:bg-violet-500/5 transition-all group"
+          to="/portal/my-tasks"
+          className="flex items-center justify-between px-4 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-blue-500/30 hover:bg-blue-500/5 transition-all group"
         >
           <div className="flex items-center gap-3">
-            <ListTodo size={16} className="text-violet-400" />
+            <ListTodo size={15} className="text-blue-400" />
             <div>
-              <div className="text-[13px] font-semibold text-white">My Tasks & Available Tasks</div>
-              <div className="text-[11px] text-white/30 mt-0.5">{openCount} task{openCount !== 1 ? 's' : ''} available to accept</div>
+              <div className="text-[13px] font-semibold text-white">My Tasks</div>
+              <div className="text-[11px] text-white/30 mt-0.5">{myTasks.length} accepted</div>
             </div>
           </div>
-          <ArrowRight size={14} className="text-white/20 group-hover:text-violet-400 transition-colors" />
+          <ArrowRight size={13} className="text-white/20 group-hover:text-blue-400 transition-colors" />
+        </Link>
+        <Link
+          to="/portal/browse"
+          className="flex items-center justify-between px-4 py-4 bg-[#1A1A24] border border-white/7 rounded-[14px] hover:border-violet-500/30 hover:bg-violet-500/5 transition-all group"
+        >
+          <div className="flex items-center gap-3">
+            <ShoppingBag size={15} className="text-violet-400" />
+            <div>
+              <div className="text-[13px] font-semibold text-white">Browse Tasks</div>
+              <div className="text-[11px] text-white/30 mt-0.5">{openCount} available</div>
+            </div>
+          </div>
+          <ArrowRight size={13} className="text-white/20 group-hover:text-violet-400 transition-colors" />
         </Link>
       </div>
     </div>

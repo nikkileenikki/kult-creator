@@ -1,11 +1,12 @@
 import { NavLink } from 'react-router-dom'
-import { LayoutGrid, ListTodo, Settings, LogOut } from 'lucide-react'
+import { LayoutGrid, ListTodo, ShoppingBag, Settings, LogOut } from 'lucide-react'
 import { creatorAuthClient } from '@/lib/creatorAuth'
 import { cn } from '@/lib/utils'
 
 const NAV = [
-  { to: '/portal/dashboard', label: 'Dashboard', icon: LayoutGrid },
-  { to: '/portal/tasks',     label: 'Tasks',     icon: ListTodo },
+  { to: '/portal/dashboard', label: 'Dashboard',   icon: LayoutGrid },
+  { to: '/portal/my-tasks',  label: 'My Tasks',    icon: ListTodo },
+  { to: '/portal/browse',    label: 'Browse Tasks', icon: ShoppingBag },
 ]
 
 const LINK = ({ isActive }) => cn(
