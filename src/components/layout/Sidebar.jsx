@@ -73,7 +73,7 @@ export default function Sidebar() {
                 end={item.to === '/'}
                 title={collapsed ? item.label : undefined}
                 className={({ isActive }) => cn(
-                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-normal transition-all duration-150 mb-0.5 relative',
+                  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-normal transition-all duration-150 mb-0.5 relative min-w-0',
                   collapsed && 'justify-center px-0 py-2.5',
                   isActive
                     ? 'bg-violet-600/15 text-violet-300 font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[18px] before:bg-violet-400 before:rounded-r-sm before:shadow-[0_0_8px_rgba(108,92,231,.8)]'
@@ -86,7 +86,7 @@ export default function Sidebar() {
                     <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-amber-400 border border-[#111116]" />
                   )}
                 </div>
-                {!collapsed && item.label}
+                {!collapsed && <span className="leading-tight min-w-0">{item.label}</span>}
                 {!collapsed && item.badge && pending > 0 && (
                   <span className="ml-auto font-mono text-[9px] font-medium px-1.5 py-0.5 rounded-full bg-amber-400/12 text-amber-300 border border-amber-400/20">
                     {pending}

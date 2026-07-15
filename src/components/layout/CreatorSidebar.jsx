@@ -10,7 +10,7 @@ const NAV = [
 ]
 
 const LINK = ({ isActive }) => cn(
-  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-normal transition-all duration-150 mb-0.5 relative',
+  'flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-normal transition-all duration-150 mb-0.5 relative min-w-0',
   isActive
     ? 'bg-violet-600/15 text-violet-300 font-medium before:absolute before:left-0 before:top-1/2 before:-translate-y-1/2 before:w-[3px] before:h-[18px] before:bg-violet-400 before:rounded-r-sm before:shadow-[0_0_8px_rgba(108,92,231,.8)]'
     : 'text-white/40 hover:bg-white/5 hover:text-white/80'
@@ -40,8 +40,8 @@ export default function CreatorSidebar() {
         <p className="font-mono text-[9px] font-medium text-white/20 uppercase tracking-[.1em] px-2 pt-3 pb-1">Menu</p>
         {NAV.map(({ to, label, icon: Icon }) => (
           <NavLink key={to} to={to} id={`creator-nav-${label.toLowerCase().replace(/\s+/g, '-')}`} className={LINK}>
-            <Icon size={15} strokeWidth={1.8} />
-            {label}
+            <Icon size={15} strokeWidth={1.8} className="flex-shrink-0" />
+            <span className="leading-tight min-w-0">{label}</span>
           </NavLink>
         ))}
       </nav>
@@ -49,8 +49,8 @@ export default function CreatorSidebar() {
       {/* Footer */}
       <div id="creator-sidebar-footer" className="p-2.5 border-t border-white/7 flex-shrink-0 space-y-1">
         <NavLink id="creator-nav-account" to="/portal/account" className={LINK}>
-          <Settings size={15} strokeWidth={1.8} />
-          Account Settings
+          <Settings size={15} strokeWidth={1.8} className="flex-shrink-0" />
+          <span className="leading-tight min-w-0">Account Settings</span>
         </NavLink>
         <button
           id="creator-signout-btn"

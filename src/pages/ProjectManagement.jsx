@@ -6,6 +6,8 @@ import { useUIStore } from '@/store/uiStore'
 import * as Dialog from '@radix-ui/react-dialog'
 import { Plus, X, Trash2, Pencil, Kanban, List, ChevronRight, FolderOpen, MoreHorizontal } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 
 // ── Constants ────────────────────────────────────────────────────────────────
 
@@ -292,6 +294,117 @@ function TaskModal({ open, onClose, initial, projectId, onSave, pics }) {
 
 // ── Main Page ─────────────────────────────────────────────────────────────────
 
+// ── Kanban DnD ───────────────────────────────────────────────────────────────
+
+function ProjKanbanCard({ task, onCardClick, handleDeleteTask }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={() => !isDragging && onCardClick(task)}
+      className={cn(
+        'group bg-[#1E1E28] border border-l-2 border-white/7 rounded-xl p-4 cursor-grab active:cursor-grabbing select-none transition-all',
+        isDragging ? 'opacity-40' : 'hover:border-violet-500/30 hover:bg-[#23233A] hover:shadow-[0_4px_16px_rgba(0,0,0,.4)]',
+        PRIORITY_BORDER[task.priority],
+      )}
+    >
+      <div className="text-[12px] font-semibold text-white leading-snug mb-1.5">{task.title}</div>
+      {task.description && <div className="text-[11px] text-white/50 line-clamp-3 mb-3">{task.description}</div>}
+      <div className="mb-2">
+        <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[task.priority])}>{task.priority}</span>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="text-[10px] text-white/35">{task.assignee || 'Unassigned'}</span>
+        <div className="flex items-center gap-1.5">
+          {task.dueDate && <span className="font-mono text-[10px] text-white/25">{task.dueDate}</span>}
+          <button
+            onClick={e => { e.stopPropagation(); handleDeleteTask(task.id) }}
+            className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
+          >
+            <Trash2 size={11} />
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ProjKanbanCol({ col, tasks, onCardClick, handleDeleteTask, openNewTask, isOver }) {
+  const { setNodeRef } = useDroppable({ id: col })
+  return (
+    <div ref={setNodeRef} className="flex-shrink-0 w-48 flex flex-col min-h-0">
+      <div className={cn('flex items-center justify-between mb-2 pb-2 border-b flex-shrink-0 transition-colors', isOver ? 'border-violet-500/40' : 'border-white/[0.06]')}>
+        <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
+        <div className="flex items-center gap-1">
+          <span className="font-mono text-[10px] text-white/20">{tasks.length}</span>
+          <button onClick={() => openNewTask(col)} className="w-5 h-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-all">
+            <Plus size={11} />
+          </button>
+        </div>
+      </div>
+      <div className={cn('space-y-2.5 overflow-y-auto flex-1 pr-0.5 rounded-lg transition-colors', isOver && 'bg-violet-500/5')}>
+        {tasks.map(t => <ProjKanbanCard key={t.id} task={t} onCardClick={onCardClick} handleDeleteTask={handleDeleteTask} />)}
+        {tasks.length === 0 && (
+          <button
+            onClick={() => openNewTask(col)}
+            className="w-full text-center text-[11px] text-white/15 hover:text-white/30 py-5 border border-dashed border-white/[0.05] rounded-xl transition-all"
+          >
+            + Add task
+          </button>
+        )}
+      </div>
+    </div>
+  )
+}
+
+function ProjKanban({ projTasks, updateTask, openNewTask, handleDeleteTask, onCardClick }) {
+  const [activeTask, setActiveTask] = useState(null)
+  const [overId,     setOverId]     = useState(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  function handleDragStart({ active }) {
+    setActiveTask(projTasks.find(t => t.id === active.id) ?? null)
+  }
+  function handleDragOver({ over }) { setOverId(over?.id ?? null) }
+  async function handleDragEnd({ active, over }) {
+    setActiveTask(null); setOverId(null)
+    if (!over) return
+    const task = projTasks.find(t => t.id === active.id)
+    if (!task || task.status === over.id) return
+    await updateTask(task.id, { status: over.id })
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
+        {TASK_STATUS.map(col => (
+          <ProjKanbanCol
+            key={col}
+            col={col}
+            tasks={projTasks.filter(t => t.status === col)}
+            onCardClick={onCardClick}
+            handleDeleteTask={handleDeleteTask}
+            openNewTask={openNewTask}
+            isOver={overId === col}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeTask && (
+          <div className="bg-[#1E1E28] border border-violet-500/50 rounded-xl p-4 shadow-2xl opacity-95 rotate-1 cursor-grabbing">
+            <div className="text-[12px] font-semibold text-white leading-snug">{activeTask.title}</div>
+            <div className="text-[10px] text-white/35 mt-1">{activeTask.assignee || 'Unassigned'}</div>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  )
+}
+
+// ── Main ─────────────────────────────────────────────────────────────────────
+
 export default function ProjectManagement() {
   const { projects, tasks, loading, fetchProjects, fetchTasks, addProject, updateProject, deleteProject, addTask, updateTask, deleteTask } = useInternalProjectStore()
   const storedPics = useAuthStore(s => s.pics)
@@ -546,66 +659,7 @@ export default function ProjectManagement() {
             ) : view === 'kanban' ? (
 
               /* Kanban */
-              <div className="flex gap-3 overflow-x-auto pb-2 flex-1 min-h-0">
-                {TASK_STATUS.map(col => {
-                  const colTasks = projTasks.filter(t => t.status === col)
-                  return (
-                    <div key={col} className="flex-shrink-0 w-48 flex flex-col min-h-0">
-                      <div className="flex items-center justify-between mb-2 pb-2 border-b border-white/[0.06] flex-shrink-0">
-                        <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
-                        <div className="flex items-center gap-1">
-                          <span className="font-mono text-[10px] text-white/20">{colTasks.length}</span>
-                          <button onClick={() => openNewTask(col)} className="w-5 h-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-all">
-                            <Plus size={11} />
-                          </button>
-                        </div>
-                      </div>
-                      <div className="space-y-2.5 overflow-y-auto flex-1 pr-0.5">
-                        {colTasks.map(t => (
-                          <div
-                            key={t.id}
-                            className={cn('group bg-[#1E1E28] border border-l-2 border-white/7 hover:border-violet-500/30 hover:bg-[#23233A] rounded-xl p-4 cursor-pointer hover:shadow-[0_4px_16px_rgba(0,0,0,.4)] transition-all', PRIORITY_BORDER[t.priority])}
-                            onClick={() => setDetailTask(t)}
-                          >
-                            {/* Title */}
-                            <div className="text-[12px] font-semibold text-white leading-snug mb-1.5">{t.title}</div>
-
-                            {/* Description */}
-                            {t.description && <div className="text-[11px] text-white/50 line-clamp-3 mb-3">{t.description}</div>}
-
-                            {/* Priority */}
-                            <div className="mb-2">
-                              <span className={cn('text-[9px] px-1.5 py-px rounded border font-medium', PRIORITY_BADGE[t.priority])}>{t.priority}</span>
-                            </div>
-
-                            {/* Assignee + Due Date */}
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-white/35">{t.assignee || 'Unassigned'}</span>
-                              <div className="flex items-center gap-1.5">
-                                {t.dueDate && <span className="font-mono text-[10px] text-white/25">{t.dueDate}</span>}
-                                <button
-                                  onClick={e => { e.stopPropagation(); handleDeleteTask(t.id) }}
-                                  className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
-                                >
-                                  <Trash2 size={11} />
-                                </button>
-                              </div>
-                            </div>
-                          </div>
-                        ))}
-                        {colTasks.length === 0 && (
-                          <button
-                            onClick={() => openNewTask(col)}
-                            className="w-full text-center text-[11px] text-white/15 hover:text-white/30 py-5 border border-dashed border-white/[0.05] rounded-xl transition-all"
-                          >
-                            + Add task
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
+              <ProjKanban projTasks={projTasks} updateTask={updateTask} openNewTask={openNewTask} handleDeleteTask={handleDeleteTask} onCardClick={setDetailTask} />
 
             ) : (
 

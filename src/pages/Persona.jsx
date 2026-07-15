@@ -625,6 +625,8 @@ export default function Persona() {
                               <div className="flex-1 min-w-0">
                                 <div className="text-[13px] text-white truncate">{t.task}</div>
                                 {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate">{t.description}</div>}
+                                {t.notes && <div className="text-[11px] text-violet-300/60 mt-0.5 truncate italic">{t.notes}</div>}
+                                {t.proofText && <div className="text-[11px] text-amber-300/60 mt-0.5 truncate italic">Proof: {t.proofText}</div>}
                                 <div className="text-[11px] text-white/30 mt-0.5">{t.project}</div>
                               </div>
                               <div className="flex items-center gap-2 flex-shrink-0">

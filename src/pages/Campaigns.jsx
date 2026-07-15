@@ -1,4 +1,6 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+import { DndContext, DragOverlay, PointerSensor, useSensor, useSensors, closestCenter } from '@dnd-kit/core'
+import { useDraggable, useDroppable } from '@dnd-kit/core'
 import { useLocation } from 'react-router-dom'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
@@ -28,6 +30,105 @@ const COLOR_OPTS   = ['#6C5CE7','#0891B2','#D97706','#059669','#DC2626','#7C3AED
 const INPUT = 'w-full bg-[#16161C] border border-white/[0.07] rounded-lg px-3 py-2 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 transition-all'
 const LABEL = 'block text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-1'
 const SEL   = 'text-[11px] px-2.5 py-1.5 border border-white/7 rounded-lg bg-[#16161C] text-white/50 outline-none hover:border-white/12 cursor-pointer transition-all'
+
+// ─── Kanban DnD ──────────────────────────────────────────────────────────────
+
+function KanbanCard({ task, onCardClick }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+  const col = task.status
+  return (
+    <div
+      ref={setNodeRef}
+      {...listeners}
+      {...attributes}
+      onClick={() => !isDragging && onCardClick(task)}
+      className={cn(
+        'bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-grab active:cursor-grabbing select-none transition-all',
+        isDragging ? 'opacity-40' : 'hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)]',
+        col === 'Overdue' ? 'border-rose-500/30' : 'border-white/7 hover:border-violet-500/40',
+      )}
+    >
+      <div className="text-[12px] font-medium text-white mb-1 leading-snug">{task.task}</div>
+      {task.description && <div className="text-[11px] text-white/30 mb-1 leading-snug line-clamp-2">{task.description}</div>}
+      {task.notes && <div className="text-[11px] text-violet-300/50 mb-1 leading-snug line-clamp-1 italic">{task.notes}</div>}
+      {task.proofText && <div className="text-[11px] text-amber-300/50 mb-1 leading-snug line-clamp-1 italic">Proof: {task.proofText}</div>}
+      <div className="text-[11px] text-white/30 mb-2">{task.creatorName || 'Unassigned'} · {task.platform || '—'}</div>
+      <div className="flex items-center justify-between">
+        <span className="flex items-center gap-1.5 text-[11px] text-white/30">
+          <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />{task.priority}
+        </span>
+        <span className={`font-mono text-[10px] ${col === 'Overdue' ? 'text-rose-400' : col === 'Completed' ? 'text-emerald-400 font-semibold' : 'text-white/25'}`}>
+          {col === 'Completed' ? `+${task.coins} coins` : task.dueDate?.slice(5)}
+        </span>
+      </div>
+    </div>
+  )
+}
+
+function KanbanColumn({ col, tasks, onCardClick, isOver }) {
+  const { setNodeRef } = useDroppable({ id: col })
+  return (
+    <div
+      ref={setNodeRef}
+      className={cn(
+        'bg-[#16161C] border rounded-[14px] p-3 min-h-[200px] transition-colors',
+        isOver ? 'border-violet-500/40 bg-violet-500/5' : 'border-white/7',
+      )}
+    >
+      <div className="flex items-center justify-between mb-3">
+        <span className="font-syne text-[12px] font-bold text-white/40">{col}</span>
+        <span className="font-mono text-[10px] bg-white/6 border border-white/7 text-white/25 px-2 py-0.5 rounded-full">{tasks.length}</span>
+      </div>
+      {tasks.map(t => <KanbanCard key={t.id} task={t} onCardClick={onCardClick} />)}
+    </div>
+  )
+}
+
+function CampaignKanban({ tasks, updateTask, onCardClick }) {
+  const [activeTask, setActiveTask] = useState(null)
+  const [overId,     setOverId]     = useState(null)
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+
+  function handleDragStart({ active }) {
+    setActiveTask(tasks.find(t => t.id === active.id) ?? null)
+  }
+  function handleDragOver({ over }) {
+    setOverId(over?.id ?? null)
+  }
+  async function handleDragEnd({ active, over }) {
+    setActiveTask(null)
+    setOverId(null)
+    if (!over) return
+    const task = tasks.find(t => t.id === active.id)
+    const newStatus = over.id
+    if (!task || task.status === newStatus) return
+    await updateTask(task.id, { status: newStatus })
+  }
+
+  return (
+    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragEnd={handleDragEnd}>
+      <div className="grid grid-cols-5 gap-3 overflow-x-auto pb-1">
+        {KANBAN_COLS.map(col => (
+          <KanbanColumn
+            key={col}
+            col={col}
+            tasks={tasks.filter(t => t.status === col)}
+            onCardClick={onCardClick}
+            isOver={overId === col}
+          />
+        ))}
+      </div>
+      <DragOverlay>
+        {activeTask && (
+          <div className="bg-[#1E1E28] border border-violet-500/50 rounded-[9px] p-3 shadow-2xl opacity-95 rotate-1 cursor-grabbing">
+            <div className="text-[12px] font-medium text-white mb-1 leading-snug">{activeTask.task}</div>
+            <div className="text-[11px] text-white/30">{activeTask.creatorName || 'Unassigned'}</div>
+          </div>
+        )}
+      </DragOverlay>
+    </DndContext>
+  )
+}
 
 // ─── By Creator View ──────────────────────────────────────────────────────────
 
@@ -539,34 +640,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
 
       {/* Kanban view */}
       {view === 'kanban' && (
-        <div className="grid grid-cols-5 gap-3 overflow-x-auto pb-1">
-          {KANBAN_COLS.map(col => {
-            const colTasks = tasks.filter(t => t.status === col)
-            return (
-              <div key={col} className="bg-[#16161C] border border-white/7 rounded-[14px] p-3 min-h-[200px]">
-                <div className="flex items-center justify-between mb-3">
-                  <span className="font-syne text-[12px] font-bold text-white/40">{col}</span>
-                  <span className="font-mono text-[10px] bg-white/6 border border-white/7 text-white/25 px-2 py-0.5 rounded-full">{colTasks.length}</span>
-                </div>
-                {colTasks.map(t => (
-                  <div key={t.id} onClick={() => setDetailTask(t)} className={`bg-[#1E1E28] border rounded-[9px] p-3 mb-2 last:mb-0 cursor-pointer hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,.3)] transition-all ${col==='Overdue'?'border-rose-500/30':'border-white/7 hover:border-violet-500/40'}`}>
-                    <div className="text-[12px] font-medium text-white mb-1 leading-snug">{t.task}</div>
-                    {t.description && <div className="text-[11px] text-white/30 mb-1 leading-snug line-clamp-2">{t.description}</div>}
-                    <div className="text-[11px] text-white/30 mb-2">{t.creatorName || 'Unassigned'} · {t.platform || '—'}</div>
-                    <div className="flex items-center justify-between">
-                      <span className="flex items-center gap-1.5 text-[11px] text-white/30">
-                        <span className={`w-1.5 h-1.5 rounded-full ${PRIORITY_DOT[t.priority]}`} />{t.priority}
-                      </span>
-                      <span className={`font-mono text-[10px] ${col==='Overdue'?'text-rose-400':col==='Completed'?'text-emerald-400 font-semibold':'text-white/25'}`}>
-                        {col==='Completed'?`+${t.coins} coins`:t.dueDate.slice(5)}
-                      </span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )
-          })}
-        </div>
+        <CampaignKanban tasks={tasks} updateTask={updateTask} onCardClick={setDetailTask} />
       )}
 
       {/* Campaign Task Detail Panel */}
