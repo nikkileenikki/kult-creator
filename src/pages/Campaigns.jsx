@@ -522,6 +522,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                     <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}>
                       <div className="text-[13px] text-white/70">{t.task}</div>
                       {t.description && <div className="text-[11px] text-white/30 mt-0.5 truncate max-w-[260px]">{t.description}</div>}
+                      {t.notes && <div className="text-[11px] text-violet-300/50 mt-0.5 truncate max-w-[260px] italic">{t.notes}</div>}
                     </td>
                     <td className="px-3.5 py-3 cursor-pointer" onClick={() => setDetailTask(t)}><Badge variant={TASK_STATUS[t.status]}>{t.status}</Badge></td>
                     <td className="px-3.5 py-3 text-[12px] text-white/40 cursor-pointer" onClick={() => setDetailTask(t)}>{t.pic}</td>
@@ -611,6 +612,20 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
                 <div>
                   <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Description</div>
                   <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{detailTask.description}</p>
+                </div>
+              )}
+
+              {detailTask.notes && (
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Notes for Creator</div>
+                  <p className="text-[13px] text-violet-300/70 leading-relaxed whitespace-pre-wrap border-l-2 border-violet-500/30 pl-3">{detailTask.notes}</p>
+                </div>
+              )}
+
+              {detailTask.proofText && (
+                <div>
+                  <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Creator Proof</div>
+                  <p className="text-[13px] text-amber-300/70 leading-relaxed whitespace-pre-wrap border-l-2 border-amber-500/30 pl-3">{detailTask.proofText}</p>
                 </div>
               )}
 

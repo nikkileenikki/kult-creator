@@ -35,8 +35,8 @@ export async function onRequestPatch({ params, request, env }) {
     await db.prepare('UPDATE tasks SET status = ?, creator_id = ?, creator_name = ? WHERE id = ?')
       .bind(status, creatorId, creatorName, params.id).run()
   } else if (status === 'Under Review') {
-    // Submitting proof — store in notes
-    await db.prepare('UPDATE tasks SET status = ?, notes = ? WHERE id = ?')
+    // Submitting proof — store in separate proof_text, never overwrite notes
+    await db.prepare('UPDATE tasks SET status = ?, proof_text = ? WHERE id = ?')
       .bind(status, proof ?? '', params.id).run()
   } else {
     await db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, params.id).run()
