@@ -162,7 +162,7 @@ export default function CreatorTasks({ session }) {
   }, {})
 
   return (
-    <div className="animate-[fadeUp_.3s_ease]">
+    <div className="animate-[fadeUp_.3s_ease] max-w-2xl">
       <div className="mb-6">
         <h1 className="font-syne text-[20px] font-extrabold text-white tracking-tight">Browse Tasks</h1>
         <p className="text-[12px] text-white/30 mt-1">Accept tasks that match your profile and start earning</p>
