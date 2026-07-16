@@ -498,7 +498,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
               {campaign.brief && (
                 <div className="bg-[#16161C] border border-white/7 rounded-[9px] p-3.5 mt-3">
                   <div className="font-mono text-[9px] text-white/25 uppercase tracking-[.06em] mb-1.5">Campaign Brief</div>
-                  <p className="text-[12px] text-white/50 leading-relaxed whitespace-pre-wrap">{campaign.brief}</p>
+                  <p className="text-[12px] text-white/50 leading-relaxed whitespace-pre-wrap break-words">{campaign.brief}</p>
                 </div>
               )}
             </div>
@@ -647,7 +647,7 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
       {detailTask && (
         <div className="fixed inset-0 z-40 flex justify-end pointer-events-none">
           <div className="absolute inset-0 bg-black/40 pointer-events-auto" onClick={() => setDetailTask(null)} />
-          <div className="relative w-[400px] bg-[#111116] border-l border-white/[0.07] flex flex-col shadow-2xl pointer-events-auto animate-[slideInRight_.2s_ease]">
+          <div className="relative w-[420px] max-w-[calc(100vw-48px)] bg-[#111116] border-l border-white/[0.07] flex flex-col shadow-2xl pointer-events-auto animate-[slideInRight_.2s_ease] overflow-x-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-white/[0.07]">
               <div className="flex items-center gap-2 flex-wrap">
                 <Badge variant={TASK_STATUS[detailTask.status]}>{detailTask.status}</Badge>
@@ -685,21 +685,21 @@ function CampaignDetail({ campaign, tasks, onBack, openEdit, openAddTask }) {
               {detailTask.description && (
                 <div>
                   <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Description</div>
-                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap">{detailTask.description}</p>
+                  <p className="text-[13px] text-white/60 leading-relaxed whitespace-pre-wrap break-words">{detailTask.description}</p>
                 </div>
               )}
 
               {detailTask.notes && (
                 <div>
                   <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Notes for Creator</div>
-                  <p className="text-[13px] text-violet-300/70 leading-relaxed whitespace-pre-wrap border-l-2 border-violet-500/30 pl-3">{detailTask.notes}</p>
+                  <p className="text-[13px] text-violet-300/70 leading-relaxed whitespace-pre-wrap break-words border-l-2 border-violet-500/30 pl-3">{detailTask.notes}</p>
                 </div>
               )}
 
               {detailTask.proofText && (
                 <div>
                   <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Creator Proof</div>
-                  <p className="text-[13px] text-amber-300/70 leading-relaxed whitespace-pre-wrap border-l-2 border-amber-500/30 pl-3">{detailTask.proofText}</p>
+                  <p className="text-[13px] text-amber-300/70 leading-relaxed whitespace-pre-wrap break-words border-l-2 border-amber-500/30 pl-3">{detailTask.proofText}</p>
                 </div>
               )}
 
