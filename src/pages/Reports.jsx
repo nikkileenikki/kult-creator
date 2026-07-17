@@ -100,6 +100,19 @@ function EmptyState({ children }) {
   return <div className="flex items-center justify-center h-[180px] text-white/20 text-[13px]">{children}</div>
 }
 
+function truncateLabel(str, max = 16) {
+  if (!str) return ''
+  return str.length > max ? `${str.slice(0, max - 1)}…` : str
+}
+
+function CategoryTick({ x, y, payload }) {
+  return (
+    <text x={x} y={y} dy={4} textAnchor="end" fill="#c3c2b7" fontSize={11}>
+      {truncateLabel(payload.value)}
+    </text>
+  )
+}
+
 function DistributionBar({ data, colorFor }) {
   if (data.length === 0) return <EmptyState>No data in this period</EmptyState>
   return (
@@ -107,7 +120,7 @@ function DistributionBar({ data, colorFor }) {
       <BarChart data={data} layout="vertical" margin={{ left: 0, right: 28, top: 4, bottom: 4 }}>
         <CartesianGrid horizontal={false} stroke="#2c2c2a" />
         <XAxis type="number" tick={{ fill: '#898781', fontSize: 10 }} axisLine={{ stroke: '#383835' }} tickLine={false} allowDecimals={false} />
-        <YAxis type="category" dataKey="name" tick={{ fill: '#c3c2b7', fontSize: 11 }} axisLine={false} tickLine={false} width={92} />
+        <YAxis type="category" dataKey="name" tick={<CategoryTick />} axisLine={false} tickLine={false} width={110} interval={0} />
         <Tooltip content={<ChartTooltip />} cursor={{ fill: 'rgba(255,255,255,0.03)' }} />
         <Bar dataKey="count" radius={[0, 4, 4, 0]} maxBarSize={20}>
           {data.map((d, i) => <Cell key={d.name} fill={colorFor(d, i)} />)}
