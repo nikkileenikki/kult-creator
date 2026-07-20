@@ -1,8 +1,9 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useRecruitStore } from '@/store/recruitStore'
+import { useUIStore } from '@/store/uiStore'
 import { cn } from '@/lib/utils'
 import { request } from '@/lib/api'
 import { STATUS_COLOR, PLATFORM_COLOR, OTHER_COLOR, categoricalColor } from '@/lib/reportColors'
@@ -13,7 +14,7 @@ import {
 import {
   Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
-  Zap, Clock, Activity, LayoutGrid,
+  Zap, Clock, Activity, LayoutGrid, ChevronDown,
 } from 'lucide-react'
 
 const CATEGORIES = [
@@ -22,6 +23,12 @@ const CATEGORIES = [
   { key: 'brands',      label: 'Brands' },
   { key: 'pic',         label: 'PIC Workload' },
   { key: 'recruitment', label: 'Recruitment' },
+]
+
+const EXPORT_SECTIONS = [
+  { key: 'overview', label: 'Overview & Velocity' },
+  ...CATEGORIES,
+  { key: 'overdue', label: 'Overdue Tasks' },
 ]
 
 function formatDuration(hours) {
@@ -76,6 +83,134 @@ const PLATFORM_ORDER = ['TikTok', 'Instagram', 'YouTube', 'X / Twitter', 'Linked
 function daysOverdue(dueDate) {
   const d = new Date(dueDate), now = new Date()
   return Math.max(0, Math.round((now - d) / 86400000))
+}
+
+// ── Pure report data builder — used for both the on-screen view and export,
+//    so export can run against a date range independent of what's displayed ──
+
+function buildReportData(bounds, { creators, tasks, campaigns, requests }) {
+  const filteredTasks    = tasks.filter(t => inRange(t.dueDate, bounds))
+  const filteredRequests = requests.filter(r => inRange(r.appliedDate, bounds))
+
+  const totalInPeriod     = filteredTasks.length
+  const completedInPeriod = filteredTasks.filter(t => t.status === 'Completed').length
+  const completionRate    = totalInPeriod ? Math.round((completedInPeriod / totalInPeriod) * 100) : 0
+  const pendingRecruitsInPeriod = filteredRequests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+
+  const campaignPerf = campaigns.map(c => {
+    const cTasks = filteredTasks.filter(t => t.project === c.name)
+    const completed = cTasks.filter(t => t.status === 'Completed').length
+    const overdue    = cTasks.filter(t => t.status === 'Overdue').length
+    return { ...c, totalTasks: cTasks.length, completed, overdue, completionRate: cTasks.length ? Math.round((completed / cTasks.length) * 100) : 0 }
+  }).sort((a, b) => b.totalTasks - a.totalTasks)
+
+  const creatorPerf = creators.map(c => {
+    const cTasks    = filteredTasks.filter(t => t.creatorId === c.id)
+    const completed = cTasks.filter(t => t.status === 'Completed')
+    const rated     = completed.filter(t => t.rating > 0)
+    return {
+      ...c,
+      assigned:       cTasks.length,
+      completed:      completed.length,
+      underReview:    cTasks.filter(t => t.status === 'Under Review').length,
+      completionRate: cTasks.length ? Math.round((completed.length / cTasks.length) * 100) : 0,
+      avgRating:      rated.length ? rated.reduce((s, t) => s + t.rating, 0) / rated.length : 0,
+      coinsEarned:    completed.reduce((s, t) => s + (t.coins || 0), 0),
+    }
+  }).filter(c => c.assigned > 0).sort((a, b) => b.completed - a.completed || b.assigned - a.assigned)
+
+  const byBrand = new Map()
+  for (const c of campaigns) {
+    const key = c.brandName || 'Unassigned'
+    if (!byBrand.has(key)) byBrand.set(key, [])
+    byBrand.get(key).push(c)
+  }
+  const brandPerf = [...byBrand.entries()].map(([brandName, camps]) => {
+    const campNames = camps.map(c => c.name)
+    const bTasks    = filteredTasks.filter(t => campNames.includes(t.project))
+    const completed = bTasks.filter(t => t.status === 'Completed').length
+    const budget    = camps.reduce((s, c) => s + (c.budget || 0), 0)
+    return {
+      brandName, campaignCount: camps.length, totalTasks: bTasks.length, completed,
+      completionRate: bTasks.length ? Math.round((completed / bTasks.length) * 100) : 0, budget,
+    }
+  }).sort((a, b) => b.totalTasks - a.totalTasks)
+
+  const pics = new Set([
+    ...creators.map(c => c.pic).filter(Boolean),
+    ...tasks.map(t => t.pic).filter(Boolean),
+    ...requests.map(r => r.pic).filter(Boolean),
+  ])
+  const picWorkload = [...pics].map(pic => {
+    const pTasks    = filteredTasks.filter(t => t.pic === pic)
+    const completed = pTasks.filter(t => t.status === 'Completed').length
+    return {
+      pic,
+      creatorsManaged: creators.filter(c => c.pic === pic).length,
+      tasksAssigned:   pTasks.length,
+      tasksCompleted:  completed,
+      completionRate:  pTasks.length ? Math.round((completed / pTasks.length) * 100) : 0,
+      recruitsHandled: filteredRequests.filter(r => r.pic === pic).length,
+    }
+  }).sort((a, b) => b.tasksAssigned - a.tasksAssigned)
+
+  const pipelineStatuses = ['Pending', 'Under Review', 'Approved', 'Rejected']
+  const pipelineData = pipelineStatuses.map(status => ({
+    name: status, count: filteredRequests.filter(r => r.status === status).length,
+  }))
+
+  const sourceMap = new Map()
+  for (const r of filteredRequests) {
+    const key = r.source || 'Unspecified'
+    if (!sourceMap.has(key)) sourceMap.set(key, { source: key, total: 0, approved: 0 })
+    const entry = sourceMap.get(key)
+    entry.total++
+    if (r.status === 'Approved') entry.approved++
+  }
+  const sourceEffectiveness = [...sourceMap.values()]
+    .map(e => ({ ...e, approvalRate: e.total ? Math.round((e.approved / e.total) * 100) : 0 }))
+    .sort((a, b) => b.total - a.total)
+
+  return {
+    filteredTasks, filteredRequests, totalInPeriod, completedInPeriod, completionRate, pendingRecruitsInPeriod,
+    campaignPerf, creatorPerf, brandPerf, picWorkload, pipelineData, sourceEffectiveness,
+  }
+}
+
+function sectionCSV(title, rows, columns) {
+  if (!rows.length) return `${title}\nNo data`
+  return `${title}\n${rowsToCSV(rows, columns)}`
+}
+
+function buildCsvSections(data) {
+  return {
+    campaigns: () => sectionCSV('CAMPAIGN PERFORMANCE', data.campaignPerf, [
+      { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
+      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
+    ]),
+    creators: () => sectionCSV('CREATOR PERFORMANCE', data.creatorPerf, [
+      { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
+      { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
+    ]),
+    brands: () => sectionCSV('BRAND PERFORMANCE', data.brandPerf, [
+      { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
+      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
+    ]),
+    pic: () => sectionCSV('PIC WORKLOAD', data.picWorkload, [
+      { key: 'pic', label: 'PIC' }, { key: 'creatorsManaged', label: 'Creators Managed' },
+      { key: 'tasksAssigned', label: 'Tasks Assigned' }, { key: 'tasksCompleted', label: 'Tasks Completed' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'recruitsHandled', label: 'Recruits Handled' },
+    ]),
+    recruitment: () => [
+      sectionCSV('RECRUITMENT PIPELINE', data.pipelineData, [{ key: 'name', label: 'Status' }, { key: 'count', label: 'Count' }]),
+      sectionCSV('RECRUITMENT SOURCE EFFECTIVENESS', data.sourceEffectiveness, [
+        { key: 'source', label: 'Source' }, { key: 'total', label: 'Total' }, { key: 'approved', label: 'Approved' }, { key: 'approvalRate', label: 'Approval %' },
+      ]),
+    ].join('\n\n'),
+  }
 }
 
 // ── Shared bits ──────────────────────────────────────────────────────────────
@@ -209,18 +344,103 @@ function ProgressBar({ pct, color = '#9085e9' }) {
   )
 }
 
-// ── Page ─────────────────────────────────────────────────────────────────────
+// ── Export menu ──────────────────────────────────────────────────────────────
 
-function sectionCSV(title, rows, columns) {
-  if (!rows.length) return `${title}\nNo data`
-  return `${title}\n${rowsToCSV(rows, columns)}`
+function ExportMenu({ defaultRange, onExport }) {
+  const [open, setOpen]           = useState(false)
+  const [exportRange, setExportRange] = useState(defaultRange)
+  const [selected, setSelected]   = useState(new Set(EXPORT_SECTIONS.map(s => s.key)))
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function onClickOutside(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', onClickOutside)
+    return () => document.removeEventListener('mousedown', onClickOutside)
+  }, [])
+
+  function toggleSection(key) {
+    setSelected(prev => {
+      const next = new Set(prev)
+      next.has(key) ? next.delete(key) : next.add(key)
+      return next
+    })
+  }
+
+  const allSelected = selected.size === EXPORT_SECTIONS.length
+  function toggleAll() {
+    setSelected(allSelected ? new Set() : new Set(EXPORT_SECTIONS.map(s => s.key)))
+  }
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
+      >
+        <Download size={13} /> Export <ChevronDown size={12} className={cn('transition-transform', open && 'rotate-180')} />
+      </button>
+
+      {open && (
+        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] bg-[#111116] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.6)] p-4 space-y-4 animate-[fadeUp_.15s_ease]">
+          <div>
+            <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Date Range</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {RANGE_OPTIONS.map(o => (
+                <button
+                  key={o.key}
+                  onClick={() => setExportRange(o.key)}
+                  className={cn('text-[11px] px-2 py-1.5 rounded-lg border transition-all',
+                    exportRange === o.key ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' : 'border-white/7 text-white/40 hover:text-white/70 hover:border-white/12')}
+                >
+                  {o.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Sections</div>
+              <button onClick={toggleAll} className="text-[10px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
+                {allSelected ? 'Clear all' : 'Select all'}
+              </button>
+            </div>
+            <div className="space-y-1.5">
+              {EXPORT_SECTIONS.map(s => (
+                <label key={s.key} className="flex items-center gap-2 text-[12px] text-white/70 cursor-pointer hover:text-white transition-colors">
+                  <input
+                    type="checkbox"
+                    checked={selected.has(s.key)}
+                    onChange={() => toggleSection(s.key)}
+                    className="accent-violet-500 w-3.5 h-3.5"
+                  />
+                  {s.label}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <button
+            onClick={() => { onExport(exportRange, selected); setOpen(false) }}
+            disabled={selected.size === 0}
+            className="w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 disabled:cursor-not-allowed text-white text-[12px] font-semibold transition-all"
+          >
+            Generate & Download
+          </button>
+        </div>
+      )}
+    </div>
+  )
 }
 
+// ── Page ─────────────────────────────────────────────────────────────────────
+
 export default function Reports() {
-  const creators  = useCreatorStore(s => s.creators)
-  const tasks     = useTaskStore(s => s.tasks)
-  const campaigns = useCampaignStore(s => s.campaigns)
-  const requests  = useRecruitStore(s => s.requests)
+  const creators   = useCreatorStore(s => s.creators)
+  const tasks      = useTaskStore(s => s.tasks)
+  const campaigns  = useCampaignStore(s => s.campaigns)
+  const requests   = useRecruitStore(s => s.requests)
+  const showToast  = useUIStore(s => s.showToast)
 
   const [range, setRange] = useState('all')
   const [showAllCreators, setShowAllCreators] = useState(false)
@@ -235,22 +455,20 @@ export default function Reports() {
     request('GET', '/analytics/log?limit=15').then(setRecentLog).catch(() => {})
   }, [])
 
-  const filteredTasks    = useMemo(() => tasks.filter(t => inRange(t.dueDate, bounds)), [tasks, bounds])
-  const filteredRequests = useMemo(() => requests.filter(r => inRange(r.appliedDate, bounds)), [requests, bounds])
+  const data = useMemo(
+    () => buildReportData(bounds, { creators, tasks, campaigns, requests }),
+    [bounds, creators, tasks, campaigns, requests],
+  )
 
-  // Overview
-  const activeCreatorsCount     = creators.filter(c => c.status === 'Active').length
-  const activeCampaignsCount    = campaigns.filter(c => c.status === 'Active').length
-  const overdueNow              = tasks.filter(t => t.status === 'Overdue').length
-  const totalInPeriod           = filteredTasks.length
-  const completedInPeriod       = filteredTasks.filter(t => t.status === 'Completed').length
-  const completionRate          = totalInPeriod ? Math.round((completedInPeriod / totalInPeriod) * 100) : 0
-  const pendingRecruitsInPeriod = filteredRequests.filter(r => r.status === 'Pending' || r.status === 'Under Review').length
+  // Overview (state gauges — not date-filtered)
+  const activeCreatorsCount  = creators.filter(c => c.status === 'Active').length
+  const activeCampaignsCount = campaigns.filter(c => c.status === 'Active').length
+  const overdueNow           = tasks.filter(t => t.status === 'Overdue').length
 
   // Distributions
   const taskPlatformData = useMemo(() => PLATFORM_ORDER
-    .map(name => ({ name, count: filteredTasks.filter(t => t.platform === name).length }))
-    .filter(d => d.count > 0), [filteredTasks])
+    .map(name => ({ name, count: data.filteredTasks.filter(t => t.platform === name).length }))
+    .filter(d => d.count > 0), [data.filteredTasks])
 
   const creatorPlatformData = useMemo(() => PLATFORM_ORDER
     .map(name => ({ name, count: creators.filter(c => c.platform === name).length }))
@@ -269,180 +487,57 @@ export default function Reports() {
     return top
   }, [creators])
 
-  // Campaign performance
-  const campaignPerf = useMemo(() => campaigns.map(c => {
-    const cTasks = filteredTasks.filter(t => t.project === c.name)
-    const completed = cTasks.filter(t => t.status === 'Completed').length
-    const overdue    = cTasks.filter(t => t.status === 'Overdue').length
-    return {
-      ...c,
-      totalTasks: cTasks.length,
-      completed,
-      overdue,
-      completionRate: cTasks.length ? Math.round((completed / cTasks.length) * 100) : 0,
-    }
-  }).sort((a, b) => b.totalTasks - a.totalTasks), [campaigns, filteredTasks])
-
-  // Creator leaderboard
-  const creatorPerf = useMemo(() => creators.map(c => {
-    const cTasks    = filteredTasks.filter(t => t.creatorId === c.id)
-    const completed = cTasks.filter(t => t.status === 'Completed')
-    const rated     = completed.filter(t => t.rating > 0)
-    return {
-      ...c,
-      assigned:       cTasks.length,
-      completed:      completed.length,
-      underReview:    cTasks.filter(t => t.status === 'Under Review').length,
-      completionRate: cTasks.length ? Math.round((completed.length / cTasks.length) * 100) : 0,
-      avgRating:      rated.length ? rated.reduce((s, t) => s + t.rating, 0) / rated.length : 0,
-      coinsEarned:    completed.reduce((s, t) => s + (t.coins || 0), 0),
-    }
-  }).filter(c => c.assigned > 0)
-    .sort((a, b) => b.completed - a.completed || b.assigned - a.assigned), [creators, filteredTasks])
-
-  const visibleCreatorPerf = showAllCreators ? creatorPerf : creatorPerf.slice(0, 10)
-
-  // Brand performance
-  const brandPerf = useMemo(() => {
-    const byBrand = new Map()
-    for (const c of campaigns) {
-      const key = c.brandName || 'Unassigned'
-      if (!byBrand.has(key)) byBrand.set(key, [])
-      byBrand.get(key).push(c)
-    }
-    return [...byBrand.entries()].map(([brandName, camps]) => {
-      const campNames = camps.map(c => c.name)
-      const bTasks    = filteredTasks.filter(t => campNames.includes(t.project))
-      const completed = bTasks.filter(t => t.status === 'Completed').length
-      const budget    = camps.reduce((s, c) => s + (c.budget || 0), 0)
-      return {
-        brandName,
-        campaignCount: camps.length,
-        totalTasks: bTasks.length,
-        completed,
-        completionRate: bTasks.length ? Math.round((completed / bTasks.length) * 100) : 0,
-        budget,
-      }
-    }).sort((a, b) => b.totalTasks - a.totalTasks)
-  }, [campaigns, filteredTasks])
-
-  // PIC workload
-  const picWorkload = useMemo(() => {
-    const pics = new Set([
-      ...creators.map(c => c.pic).filter(Boolean),
-      ...tasks.map(t => t.pic).filter(Boolean),
-      ...requests.map(r => r.pic).filter(Boolean),
-    ])
-    return [...pics].map(pic => {
-      const pTasks    = filteredTasks.filter(t => t.pic === pic)
-      const completed = pTasks.filter(t => t.status === 'Completed').length
-      return {
-        pic,
-        creatorsManaged: creators.filter(c => c.pic === pic).length,
-        tasksAssigned:   pTasks.length,
-        tasksCompleted:  completed,
-        completionRate:  pTasks.length ? Math.round((completed / pTasks.length) * 100) : 0,
-        recruitsHandled: filteredRequests.filter(r => r.pic === pic).length,
-      }
-    }).sort((a, b) => b.tasksAssigned - a.tasksAssigned)
-  }, [creators, tasks, requests, filteredTasks, filteredRequests])
-
-  // Recruitment pipeline
-  const pipelineStatuses = ['Pending', 'Under Review', 'Approved', 'Rejected']
-  const pipelineData = pipelineStatuses.map(status => ({
-    name: status, count: filteredRequests.filter(r => r.status === status).length,
-  }))
-
-  const sourceEffectiveness = useMemo(() => {
-    const map = new Map()
-    for (const r of filteredRequests) {
-      const key = r.source || 'Unspecified'
-      if (!map.has(key)) map.set(key, { source: key, total: 0, approved: 0 })
-      const entry = map.get(key)
-      entry.total++
-      if (r.status === 'Approved') entry.approved++
-    }
-    return [...map.values()]
-      .map(e => ({ ...e, approvalRate: e.total ? Math.round((e.approved / e.total) * 100) : 0 }))
-      .sort((a, b) => b.total - a.total)
-  }, [filteredRequests])
+  const visibleCreatorPerf = showAllCreators ? data.creatorPerf : data.creatorPerf.slice(0, 10)
 
   // Overdue tasks — always current, independent of the date filter
   const overdueTasks = useMemo(() =>
     tasks.filter(t => t.status === 'Overdue').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
   [tasks])
 
-  const CSV_SECTIONS = {
-    campaigns: () => sectionCSV('CAMPAIGN PERFORMANCE', campaignPerf, [
-      { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
-      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-    ]),
-    creators: () => sectionCSV('CREATOR PERFORMANCE', creatorPerf, [
-      { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
-      { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
-    ]),
-    brands: () => sectionCSV('BRAND PERFORMANCE', brandPerf, [
-      { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
-      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-    ]),
-    pic: () => sectionCSV('PIC WORKLOAD', picWorkload, [
-      { key: 'pic', label: 'PIC' }, { key: 'creatorsManaged', label: 'Creators Managed' },
-      { key: 'tasksAssigned', label: 'Tasks Assigned' }, { key: 'tasksCompleted', label: 'Tasks Completed' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'recruitsHandled', label: 'Recruits Handled' },
-    ]),
-    recruitment: () => [
-      sectionCSV('RECRUITMENT PIPELINE', pipelineData, [{ key: 'name', label: 'Status' }, { key: 'count', label: 'Count' }]),
-      sectionCSV('RECRUITMENT SOURCE EFFECTIVENESS', sourceEffectiveness, [
-        { key: 'source', label: 'Source' }, { key: 'total', label: 'Total' }, { key: 'approved', label: 'Approved' }, { key: 'approvalRate', label: 'Approval %' },
-      ]),
-    ].join('\n\n'),
-  }
+  function handleExportAll(exportRange, selectedKeys) {
+    const exportBounds = getRangeBounds(exportRange)
+    const exportData   = buildReportData(exportBounds, { creators, tasks, campaigns, requests })
+    const csv          = buildCsvSections(exportData)
+    const dateSuffix    = new Date().toISOString().slice(0, 10)
 
-  function handleExport() {
-    const dateSuffix = new Date().toISOString().slice(0, 10)
-
-    if (viewMode === 'category') {
-      downloadCSV(`kult-creator-${category}-report-${dateSuffix}.csv`, CSV_SECTIONS[category]())
-      return
-    }
-
-    const parts = [
-      sectionCSV('OVERVIEW', [
+    const parts = []
+    if (selectedKeys.has('overview')) {
+      parts.push(sectionCSV('OVERVIEW', [
         { label: 'Active Creators', value: activeCreatorsCount },
         { label: 'Active Campaigns', value: activeCampaignsCount },
         { label: 'Overdue Tasks (now)', value: overdueNow },
-        { label: 'Tasks in Period', value: totalInPeriod },
-        { label: 'Completed in Period', value: completedInPeriod },
-        { label: 'Completion Rate', value: `${completionRate}%` },
-        { label: 'Pending Recruits in Period', value: pendingRecruitsInPeriod },
+        { label: 'Tasks in Period', value: exportData.totalInPeriod },
+        { label: 'Completed in Period', value: exportData.completedInPeriod },
+        { label: 'Completion Rate', value: `${exportData.completionRate}%` },
+        { label: 'Pending Recruits in Period', value: exportData.pendingRecruitsInPeriod },
         { label: 'Completed (Last 7 Days)', value: velocity?.completedLast7 ?? '—' },
         { label: 'Completed (Last 30 Days)', value: velocity?.completedLast30 ?? '—' },
         { label: 'Avg Task Completion Time', value: formatDuration(velocity?.avgCompletionHours) },
         { label: 'Avg Recruit Approval Time', value: formatDuration(velocity?.avgApprovalHours) },
-      ], [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }]),
-
-      CSV_SECTIONS.campaigns(),
-      CSV_SECTIONS.creators(),
-      CSV_SECTIONS.brands(),
-      CSV_SECTIONS.pic(),
-      CSV_SECTIONS.recruitment(),
-
-      sectionCSV('OVERDUE TASKS (current)', overdueTasks.map(t => ({ ...t, daysOverdue: daysOverdue(t.dueDate) })), [
+      ], [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }]))
+    }
+    if (selectedKeys.has('campaigns'))   parts.push(csv.campaigns())
+    if (selectedKeys.has('creators'))    parts.push(csv.creators())
+    if (selectedKeys.has('brands'))      parts.push(csv.brands())
+    if (selectedKeys.has('pic'))         parts.push(csv.pic())
+    if (selectedKeys.has('recruitment')) parts.push(csv.recruitment())
+    if (selectedKeys.has('overdue')) {
+      parts.push(sectionCSV('OVERDUE TASKS (current)', overdueTasks.map(t => ({ ...t, daysOverdue: daysOverdue(t.dueDate) })), [
         { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' },
         { key: 'pic', label: 'PIC' }, { key: 'dueDate', label: 'Due Date' }, { key: 'daysOverdue', label: 'Days Overdue' },
-      ]),
-    ]
+      ]))
+    }
+
+    if (parts.length === 0) { showToast('Select at least one section to export', 'error'); return }
     downloadCSV(`kult-creator-report-${dateSuffix}.csv`, parts.join('\n\n'))
+    showToast('Report downloaded')
   }
 
   // ── Section content (reused for both summary and category views) ──────────
 
   const campaignSection = (
     <Card title="Campaign Performance" icon={FolderOpen}>
-      {campaignPerf.length === 0 ? <EmptyState>No campaigns yet</EmptyState> : (
+      {data.campaignPerf.length === 0 ? <EmptyState>No campaigns yet</EmptyState> : (
         <div className={cn('overflow-y-auto -mx-5 -mb-5', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
           <table className="w-full">
             <thead className="sticky top-0 bg-[#1E1E28]">
@@ -453,7 +548,7 @@ export default function Reports() {
               </tr>
             </thead>
             <tbody>
-              {campaignPerf.map(c => (
+              {data.campaignPerf.map(c => (
                 <tr key={c.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.02] transition-colors">
                   <td className="px-5 py-2.5">
                     <div className="flex items-center gap-2">
@@ -486,9 +581,9 @@ export default function Reports() {
     <Card
       title="Creator Leaderboard"
       icon={Trophy}
-      action={creatorPerf.length > 10 && (
+      action={data.creatorPerf.length > 10 && (
         <button onClick={() => setShowAllCreators(v => !v)} className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
-          {showAllCreators ? 'Show top 10' : `Show all (${creatorPerf.length})`}
+          {showAllCreators ? 'Show top 10' : `Show all (${data.creatorPerf.length})`}
         </button>
       )}
     >
@@ -512,9 +607,9 @@ export default function Reports() {
 
   const brandSection = (
     <Card title="Brand Performance" icon={Briefcase}>
-      {brandPerf.length === 0 ? <EmptyState>No brands yet</EmptyState> : (
+      {data.brandPerf.length === 0 ? <EmptyState>No brands yet</EmptyState> : (
         <div className={cn('space-y-1.5 overflow-y-auto pr-1', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
-          {brandPerf.map(b => (
+          {data.brandPerf.map(b => (
             <div key={b.brandName} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
               <div className="flex-1 min-w-0">
                 <div className="text-[12px] text-white truncate">{b.brandName}</div>
@@ -530,9 +625,9 @@ export default function Reports() {
 
   const picSection = (
     <Card title="Staff (PIC) Workload" icon={Users}>
-      {picWorkload.length === 0 ? <EmptyState>No PICs assigned yet</EmptyState> : (
+      {data.picWorkload.length === 0 ? <EmptyState>No PICs assigned yet</EmptyState> : (
         <div className={cn('space-y-1.5 overflow-y-auto pr-1', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[300px]')}>
-          {picWorkload.map(p => (
+          {data.picWorkload.map(p => (
             <div key={p.pic} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
               <div className="flex-1 min-w-0">
                 <div className="text-[12px] text-white truncate">{p.pic}</div>
@@ -550,14 +645,14 @@ export default function Reports() {
     <Card title="Recruitment Pipeline" icon={GitBranch}>
       <div className="mb-4">
         <DistributionBar
-          data={pipelineData.filter(d => d.count > 0)}
+          data={data.pipelineData.filter(d => d.count > 0)}
           colorFor={d => d.name === 'Approved' ? STATUS_COLOR['Completed'] : d.name === 'Rejected' ? STATUS_COLOR['Overdue'] : d.name === 'Under Review' ? STATUS_COLOR['Under Review'] : STATUS_COLOR['Not Started']}
         />
       </div>
-      {sourceEffectiveness.length > 0 && (
+      {data.sourceEffectiveness.length > 0 && (
         <div className="border-t border-white/7 pt-3 space-y-1.5">
           <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-1.5">Source Effectiveness</div>
-          {sourceEffectiveness.map(s => (
+          {data.sourceEffectiveness.map(s => (
             <div key={s.source} className="flex items-center gap-3 text-[12px]">
               <span className="flex-1 text-white/60 truncate">{s.source}</span>
               <span className="font-mono text-white/40">{s.approved}/{s.total}</span>
@@ -599,12 +694,7 @@ export default function Reports() {
               </button>
             ))}
           </div>
-          <button
-            onClick={handleExport}
-            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
-          >
-            <Download size={13} /> {viewMode === 'category' ? `Export ${CATEGORIES.find(c => c.key === category)?.label}` : 'Export CSV'}
-          </button>
+          <ExportMenu defaultRange={range} onExport={handleExportAll} />
         </div>
       </div>
 
@@ -651,9 +741,9 @@ export default function Reports() {
             <KpiTile icon={Users}       label="Active Creators"  value={activeCreatorsCount}  caption="Now"                iconBg="bg-violet-400/15 text-violet-300" />
             <KpiTile icon={FolderOpen}  label="Active Campaigns" value={activeCampaignsCount} caption="Now"                iconBg="bg-blue-400/12 text-blue-400" />
             <KpiTile icon={AlertTriangle} label="Overdue"        value={overdueNow}           caption="Now — needs action" iconBg="bg-rose-400/12 text-rose-400" />
-            <KpiTile icon={ListTodo}    label="Tasks"             value={totalInPeriod}        caption="This period"       iconBg="bg-teal-400/12 text-teal-400" />
-            <KpiTile icon={TrendingUp}  label="Completion Rate"   value={`${completionRate}%`}  caption={`${completedInPeriod} completed`} iconBg="bg-emerald-400/12 text-emerald-400" />
-            <KpiTile icon={UserPlus}    label="Pending Recruits"  value={pendingRecruitsInPeriod} caption="This period"     iconBg="bg-amber-400/12 text-amber-300" />
+            <KpiTile icon={ListTodo}    label="Tasks"             value={data.totalInPeriod}   caption="This period"       iconBg="bg-teal-400/12 text-teal-400" />
+            <KpiTile icon={TrendingUp}  label="Completion Rate"   value={`${data.completionRate}%`} caption={`${data.completedInPeriod} completed`} iconBg="bg-emerald-400/12 text-emerald-400" />
+            <KpiTile icon={UserPlus}    label="Pending Recruits"  value={data.pendingRecruitsInPeriod} caption="This period" iconBg="bg-amber-400/12 text-amber-300" />
           </div>
 
           {/* Velocity KPIs */}
@@ -667,7 +757,7 @@ export default function Reports() {
           {/* Status + distributions */}
           <div className="grid grid-cols-3 gap-4 mb-4">
             <Card title="Task Status" icon={ListTodo}>
-              <StatusDonut tasks={filteredTasks} />
+              <StatusDonut tasks={data.filteredTasks} />
             </Card>
             <Card title="Tasks by Platform" icon={Smartphone}>
               <DistributionBar data={taskPlatformData} colorFor={d => PLATFORM_COLOR[d.name] ?? OTHER_COLOR} />
