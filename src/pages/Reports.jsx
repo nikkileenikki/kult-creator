@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
@@ -14,7 +15,7 @@ import {
 import {
   Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
-  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter,
+  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter, FileSpreadsheet,
 } from 'lucide-react'
 
 const CATEGORIES = [
@@ -827,6 +828,12 @@ export default function Reports() {
           <p className="text-[12px] text-white/30 mt-1">Campaign, creator, and pipeline performance</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            to="/reports/templates"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
+          >
+            <FileSpreadsheet size={13} /> Custom Reports
+          </Link>
           <RangeControl value={range} onChange={setRange} />
           <ExportMenu defaultRange={range} onExport={handleExportAll} />
         </div>
