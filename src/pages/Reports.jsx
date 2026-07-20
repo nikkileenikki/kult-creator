@@ -1,4 +1,6 @@
 import { useState, useMemo, useEffect, useRef } from 'react'
+import { Link } from 'react-router-dom'
+import TagMultiSelect from '@/components/shared/TagMultiSelect'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
@@ -14,7 +16,7 @@ import {
 import {
   Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
-  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter,
+  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter, FileSpreadsheet,
 } from 'lucide-react'
 
 const CATEGORIES = [
@@ -386,7 +388,6 @@ function ProgressBar({ pct, color = '#9085e9' }) {
 }
 
 const DATE_INPUT = 'bg-[#111116] border border-white/10 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-violet-500/50'
-const SELECT = 'bg-[#1A1A22] border border-white/7 rounded-lg px-2.5 py-1.5 text-[11px] text-white/70 focus:outline-none focus:border-violet-500/40 hover:border-white/12 transition-all'
 
 function RangeControl({ value, onChange }) {
   return (
@@ -509,10 +510,10 @@ export default function Reports() {
   const [recentLog, setRecentLog] = useState([])
   const [taskTimeline, setTaskTimeline] = useState({})
 
-  const [campaignFilter, setCampaignFilter] = useState('all')
-  const [brandFilter, setBrandFilter]       = useState('all')
-  const [creatorFilter, setCreatorFilter]   = useState('all')
-  const [picFilter, setPicFilter]           = useState('all')
+  const [campaignFilter, setCampaignFilter] = useState([])
+  const [brandFilter, setBrandFilter]       = useState([])
+  const [creatorFilter, setCreatorFilter]   = useState([])
+  const [picFilter, setPicFilter]           = useState([])
 
   const bounds = useMemo(() => getRangeBounds(range), [range])
 
@@ -529,36 +530,36 @@ export default function Reports() {
     ...requests.map(r => r.pic).filter(Boolean),
   ])].sort(), [creators, tasks, requests])
 
-  // ── Entity filters — campaign/brand/creator/PIC all combine with AND semantics,
-  //    and cascade through every section (charts, KPIs, tables, export)
+  // ── Entity filters — campaign/brand/creator/PIC are multi-select and combine
+  //    with AND semantics, cascading through every section (charts, KPIs, tables, export)
   const scopedCampaigns = useMemo(() => campaigns.filter(c =>
-    (brandFilter === 'all' || c.brandName === brandFilter) &&
-    (campaignFilter === 'all' || c.id === campaignFilter),
+    (brandFilter.length === 0 || brandFilter.includes(c.brandName)) &&
+    (campaignFilter.length === 0 || campaignFilter.includes(c.id)),
   ), [campaigns, brandFilter, campaignFilter])
 
   const scopedCampaignNames = useMemo(() => new Set(scopedCampaigns.map(c => c.name)), [scopedCampaigns])
 
   const scopedTasks = useMemo(() => tasks.filter(t =>
     scopedCampaignNames.has(t.project) &&
-    (creatorFilter === 'all' || t.creatorId === creatorFilter) &&
-    (picFilter === 'all' || t.pic === picFilter),
+    (creatorFilter.length === 0 || creatorFilter.includes(t.creatorId)) &&
+    (picFilter.length === 0 || picFilter.includes(t.pic)),
   ), [tasks, scopedCampaignNames, creatorFilter, picFilter])
 
   const scopedRequests = useMemo(() => requests.filter(r =>
-    picFilter === 'all' || r.pic === picFilter,
+    picFilter.length === 0 || picFilter.includes(r.pic),
   ), [requests, picFilter])
 
   const scopedCreators = useMemo(() => creators.filter(c => {
-    if (creatorFilter !== 'all' && c.id !== creatorFilter) return false
-    if (picFilter !== 'all' && c.pic !== picFilter) return false
-    if (campaignFilter !== 'all' || brandFilter !== 'all') {
+    if (creatorFilter.length > 0 && !creatorFilter.includes(c.id)) return false
+    if (picFilter.length > 0 && !picFilter.includes(c.pic)) return false
+    if (campaignFilter.length > 0 || brandFilter.length > 0) {
       const hasTaskInScope = tasks.some(t => scopedCampaignNames.has(t.project) && t.creatorId === c.id)
       if (!hasTaskInScope) return false
     }
     return true
   }), [creators, tasks, scopedCampaignNames, campaignFilter, brandFilter, creatorFilter, picFilter])
 
-  const hasEntityFilter = campaignFilter !== 'all' || brandFilter !== 'all' || creatorFilter !== 'all' || picFilter !== 'all'
+  const hasEntityFilter = campaignFilter.length > 0 || brandFilter.length > 0 || creatorFilter.length > 0 || picFilter.length > 0
 
   const data = useMemo(
     () => buildReportData(bounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests: scopedRequests }),
@@ -827,34 +828,44 @@ export default function Reports() {
           <p className="text-[12px] text-white/30 mt-1">Campaign, creator, and pipeline performance</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <Link
+            to="/reports/templates"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
+          >
+            <FileSpreadsheet size={13} /> Custom Reports
+          </Link>
           <RangeControl value={range} onChange={setRange} />
           <ExportMenu defaultRange={range} onExport={handleExportAll} />
         </div>
       </div>
 
-      {/* Entity filters */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <Filter size={12} className="text-white/25" />
-        <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={SELECT}>
-          <option value="all">All Campaigns</option>
-          {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} className={SELECT}>
-          <option value="all">All Brands</option>
-          {brandOptions.map(b => <option key={b} value={b}>{b}</option>)}
-        </select>
-        <select value={creatorFilter} onChange={e => setCreatorFilter(e.target.value)} className={SELECT}>
-          <option value="all">All Creators</option>
-          {creators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
-        </select>
-        <select value={picFilter} onChange={e => setPicFilter(e.target.value)} className={SELECT}>
-          <option value="all">All PICs</option>
-          {picOptions.map(p => <option key={p} value={p}>{p}</option>)}
-        </select>
+      {/* Entity filters — multi-select, so a report can be scoped to several campaigns/brands/creators/PICs at once */}
+      <div className="flex items-start gap-2 mb-3 flex-wrap">
+        <Filter size={12} className="text-white/25 mt-2 flex-shrink-0" />
+        <TagMultiSelect
+          compact placeholder="All Campaigns"
+          options={campaigns} selected={campaignFilter} onChange={setCampaignFilter}
+          getKey={c => c.id} getLabel={c => c.name}
+        />
+        <TagMultiSelect
+          compact placeholder="All Brands"
+          options={brandOptions.map(b => ({ id: b, name: b }))} selected={brandFilter} onChange={setBrandFilter}
+          getKey={o => o.id} getLabel={o => o.name}
+        />
+        <TagMultiSelect
+          compact placeholder="All Creators"
+          options={creators} selected={creatorFilter} onChange={setCreatorFilter}
+          getKey={c => c.id} getLabel={c => c.name}
+        />
+        <TagMultiSelect
+          compact placeholder="All PICs"
+          options={picOptions.map(p => ({ id: p, name: p }))} selected={picFilter} onChange={setPicFilter}
+          getKey={o => o.id} getLabel={o => o.name}
+        />
         {hasEntityFilter && (
           <button
-            onClick={() => { setCampaignFilter('all'); setBrandFilter('all'); setCreatorFilter('all'); setPicFilter('all') }}
-            className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium"
+            onClick={() => { setCampaignFilter([]); setBrandFilter([]); setCreatorFilter([]); setPicFilter([]) }}
+            className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium mt-2"
           >
             Clear filters
           </button>

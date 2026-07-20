@@ -14,6 +14,8 @@ import Niche from '@/pages/Niche'
 import Brands from '@/pages/Brands'
 import ProjectManagement from '@/pages/ProjectManagement'
 import Reports from '@/pages/Reports'
+import CustomReports from '@/pages/CustomReports'
+import ReportTemplateEditor from '@/pages/ReportTemplateEditor'
 import Settings from '@/pages/Settings'
 import Users from '@/pages/Users'
 import NewUser from '@/pages/NewUser'
@@ -160,7 +162,10 @@ export default function App() {
             <Route path="/"                 element={<Dashboard />} />
             <Route path="/campaigns"        element={<Campaigns />} />
             <Route path="/projects"         element={<ProjectManagement />} />
-            <Route path="/reports"          element={<Reports />} />
+            <Route path="/reports"                  element={<Reports />} />
+            <Route path="/reports/templates"        element={<CustomReports />} />
+            <Route path="/reports/templates/new"    element={<ReportTemplateEditor />} />
+            <Route path="/reports/templates/:id"    element={<ReportTemplateEditor />} />
             <Route path="/creators"         element={<Creators />} />
             <Route path="/brands"           element={<Brands />} />
             <Route path="/recruit"          element={<Recruit />} />
