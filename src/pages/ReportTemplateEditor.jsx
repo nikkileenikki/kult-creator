@@ -2,13 +2,17 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useCampaignStore } from '@/store/campaignStore'
+import { useTaskStore } from '@/store/taskStore'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { request } from '@/lib/api'
 import { fetchTemplate, createTemplate, updateTemplate } from '@/lib/api/reportTemplates'
-import { RANGE_OPTIONS, LEVEL_OPTIONS, metricOptionsFor } from '@/lib/reportBuilder'
+import { RANGE_OPTIONS, LEVEL_OPTIONS, metricOptionsFor, generateReport } from '@/lib/reportBuilder'
+import { downloadCSV, rowsToCSV } from '@/lib/csv'
+import { downloadXLSX } from '@/lib/xlsx'
 import TagMultiSelect from '@/components/shared/TagMultiSelect'
 import { cn } from '@/lib/utils'
-import { ArrowLeft, X } from 'lucide-react'
+import { ArrowLeft, X, Download } from 'lucide-react'
 
 const INPUT  = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-3 py-2.5 text-[13px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const SELECT = INPUT + ' cursor-pointer'
@@ -27,10 +31,12 @@ export default function ReportTemplateEditor() {
   const authUser  = useAuthStore(s => s.user)
   const creators  = useCreatorStore(s => s.creators)
   const campaigns = useCampaignStore(s => s.campaigns)
+  const tasks     = useTaskStore(s => s.tasks)
 
   const [tpl, setTpl] = useState(DEFAULT_TEMPLATE)
-  const [saving, setSaving]   = useState(false)
-  const [loading, setLoading] = useState(!isNew)
+  const [saving, setSaving]         = useState(false)
+  const [generating, setGenerating] = useState(false)
+  const [loading, setLoading]       = useState(!isNew)
 
   useEffect(() => {
     if (isNew) return
@@ -50,23 +56,46 @@ export default function ReportTemplateEditor() {
     set({ levels: tpl.levels.includes(key) ? tpl.levels.filter(l => l !== key) : [...tpl.levels, key] })
   }
 
+  // Saves the template (create or update) and returns the saved template, or null on failure.
+  async function persist() {
+    if (!tpl.title.trim()) { showToast('Template title is required', 'error'); return null }
+    const payload = { ...tpl, createdBy: tpl.createdBy || authUser?.displayName || '' }
+    if (isNew) {
+      const created = await createTemplate(payload)
+      navigate(`/reports/templates/${created.id}`, { replace: true })
+      return created
+    }
+    await updateTemplate(id, payload)
+    return { ...payload, id }
+  }
+
   async function handleSave() {
-    if (!tpl.title.trim()) { showToast('Template title is required', 'error'); return }
     setSaving(true)
     try {
-      const payload = { ...tpl, createdBy: tpl.createdBy || authUser?.displayName || '' }
-      if (isNew) {
-        const created = await createTemplate(payload)
-        showToast('Template created')
-        navigate(`/reports/templates/${created.id}`, { replace: true })
-      } else {
-        await updateTemplate(id, payload)
-        showToast('Template saved')
-      }
+      const saved = await persist()
+      if (saved) showToast(isNew ? 'Template created' : 'Template saved')
     } catch (e) {
       showToast('Failed to save template: ' + e.message, 'error')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function handleSaveAndGenerate() {
+    setGenerating(true)
+    try {
+      const saved = await persist()
+      if (!saved) return
+      const taskTimeline = await request('GET', '/analytics/task-timeline').catch(() => ({}))
+      const { sheets } = generateReport(saved, { creators, tasks, campaigns }, taskTimeline)
+      const filenameBase = `${saved.title.replace(/[^\w\-]+/g, '_')}-${new Date().toISOString().slice(0, 10)}`
+      if (saved.fileType === 'xlsx') downloadXLSX(`${filenameBase}.xlsx`, sheets)
+      else downloadCSV(`${filenameBase}.csv`, sheets.map(s => rowsToCSV(s.rows, s.columns)).join('\n\n'))
+      showToast('Template saved and report generated')
+    } catch (e) {
+      showToast('Failed to generate report: ' + e.message, 'error')
+    } finally {
+      setGenerating(false)
     }
   }
 
@@ -84,13 +113,22 @@ export default function ReportTemplateEditor() {
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">{isNew ? 'New Template' : 'Edit Template'}</h1>
           <p className="text-[12px] text-white/30 mt-1">Configure a reusable report and save it for later</p>
         </div>
-        <button
-          onClick={handleSave}
-          disabled={saving}
-          className="px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-[13px] font-semibold transition-all"
-        >
-          {saving ? 'Saving…' : 'Save Template'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving || generating}
+            className="px-5 py-2.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 disabled:opacity-50 text-white/70 hover:text-white text-[13px] font-semibold transition-all"
+          >
+            {saving ? 'Saving…' : 'Save Template'}
+          </button>
+          <button
+            onClick={handleSaveAndGenerate}
+            disabled={saving || generating}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:opacity-50 text-white text-[13px] font-semibold transition-all"
+          >
+            <Download size={14} /> {generating ? 'Generating…' : 'Save & Generate Report'}
+          </button>
+        </div>
       </div>
 
       <div className="space-y-6">
