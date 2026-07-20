@@ -1,5 +1,6 @@
 import { json, err, opts, getDB } from '../../_helpers.js'
 import { verifyCreatorToken } from '../../_creator_auth.js'
+import { logActivity } from '../../_activityLog.js'
 
 export const onRequestOptions = () => opts()
 
@@ -11,7 +12,7 @@ export async function onRequestPatch({ params, request, env }) {
   if (!creatorId) return err('No creator profile linked', 403)
 
   const db = getDB(env)
-  const task = await db.prepare('SELECT id, status, creator_id, creator_name FROM tasks WHERE id = ?').bind(params.id).first()
+  const task = await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(params.id).first()
   if (!task) return err('Task not found', 404)
 
   // Allow if task belongs to this creator OR is unassigned (open marketplace task)
@@ -41,6 +42,12 @@ export async function onRequestPatch({ params, request, env }) {
   } else {
     await db.prepare('UPDATE tasks SET status = ? WHERE id = ?').bind(status, params.id).run()
   }
+
+  await logActivity(db, {
+    entityType: 'task', entityId: params.id, entityName: task.task ?? '',
+    action: 'status_changed', fromStatus: task.status, toStatus: status,
+    actor: task.creator_name || creatorId, meta: { project: task.project },
+  })
 
   const updated = await db.prepare('SELECT * FROM tasks WHERE id = ?').bind(params.id).first()
   return json(updated)

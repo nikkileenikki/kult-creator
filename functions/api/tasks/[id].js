@@ -1,5 +1,6 @@
 import { json, err, opts, getDB, mapTask } from '../_helpers'
 import { taskQ } from '../_queries'
+import { logActivity } from '../_activityLog'
 
 export const onRequestOptions = () => opts()
 
@@ -13,6 +14,14 @@ export async function onRequestPatch({ params, request, env }) {
 
   const result = await taskQ.update(db, params.id, body)
   if (!result) return err('No valid fields to update')
+
+  if (body.status && body.status !== prev.status) {
+    await logActivity(db, {
+      entityType: 'task', entityId: params.id, entityName: prev.task,
+      action: 'status_changed', fromStatus: prev.status, toStatus: body.status,
+      actor: prev.pic || '', meta: { project: prev.project, creatorName: prev.creator_name },
+    })
+  }
 
   // Log activity when a task is newly marked Completed
   if (body.status === 'Completed' && prev.status !== 'Completed' && prev.creator_name && prev.creator_name !== 'Unassigned') {
