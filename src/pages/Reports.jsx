@@ -14,12 +14,13 @@ import {
 import {
   Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
-  Zap, Clock, Activity, LayoutGrid, ChevronDown,
+  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter,
 } from 'lucide-react'
 
 const CATEGORIES = [
   { key: 'campaigns',   label: 'Campaigns' },
   { key: 'creators',    label: 'Creators' },
+  { key: 'tasks',       label: 'Tasks' },
   { key: 'brands',      label: 'Brands' },
   { key: 'pic',         label: 'PIC Workload' },
   { key: 'recruitment', label: 'Recruitment' },
@@ -49,17 +50,33 @@ function relativeTime(iso) {
   return `${Math.floor(hrs / 24)}d ago`
 }
 
+function fmtDate(iso) {
+  if (!iso) return '—'
+  const d = new Date(iso)
+  if (isNaN(d)) return '—'
+  return d.toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })
+}
+
 // ── Date range ───────────────────────────────────────────────────────────────
 
 const RANGE_OPTIONS = [
-  { key: 'all',   label: 'All Time' },
-  { key: 'month', label: 'This Month' },
-  { key: '30',    label: 'Last 30 Days' },
-  { key: '90',    label: 'Last 90 Days' },
+  { key: 'all',    label: 'All Time' },
+  { key: 'month',  label: 'This Month' },
+  { key: '30',     label: 'Last 30 Days' },
+  { key: '90',     label: 'Last 90 Days' },
+  { key: 'custom', label: 'Custom' },
 ]
 
-function getRangeBounds(preset) {
+const DEFAULT_RANGE = { preset: 'all', start: '', end: '' }
+
+function getRangeBounds({ preset, start: customStart, end: customEnd }) {
   if (preset === 'all') return null
+  if (preset === 'custom') {
+    if (!customStart || !customEnd) return null
+    const start = new Date(customStart); start.setHours(0, 0, 0, 0)
+    const end   = new Date(customEnd);   end.setHours(23, 59, 59, 999)
+    return { start, end }
+  }
   const end = new Date(); end.setHours(23, 59, 59, 999)
   let start
   if (preset === 'month') start = new Date(end.getFullYear(), end.getMonth(), 1)
@@ -86,7 +103,8 @@ function daysOverdue(dueDate) {
 }
 
 // ── Pure report data builder — used for both the on-screen view and export,
-//    so export can run against a date range independent of what's displayed ──
+//    over whichever creators/tasks/campaigns/requests have already been
+//    scoped by the campaign/brand/creator filters ───────────────────────────
 
 function buildReportData(bounds, { creators, tasks, campaigns, requests }) {
   const filteredTasks    = tasks.filter(t => inRange(t.dueDate, bounds))
@@ -182,10 +200,11 @@ function sectionCSV(title, rows, columns) {
   return `${title}\n${rowsToCSV(rows, columns)}`
 }
 
-function buildCsvSections(data) {
+function buildCsvSections(data, taskTimeline) {
   return {
     campaigns: () => sectionCSV('CAMPAIGN PERFORMANCE', data.campaignPerf, [
       { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
+      { key: 'startDate', label: 'Start Date' }, { key: 'endDate', label: 'End Date' },
       { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
       { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
     ]),
@@ -193,6 +212,16 @@ function buildCsvSections(data) {
       { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
       { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
       { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
+    ]),
+    tasks: () => sectionCSV('TASK DETAIL', data.filteredTasks.map(t => ({
+      ...t,
+      assignedAt:   fmtDate(taskTimeline?.[t.id]?.assignedAt),
+      submittedAt:  fmtDate(taskTimeline?.[t.id]?.submittedAt),
+      completedAt:  fmtDate(taskTimeline?.[t.id]?.completedAt),
+    })), [
+      { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' },
+      { key: 'status', label: 'Status' }, { key: 'dueDate', label: 'Due Date' },
+      { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
     ]),
     brands: () => sectionCSV('BRAND PERFORMANCE', data.brandPerf, [
       { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
@@ -344,12 +373,41 @@ function ProgressBar({ pct, color = '#9085e9' }) {
   )
 }
 
+const DATE_INPUT = 'bg-[#111116] border border-white/10 rounded-md px-2 py-1 text-[11px] text-white focus:outline-none focus:border-violet-500/50'
+const SELECT = 'bg-[#1A1A22] border border-white/7 rounded-lg px-2.5 py-1.5 text-[11px] text-white/70 focus:outline-none focus:border-violet-500/40 hover:border-white/12 transition-all'
+
+function RangeControl({ value, onChange }) {
+  return (
+    <div className="flex items-center gap-1 bg-[#1A1A22] border border-white/7 rounded-lg p-1 flex-wrap">
+      {RANGE_OPTIONS.map(o => (
+        <button
+          key={o.key}
+          onClick={() => onChange({ ...value, preset: o.key })}
+          className={cn(
+            'text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-all',
+            value.preset === o.key ? 'bg-violet-600/25 text-violet-300' : 'text-white/40 hover:text-white/70',
+          )}
+        >
+          {o.label}
+        </button>
+      ))}
+      {value.preset === 'custom' && (
+        <div className="flex items-center gap-1.5 pl-1">
+          <input type="date" value={value.start} onChange={e => onChange({ ...value, start: e.target.value })} className={DATE_INPUT} />
+          <span className="text-white/20 text-[11px]">to</span>
+          <input type="date" value={value.end} onChange={e => onChange({ ...value, end: e.target.value })} className={DATE_INPUT} />
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Export menu ──────────────────────────────────────────────────────────────
 
 function ExportMenu({ defaultRange, onExport }) {
-  const [open, setOpen]           = useState(false)
+  const [open, setOpen]     = useState(false)
   const [exportRange, setExportRange] = useState(defaultRange)
-  const [selected, setSelected]   = useState(new Set(EXPORT_SECTIONS.map(s => s.key)))
+  const [selected, setSelected] = useState(new Set(EXPORT_SECTIONS.map(s => s.key)))
   const ref = useRef(null)
 
   useEffect(() => {
@@ -381,21 +439,10 @@ function ExportMenu({ defaultRange, onExport }) {
       </button>
 
       {open && (
-        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-[280px] bg-[#111116] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.6)] p-4 space-y-4 animate-[fadeUp_.15s_ease]">
+        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-[300px] bg-[#111116] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.6)] p-4 space-y-4 animate-[fadeUp_.15s_ease]">
           <div>
             <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Date Range</div>
-            <div className="grid grid-cols-2 gap-1.5">
-              {RANGE_OPTIONS.map(o => (
-                <button
-                  key={o.key}
-                  onClick={() => setExportRange(o.key)}
-                  className={cn('text-[11px] px-2 py-1.5 rounded-lg border transition-all',
-                    exportRange === o.key ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' : 'border-white/7 text-white/40 hover:text-white/70 hover:border-white/12')}
-                >
-                  {o.label}
-                </button>
-              ))}
-            </div>
+            <RangeControl value={exportRange} onChange={setExportRange} />
           </div>
 
           <div>
@@ -442,28 +489,61 @@ export default function Reports() {
   const requests   = useRecruitStore(s => s.requests)
   const showToast  = useUIStore(s => s.showToast)
 
-  const [range, setRange] = useState('all')
+  const [range, setRange] = useState(DEFAULT_RANGE)
   const [showAllCreators, setShowAllCreators] = useState(false)
   const [viewMode, setViewMode] = useState('summary') // 'summary' | 'category'
   const [category, setCategory] = useState('campaigns')
   const [velocity, setVelocity] = useState(null)
   const [recentLog, setRecentLog] = useState([])
+  const [taskTimeline, setTaskTimeline] = useState({})
+
+  const [campaignFilter, setCampaignFilter] = useState('all')
+  const [brandFilter, setBrandFilter]       = useState('all')
+  const [creatorFilter, setCreatorFilter]   = useState('all')
+
   const bounds = useMemo(() => getRangeBounds(range), [range])
 
   useEffect(() => {
     request('GET', '/analytics/velocity').then(setVelocity).catch(() => {})
     request('GET', '/analytics/log?limit=15').then(setRecentLog).catch(() => {})
+    request('GET', '/analytics/task-timeline').then(setTaskTimeline).catch(() => {})
   }, [])
 
+  const brandOptions = useMemo(() => [...new Set(campaigns.map(c => c.brandName).filter(Boolean))].sort(), [campaigns])
+
+  // ── Entity filters — cascade campaign -> brand -> creator through every section
+  const scopedCampaigns = useMemo(() => campaigns.filter(c =>
+    (brandFilter === 'all' || c.brandName === brandFilter) &&
+    (campaignFilter === 'all' || c.id === campaignFilter),
+  ), [campaigns, brandFilter, campaignFilter])
+
+  const scopedCampaignNames = useMemo(() => new Set(scopedCampaigns.map(c => c.name)), [scopedCampaigns])
+
+  const scopedTasks = useMemo(() => tasks.filter(t =>
+    scopedCampaignNames.has(t.project) &&
+    (creatorFilter === 'all' || t.creatorId === creatorFilter),
+  ), [tasks, scopedCampaignNames, creatorFilter])
+
+  const scopedCreators = useMemo(() => {
+    if (creatorFilter !== 'all') return creators.filter(c => c.id === creatorFilter)
+    if (campaignFilter === 'all' && brandFilter === 'all') return creators
+    const creatorIdsInScope = new Set(
+      tasks.filter(t => scopedCampaignNames.has(t.project)).map(t => t.creatorId).filter(Boolean),
+    )
+    return creators.filter(c => creatorIdsInScope.has(c.id))
+  }, [creators, tasks, scopedCampaignNames, campaignFilter, brandFilter, creatorFilter])
+
+  const hasEntityFilter = campaignFilter !== 'all' || brandFilter !== 'all' || creatorFilter !== 'all'
+
   const data = useMemo(
-    () => buildReportData(bounds, { creators, tasks, campaigns, requests }),
-    [bounds, creators, tasks, campaigns, requests],
+    () => buildReportData(bounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests }),
+    [bounds, scopedCreators, scopedTasks, scopedCampaigns, requests],
   )
 
-  // Overview (state gauges — not date-filtered)
-  const activeCreatorsCount  = creators.filter(c => c.status === 'Active').length
-  const activeCampaignsCount = campaigns.filter(c => c.status === 'Active').length
-  const overdueNow           = tasks.filter(t => t.status === 'Overdue').length
+  // Overview (state gauges, scoped by entity filters but not the date range)
+  const activeCreatorsCount  = scopedCreators.filter(c => c.status === 'Active').length
+  const activeCampaignsCount = scopedCampaigns.filter(c => c.status === 'Active').length
+  const overdueNow           = scopedTasks.filter(t => t.status === 'Overdue').length
 
   // Distributions
   const taskPlatformData = useMemo(() => PLATFORM_ORDER
@@ -471,12 +551,12 @@ export default function Reports() {
     .filter(d => d.count > 0), [data.filteredTasks])
 
   const creatorPlatformData = useMemo(() => PLATFORM_ORDER
-    .map(name => ({ name, count: creators.filter(c => c.platform === name).length }))
-    .filter(d => d.count > 0), [creators])
+    .map(name => ({ name, count: scopedCreators.filter(c => c.platform === name).length }))
+    .filter(d => d.count > 0), [scopedCreators])
 
   const nicheData = useMemo(() => {
     const map = new Map()
-    for (const c of creators) {
+    for (const c of scopedCreators) {
       const key = c.niche || 'Unspecified'
       map.set(key, (map.get(key) ?? 0) + 1)
     }
@@ -485,19 +565,19 @@ export default function Reports() {
     const rest = sorted.slice(6).reduce((sum, [, n]) => sum + n, 0)
     if (rest > 0) top.push({ name: 'Other', count: rest })
     return top
-  }, [creators])
+  }, [scopedCreators])
 
   const visibleCreatorPerf = showAllCreators ? data.creatorPerf : data.creatorPerf.slice(0, 10)
 
-  // Overdue tasks — always current, independent of the date filter
+  // Overdue tasks — always current (not date-filtered), but respects entity filters
   const overdueTasks = useMemo(() =>
-    tasks.filter(t => t.status === 'Overdue').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
-  [tasks])
+    scopedTasks.filter(t => t.status === 'Overdue').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
+  [scopedTasks])
 
   function handleExportAll(exportRange, selectedKeys) {
     const exportBounds = getRangeBounds(exportRange)
-    const exportData   = buildReportData(exportBounds, { creators, tasks, campaigns, requests })
-    const csv          = buildCsvSections(exportData)
+    const exportData   = buildReportData(exportBounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests })
+    const csv          = buildCsvSections(exportData, taskTimeline)
     const dateSuffix    = new Date().toISOString().slice(0, 10)
 
     const parts = []
@@ -518,6 +598,7 @@ export default function Reports() {
     }
     if (selectedKeys.has('campaigns'))   parts.push(csv.campaigns())
     if (selectedKeys.has('creators'))    parts.push(csv.creators())
+    if (selectedKeys.has('tasks'))       parts.push(csv.tasks())
     if (selectedKeys.has('brands'))      parts.push(csv.brands())
     if (selectedKeys.has('pic'))         parts.push(csv.pic())
     if (selectedKeys.has('recruitment')) parts.push(csv.recruitment())
@@ -542,7 +623,7 @@ export default function Reports() {
           <table className="w-full">
             <thead className="sticky top-0 bg-[#1E1E28]">
               <tr>
-                {['Campaign', 'Brand', 'Status', 'Tasks', 'Completed', 'Overdue', 'Completion', 'Budget'].map(h => (
+                {['Campaign', 'Brand', 'Status', 'Start', 'End', 'Tasks', 'Completed', 'Overdue', 'Completion', 'Budget'].map(h => (
                   <th key={h} className="px-5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -558,6 +639,8 @@ export default function Reports() {
                   </td>
                   <td className="px-5 py-2.5 text-[12px] text-white/40">{c.brandName || '—'}</td>
                   <td className="px-5 py-2.5 text-[11px] text-white/40">{c.status}</td>
+                  <td className="px-5 py-2.5 font-mono text-[11px] text-white/40 whitespace-nowrap">{c.startDate || '—'}</td>
+                  <td className="px-5 py-2.5 font-mono text-[11px] text-white/40 whitespace-nowrap">{c.endDate || '—'}</td>
                   <td className="px-5 py-2.5 font-mono text-[12px] text-white/60">{c.totalTasks}</td>
                   <td className="px-5 py-2.5 font-mono text-[12px] text-emerald-400">{c.completed}</td>
                   <td className="px-5 py-2.5 font-mono text-[12px]">{c.overdue > 0 ? <span className="text-rose-400">{c.overdue}</span> : <span className="text-white/20">0</span>}</td>
@@ -600,6 +683,43 @@ export default function Reports() {
               <span className="flex-shrink-0 font-mono text-[12px] text-emerald-400 w-10 text-right">{c.completionRate}%</span>
             </div>
           ))}
+        </div>
+      )}
+    </Card>
+  )
+
+  const tasksSection = (
+    <Card title="Task Detail" icon={ListTodo}>
+      {data.filteredTasks.length === 0 ? <EmptyState>No tasks in this period</EmptyState> : (
+        <div className={cn('overflow-y-auto -mx-5 -mb-5', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
+          <table className="w-full">
+            <thead className="sticky top-0 bg-[#1E1E28]">
+              <tr>
+                {['Task', 'Campaign', 'Creator', 'Status', 'Due', 'Assigned', 'Submitted', 'Completed'].map(h => (
+                  <th key={h} className="px-5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {data.filteredTasks.map(t => {
+                const tl = taskTimeline[t.id] ?? {}
+                return (
+                  <tr key={t.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.02] transition-colors">
+                    <td className="px-5 py-2.5 text-[12px] text-white/80 max-w-[220px] truncate">{t.task}</td>
+                    <td className="px-5 py-2.5 text-[12px] text-white/40 max-w-[160px] truncate">{t.project}</td>
+                    <td className="px-5 py-2.5 text-[12px] text-white/40">{t.creatorName || 'Unassigned'}</td>
+                    <td className="px-5 py-2.5">
+                      <span className="text-[10px] font-mono px-2 py-0.5 rounded-full" style={{ color: STATUS_COLOR[t.status], backgroundColor: `${STATUS_COLOR[t.status]}1a` }}>{t.status}</span>
+                    </td>
+                    <td className="px-5 py-2.5 font-mono text-[11px] text-white/40 whitespace-nowrap">{t.dueDate || '—'}</td>
+                    <td className="px-5 py-2.5 font-mono text-[11px] text-white/40 whitespace-nowrap">{fmtDate(tl.assignedAt)}</td>
+                    <td className="px-5 py-2.5 font-mono text-[11px] text-white/40 whitespace-nowrap">{fmtDate(tl.submittedAt)}</td>
+                    <td className="px-5 py-2.5 font-mono text-[11px] text-emerald-400/80 whitespace-nowrap">{fmtDate(tl.completedAt)}</td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </Card>
@@ -667,6 +787,7 @@ export default function Reports() {
   const CATEGORY_SECTION = {
     campaigns:   campaignSection,
     creators:    creatorSection,
+    tasks:       tasksSection,
     brands:      brandSection,
     pic:         picSection,
     recruitment: recruitmentSection,
@@ -680,22 +801,34 @@ export default function Reports() {
           <p className="text-[12px] text-white/30 mt-1">Campaign, creator, and pipeline performance</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1 bg-[#1A1A22] border border-white/7 rounded-lg p-1">
-            {RANGE_OPTIONS.map(o => (
-              <button
-                key={o.key}
-                onClick={() => setRange(o.key)}
-                className={cn(
-                  'text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-all',
-                  range === o.key ? 'bg-violet-600/25 text-violet-300' : 'text-white/40 hover:text-white/70',
-                )}
-              >
-                {o.label}
-              </button>
-            ))}
-          </div>
+          <RangeControl value={range} onChange={setRange} />
           <ExportMenu defaultRange={range} onExport={handleExportAll} />
         </div>
+      </div>
+
+      {/* Entity filters */}
+      <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <Filter size={12} className="text-white/25" />
+        <select value={campaignFilter} onChange={e => setCampaignFilter(e.target.value)} className={SELECT}>
+          <option value="all">All Campaigns</option>
+          {campaigns.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        <select value={brandFilter} onChange={e => setBrandFilter(e.target.value)} className={SELECT}>
+          <option value="all">All Brands</option>
+          {brandOptions.map(b => <option key={b} value={b}>{b}</option>)}
+        </select>
+        <select value={creatorFilter} onChange={e => setCreatorFilter(e.target.value)} className={SELECT}>
+          <option value="all">All Creators</option>
+          {creators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+        </select>
+        {hasEntityFilter && (
+          <button
+            onClick={() => { setCampaignFilter('all'); setBrandFilter('all'); setCreatorFilter('all') }}
+            className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium"
+          >
+            Clear filters
+          </button>
+        )}
       </div>
 
       {/* View mode + category selector */}
@@ -791,6 +924,7 @@ export default function Reports() {
           </div>
 
           <div className="mb-4">{campaignSection}</div>
+          <div className="mb-4">{tasksSection}</div>
 
           <div className="grid grid-cols-2 gap-4 mb-4">
             {creatorSection}
