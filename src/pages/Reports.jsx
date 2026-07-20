@@ -202,12 +202,24 @@ function sectionCSV(title, rows, columns) {
 
 function buildCsvSections(data, taskTimeline) {
   return {
-    campaigns: () => sectionCSV('CAMPAIGN PERFORMANCE', data.campaignPerf, [
-      { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
-      { key: 'startDate', label: 'Start Date' }, { key: 'endDate', label: 'End Date' },
-      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-    ]),
+    campaigns: () => [
+      sectionCSV('CAMPAIGN PERFORMANCE', data.campaignPerf, [
+        { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
+        { key: 'startDate', label: 'Start Date' }, { key: 'endDate', label: 'End Date' },
+        { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
+        { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
+      ]),
+      sectionCSV('CAMPAIGN TASK DETAIL', data.filteredTasks.map(t => ({
+        ...t,
+        assignedAt:  fmtDate(taskTimeline?.[t.id]?.assignedAt),
+        submittedAt: fmtDate(taskTimeline?.[t.id]?.submittedAt),
+        completedAt: fmtDate(taskTimeline?.[t.id]?.completedAt),
+      })), [
+        { key: 'project', label: 'Campaign' }, { key: 'task', label: 'Task' }, { key: 'creatorName', label: 'Creator' },
+        { key: 'status', label: 'Status' }, { key: 'priority', label: 'Priority' }, { key: 'dueDate', label: 'Due Date' },
+        { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
+      ]),
+    ].join('\n\n'),
     creators: () => sectionCSV('CREATOR PERFORMANCE', data.creatorPerf, [
       { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
       { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
