@@ -1,22 +1,20 @@
-import { useState, useMemo, useEffect, useRef } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import TagMultiSelect from '@/components/shared/TagMultiSelect'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useRecruitStore } from '@/store/recruitStore'
-import { useUIStore } from '@/store/uiStore'
 import { cn } from '@/lib/utils'
 import { request } from '@/lib/api'
 import { STATUS_COLOR, PLATFORM_COLOR, OTHER_COLOR, categoricalColor } from '@/lib/reportColors'
-import { rowsToCSV, downloadCSV } from '@/lib/csv'
 import {
   PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, LabelList,
 } from 'recharts'
 import {
-  Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
+  TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
-  Zap, Clock, Activity, LayoutGrid, ChevronDown, Filter, FileSpreadsheet,
+  Zap, Clock, Activity, LayoutGrid, Filter, FileSpreadsheet,
 } from 'lucide-react'
 
 const CATEGORIES = [
@@ -26,12 +24,6 @@ const CATEGORIES = [
   { key: 'brands',      label: 'Brands' },
   { key: 'pic',         label: 'PIC Workload' },
   { key: 'recruitment', label: 'Recruitment' },
-]
-
-const EXPORT_SECTIONS = [
-  { key: 'overview', label: 'Overview & Velocity' },
-  ...CATEGORIES,
-  { key: 'overdue', label: 'Overdue Tasks' },
 ]
 
 function formatDuration(hours) {
@@ -197,65 +189,6 @@ function buildReportData(bounds, { creators, tasks, campaigns, requests }) {
   }
 }
 
-function sectionCSV(title, rows, columns) {
-  if (!rows.length) return `${title}\nNo data`
-  return `${title}\n${rowsToCSV(rows, columns)}`
-}
-
-function buildCsvSections(data, taskTimeline) {
-  return {
-    campaigns: () => [
-      sectionCSV('CAMPAIGN PERFORMANCE', data.campaignPerf, [
-        { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
-        { key: 'startDate', label: 'Start Date' }, { key: 'endDate', label: 'End Date' },
-        { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
-        { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-      ]),
-      sectionCSV('CAMPAIGN TASK DETAIL', data.filteredTasks.map(t => ({
-        ...t,
-        assignedAt:  fmtDate(taskTimeline?.[t.id]?.assignedAt),
-        submittedAt: fmtDate(taskTimeline?.[t.id]?.submittedAt),
-        completedAt: fmtDate(taskTimeline?.[t.id]?.completedAt),
-      })), [
-        { key: 'project', label: 'Campaign' }, { key: 'task', label: 'Task' }, { key: 'creatorName', label: 'Creator' }, { key: 'pic', label: 'PIC' },
-        { key: 'status', label: 'Status' }, { key: 'priority', label: 'Priority' }, { key: 'dueDate', label: 'Due Date' },
-        { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
-      ]),
-    ].join('\n\n'),
-    creators: () => sectionCSV('CREATOR PERFORMANCE', data.creatorPerf, [
-      { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
-      { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
-    ]),
-    tasks: () => sectionCSV('TASK DETAIL', data.filteredTasks.map(t => ({
-      ...t,
-      assignedAt:   fmtDate(taskTimeline?.[t.id]?.assignedAt),
-      submittedAt:  fmtDate(taskTimeline?.[t.id]?.submittedAt),
-      completedAt:  fmtDate(taskTimeline?.[t.id]?.completedAt),
-    })), [
-      { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' }, { key: 'pic', label: 'PIC' },
-      { key: 'status', label: 'Status' }, { key: 'dueDate', label: 'Due Date' },
-      { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
-    ]),
-    brands: () => sectionCSV('BRAND PERFORMANCE', data.brandPerf, [
-      { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
-      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-    ]),
-    pic: () => sectionCSV('PIC WORKLOAD', data.picWorkload, [
-      { key: 'pic', label: 'PIC' }, { key: 'creatorsManaged', label: 'Creators Managed' },
-      { key: 'tasksAssigned', label: 'Tasks Assigned' }, { key: 'tasksCompleted', label: 'Tasks Completed' },
-      { key: 'completionRate', label: 'Completion %' }, { key: 'recruitsHandled', label: 'Recruits Handled' },
-    ]),
-    recruitment: () => [
-      sectionCSV('RECRUITMENT PIPELINE', data.pipelineData, [{ key: 'name', label: 'Status' }, { key: 'count', label: 'Count' }]),
-      sectionCSV('RECRUITMENT SOURCE EFFECTIVENESS', data.sourceEffectiveness, [
-        { key: 'source', label: 'Source' }, { key: 'total', label: 'Total' }, { key: 'approved', label: 'Approved' }, { key: 'approvalRate', label: 'Approval %' },
-      ]),
-    ].join('\n\n'),
-  }
-}
-
 // ── Shared bits ──────────────────────────────────────────────────────────────
 
 function ChartTooltip({ active, payload, label }) {
@@ -415,84 +348,6 @@ function RangeControl({ value, onChange }) {
   )
 }
 
-// ── Export menu ──────────────────────────────────────────────────────────────
-
-function ExportMenu({ defaultRange, onExport }) {
-  const [open, setOpen]     = useState(false)
-  const [exportRange, setExportRange] = useState(defaultRange)
-  const [selected, setSelected] = useState(new Set(EXPORT_SECTIONS.map(s => s.key)))
-  const ref = useRef(null)
-
-  useEffect(() => {
-    function onClickOutside(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
-    document.addEventListener('mousedown', onClickOutside)
-    return () => document.removeEventListener('mousedown', onClickOutside)
-  }, [])
-
-  function toggleSection(key) {
-    setSelected(prev => {
-      const next = new Set(prev)
-      next.has(key) ? next.delete(key) : next.add(key)
-      return next
-    })
-  }
-
-  const allSelected = selected.size === EXPORT_SECTIONS.length
-  function toggleAll() {
-    setSelected(allSelected ? new Set() : new Set(EXPORT_SECTIONS.map(s => s.key)))
-  }
-
-  return (
-    <div className="relative" ref={ref}>
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
-      >
-        <Download size={13} /> Export <ChevronDown size={12} className={cn('transition-transform', open && 'rotate-180')} />
-      </button>
-
-      {open && (
-        <div className="absolute top-[calc(100%+8px)] right-0 z-50 w-[300px] bg-[#111116] border border-white/[0.08] rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,.6)] p-4 space-y-4 animate-[fadeUp_.15s_ease]">
-          <div>
-            <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-2">Date Range</div>
-            <RangeControl value={exportRange} onChange={setExportRange} />
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Sections</div>
-              <button onClick={toggleAll} className="text-[10px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
-                {allSelected ? 'Clear all' : 'Select all'}
-              </button>
-            </div>
-            <div className="space-y-1.5">
-              {EXPORT_SECTIONS.map(s => (
-                <label key={s.key} className="flex items-center gap-2 text-[12px] text-white/70 cursor-pointer hover:text-white transition-colors">
-                  <input
-                    type="checkbox"
-                    checked={selected.has(s.key)}
-                    onChange={() => toggleSection(s.key)}
-                    className="accent-violet-500 w-3.5 h-3.5"
-                  />
-                  {s.label}
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <button
-            onClick={() => { onExport(exportRange, selected); setOpen(false) }}
-            disabled={selected.size === 0}
-            className="w-full py-2 rounded-lg bg-violet-600 hover:bg-violet-500 disabled:bg-violet-600/30 disabled:cursor-not-allowed text-white text-[12px] font-semibold transition-all"
-          >
-            Generate & Download
-          </button>
-        </div>
-      )}
-    </div>
-  )
-}
-
 // ── Page ─────────────────────────────────────────────────────────────────────
 
 export default function Reports() {
@@ -500,7 +355,6 @@ export default function Reports() {
   const tasks      = useTaskStore(s => s.tasks)
   const campaigns  = useCampaignStore(s => s.campaigns)
   const requests   = useRecruitStore(s => s.requests)
-  const showToast  = useUIStore(s => s.showToast)
 
   const [range, setRange] = useState(DEFAULT_RANGE)
   const [showAllCreators, setShowAllCreators] = useState(false)
@@ -599,46 +453,6 @@ export default function Reports() {
   const overdueTasks = useMemo(() =>
     scopedTasks.filter(t => t.status === 'Overdue').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
   [scopedTasks])
-
-  function handleExportAll(exportRange, selectedKeys) {
-    const exportBounds = getRangeBounds(exportRange)
-    const exportData   = buildReportData(exportBounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests: scopedRequests })
-    const csv          = buildCsvSections(exportData, taskTimeline)
-    const dateSuffix    = new Date().toISOString().slice(0, 10)
-
-    const parts = []
-    if (selectedKeys.has('overview')) {
-      parts.push(sectionCSV('OVERVIEW', [
-        { label: 'Active Creators', value: activeCreatorsCount },
-        { label: 'Active Campaigns', value: activeCampaignsCount },
-        { label: 'Overdue Tasks (now)', value: overdueNow },
-        { label: 'Tasks in Period', value: exportData.totalInPeriod },
-        { label: 'Completed in Period', value: exportData.completedInPeriod },
-        { label: 'Completion Rate', value: `${exportData.completionRate}%` },
-        { label: 'Pending Recruits in Period', value: exportData.pendingRecruitsInPeriod },
-        { label: 'Completed (Last 7 Days)', value: velocity?.completedLast7 ?? '—' },
-        { label: 'Completed (Last 30 Days)', value: velocity?.completedLast30 ?? '—' },
-        { label: 'Avg Task Completion Time', value: formatDuration(velocity?.avgCompletionHours) },
-        { label: 'Avg Recruit Approval Time', value: formatDuration(velocity?.avgApprovalHours) },
-      ], [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }]))
-    }
-    if (selectedKeys.has('campaigns'))   parts.push(csv.campaigns())
-    if (selectedKeys.has('creators'))    parts.push(csv.creators())
-    if (selectedKeys.has('tasks'))       parts.push(csv.tasks())
-    if (selectedKeys.has('brands'))      parts.push(csv.brands())
-    if (selectedKeys.has('pic'))         parts.push(csv.pic())
-    if (selectedKeys.has('recruitment')) parts.push(csv.recruitment())
-    if (selectedKeys.has('overdue')) {
-      parts.push(sectionCSV('OVERDUE TASKS (current)', overdueTasks.map(t => ({ ...t, daysOverdue: daysOverdue(t.dueDate) })), [
-        { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' },
-        { key: 'pic', label: 'PIC' }, { key: 'dueDate', label: 'Due Date' }, { key: 'daysOverdue', label: 'Days Overdue' },
-      ]))
-    }
-
-    if (parts.length === 0) { showToast('Select at least one section to export', 'error'); return }
-    downloadCSV(`kult-creator-report-${dateSuffix}.csv`, parts.join('\n\n'))
-    showToast('Report downloaded')
-  }
 
   // ── Section content (reused for both summary and category views) ──────────
 
@@ -828,14 +642,13 @@ export default function Reports() {
           <p className="text-[12px] text-white/30 mt-1">Campaign, creator, and pipeline performance</p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          <RangeControl value={range} onChange={setRange} />
           <Link
             to="/reports/templates"
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
           >
             <FileSpreadsheet size={13} /> Custom Reports
           </Link>
-          <RangeControl value={range} onChange={setRange} />
-          <ExportMenu defaultRange={range} onExport={handleExportAll} />
         </div>
       </div>
 
