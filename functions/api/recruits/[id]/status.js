@@ -1,5 +1,6 @@
 import { json, err, opts, getDB } from '../../_helpers'
 import { recruitQ, creatorQ } from '../../_queries'
+import { logActivity } from '../../_activityLog'
 
 export const onRequestOptions = () => opts()
 
@@ -10,10 +11,20 @@ export async function onRequestPatch({ params, request, env }) {
   const { status, pic, rejectionReason } = body
   if (!status) return err('status is required')
 
+  const before = await db.prepare('SELECT status, name, pic FROM recruit_requests WHERE id = ?').bind(params.id).first()
+
   const patch = { status }
   if (pic) patch.pic = pic
   if (rejectionReason !== undefined) patch.rejectionReason = rejectionReason
   await recruitQ.patch(db, params.id, patch)
+
+  if (before && status !== before.status) {
+    await logActivity(db, {
+      entityType: 'recruit', entityId: params.id, entityName: before.name ?? '',
+      action: 'status_changed', fromStatus: before.status, toStatus: status,
+      actor: pic || before.pic || '', meta: {},
+    })
+  }
 
   if (status === 'Approved' || status === 'Rejected') {
     const recruit = await db.prepare('SELECT * FROM recruit_requests WHERE id = ?').bind(params.id).first()

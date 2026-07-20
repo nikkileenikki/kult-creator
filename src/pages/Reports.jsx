@@ -1,9 +1,10 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useRecruitStore } from '@/store/recruitStore'
 import { cn } from '@/lib/utils'
+import { request } from '@/lib/api'
 import { STATUS_COLOR, PLATFORM_COLOR, OTHER_COLOR, categoricalColor } from '@/lib/reportColors'
 import { rowsToCSV, downloadCSV } from '@/lib/csv'
 import {
@@ -12,7 +13,34 @@ import {
 import {
   Download, TrendingUp, Users, FolderOpen, AlertTriangle, ListTodo, UserPlus,
   CircleDot, AlertCircle, Circle, CheckCircle2, Trophy, Briefcase, Smartphone, Tags, GitBranch,
+  Zap, Clock, Activity, LayoutGrid,
 } from 'lucide-react'
+
+const CATEGORIES = [
+  { key: 'campaigns',   label: 'Campaigns' },
+  { key: 'creators',    label: 'Creators' },
+  { key: 'brands',      label: 'Brands' },
+  { key: 'pic',         label: 'PIC Workload' },
+  { key: 'recruitment', label: 'Recruitment' },
+]
+
+function formatDuration(hours) {
+  if (hours == null) return '—'
+  if (hours < 1) return `${Math.round(hours * 60)}m`
+  if (hours < 24) return `${hours.toFixed(1)}h`
+  return `${(hours / 24).toFixed(1)}d`
+}
+
+function relativeTime(iso) {
+  if (!iso) return ''
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return 'just now'
+  if (mins < 60) return `${mins}m ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs}h ago`
+  return `${Math.floor(hrs / 24)}d ago`
+}
 
 // ── Date range ───────────────────────────────────────────────────────────────
 
@@ -196,7 +224,16 @@ export default function Reports() {
 
   const [range, setRange] = useState('all')
   const [showAllCreators, setShowAllCreators] = useState(false)
+  const [viewMode, setViewMode] = useState('summary') // 'summary' | 'category'
+  const [category, setCategory] = useState('campaigns')
+  const [velocity, setVelocity] = useState(null)
+  const [recentLog, setRecentLog] = useState([])
   const bounds = useMemo(() => getRangeBounds(range), [range])
+
+  useEffect(() => {
+    request('GET', '/analytics/velocity').then(setVelocity).catch(() => {})
+    request('GET', '/analytics/log?limit=15').then(setRecentLog).catch(() => {})
+  }, [])
 
   const filteredTasks    = useMemo(() => tasks.filter(t => inRange(t.dueDate, bounds)), [tasks, bounds])
   const filteredRequests = useMemo(() => requests.filter(r => inRange(r.appliedDate, bounds)), [requests, bounds])
@@ -335,7 +372,43 @@ export default function Reports() {
     tasks.filter(t => t.status === 'Overdue').sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate)),
   [tasks])
 
+  const CSV_SECTIONS = {
+    campaigns: () => sectionCSV('CAMPAIGN PERFORMANCE', campaignPerf, [
+      { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
+      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
+    ]),
+    creators: () => sectionCSV('CREATOR PERFORMANCE', creatorPerf, [
+      { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
+      { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
+    ]),
+    brands: () => sectionCSV('BRAND PERFORMANCE', brandPerf, [
+      { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
+      { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
+    ]),
+    pic: () => sectionCSV('PIC WORKLOAD', picWorkload, [
+      { key: 'pic', label: 'PIC' }, { key: 'creatorsManaged', label: 'Creators Managed' },
+      { key: 'tasksAssigned', label: 'Tasks Assigned' }, { key: 'tasksCompleted', label: 'Tasks Completed' },
+      { key: 'completionRate', label: 'Completion %' }, { key: 'recruitsHandled', label: 'Recruits Handled' },
+    ]),
+    recruitment: () => [
+      sectionCSV('RECRUITMENT PIPELINE', pipelineData, [{ key: 'name', label: 'Status' }, { key: 'count', label: 'Count' }]),
+      sectionCSV('RECRUITMENT SOURCE EFFECTIVENESS', sourceEffectiveness, [
+        { key: 'source', label: 'Source' }, { key: 'total', label: 'Total' }, { key: 'approved', label: 'Approved' }, { key: 'approvalRate', label: 'Approval %' },
+      ]),
+    ].join('\n\n'),
+  }
+
   function handleExport() {
+    const dateSuffix = new Date().toISOString().slice(0, 10)
+
+    if (viewMode === 'category') {
+      downloadCSV(`kult-creator-${category}-report-${dateSuffix}.csv`, CSV_SECTIONS[category]())
+      return
+    }
+
     const parts = [
       sectionCSV('OVERVIEW', [
         { label: 'Active Creators', value: activeCreatorsCount },
@@ -345,51 +418,168 @@ export default function Reports() {
         { label: 'Completed in Period', value: completedInPeriod },
         { label: 'Completion Rate', value: `${completionRate}%` },
         { label: 'Pending Recruits in Period', value: pendingRecruitsInPeriod },
+        { label: 'Completed (Last 7 Days)', value: velocity?.completedLast7 ?? '—' },
+        { label: 'Completed (Last 30 Days)', value: velocity?.completedLast30 ?? '—' },
+        { label: 'Avg Task Completion Time', value: formatDuration(velocity?.avgCompletionHours) },
+        { label: 'Avg Recruit Approval Time', value: formatDuration(velocity?.avgApprovalHours) },
       ], [{ key: 'label', label: 'Metric' }, { key: 'value', label: 'Value' }]),
 
-      sectionCSV('CAMPAIGN PERFORMANCE', campaignPerf, [
-        { key: 'name', label: 'Campaign' }, { key: 'brandName', label: 'Brand' }, { key: 'status', label: 'Status' },
-        { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' }, { key: 'overdue', label: 'Overdue' },
-        { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-      ]),
-
-      sectionCSV('CREATOR PERFORMANCE', creatorPerf, [
-        { key: 'name', label: 'Creator' }, { key: 'platform', label: 'Platform' },
-        { key: 'assigned', label: 'Assigned' }, { key: 'completed', label: 'Completed' }, { key: 'underReview', label: 'Under Review' },
-        { key: 'completionRate', label: 'Completion %' }, { key: 'avgRating', label: 'Avg Rating' }, { key: 'coinsEarned', label: 'Coins Earned' },
-      ]),
-
-      sectionCSV('BRAND PERFORMANCE', brandPerf, [
-        { key: 'brandName', label: 'Brand' }, { key: 'campaignCount', label: 'Campaigns' },
-        { key: 'totalTasks', label: 'Total Tasks' }, { key: 'completed', label: 'Completed' },
-        { key: 'completionRate', label: 'Completion %' }, { key: 'budget', label: 'Budget' },
-      ]),
-
-      sectionCSV('PIC WORKLOAD', picWorkload, [
-        { key: 'pic', label: 'PIC' }, { key: 'creatorsManaged', label: 'Creators Managed' },
-        { key: 'tasksAssigned', label: 'Tasks Assigned' }, { key: 'tasksCompleted', label: 'Tasks Completed' },
-        { key: 'completionRate', label: 'Completion %' }, { key: 'recruitsHandled', label: 'Recruits Handled' },
-      ]),
-
-      sectionCSV('RECRUITMENT PIPELINE', pipelineData, [
-        { key: 'name', label: 'Status' }, { key: 'count', label: 'Count' },
-      ]),
-
-      sectionCSV('RECRUITMENT SOURCE EFFECTIVENESS', sourceEffectiveness, [
-        { key: 'source', label: 'Source' }, { key: 'total', label: 'Total' }, { key: 'approved', label: 'Approved' }, { key: 'approvalRate', label: 'Approval %' },
-      ]),
+      CSV_SECTIONS.campaigns(),
+      CSV_SECTIONS.creators(),
+      CSV_SECTIONS.brands(),
+      CSV_SECTIONS.pic(),
+      CSV_SECTIONS.recruitment(),
 
       sectionCSV('OVERDUE TASKS (current)', overdueTasks.map(t => ({ ...t, daysOverdue: daysOverdue(t.dueDate) })), [
         { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' },
         { key: 'pic', label: 'PIC' }, { key: 'dueDate', label: 'Due Date' }, { key: 'daysOverdue', label: 'Days Overdue' },
       ]),
     ]
-    downloadCSV(`kult-creator-report-${new Date().toISOString().slice(0, 10)}.csv`, parts.join('\n\n'))
+    downloadCSV(`kult-creator-report-${dateSuffix}.csv`, parts.join('\n\n'))
+  }
+
+  // ── Section content (reused for both summary and category views) ──────────
+
+  const campaignSection = (
+    <Card title="Campaign Performance" icon={FolderOpen}>
+      {campaignPerf.length === 0 ? <EmptyState>No campaigns yet</EmptyState> : (
+        <div className={cn('overflow-y-auto -mx-5 -mb-5', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
+          <table className="w-full">
+            <thead className="sticky top-0 bg-[#1E1E28]">
+              <tr>
+                {['Campaign', 'Brand', 'Status', 'Tasks', 'Completed', 'Overdue', 'Completion', 'Budget'].map(h => (
+                  <th key={h} className="px-5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {campaignPerf.map(c => (
+                <tr key={c.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.02] transition-colors">
+                  <td className="px-5 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
+                      <span className="text-[12px] text-white/80">{c.name}</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-2.5 text-[12px] text-white/40">{c.brandName || '—'}</td>
+                  <td className="px-5 py-2.5 text-[11px] text-white/40">{c.status}</td>
+                  <td className="px-5 py-2.5 font-mono text-[12px] text-white/60">{c.totalTasks}</td>
+                  <td className="px-5 py-2.5 font-mono text-[12px] text-emerald-400">{c.completed}</td>
+                  <td className="px-5 py-2.5 font-mono text-[12px]">{c.overdue > 0 ? <span className="text-rose-400">{c.overdue}</span> : <span className="text-white/20">0</span>}</td>
+                  <td className="px-5 py-2.5">
+                    <div className="flex items-center gap-2 w-28">
+                      <ProgressBar pct={c.completionRate} color={c.color} />
+                      <span className="font-mono text-[11px] text-white/40 w-8 text-right flex-shrink-0">{c.completionRate}%</span>
+                    </div>
+                  </td>
+                  <td className="px-5 py-2.5 font-mono text-[12px] text-white/40">{c.budget ? `RM ${c.budget.toLocaleString()}` : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </Card>
+  )
+
+  const creatorSection = (
+    <Card
+      title="Creator Leaderboard"
+      icon={Trophy}
+      action={creatorPerf.length > 10 && (
+        <button onClick={() => setShowAllCreators(v => !v)} className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
+          {showAllCreators ? 'Show top 10' : `Show all (${creatorPerf.length})`}
+        </button>
+      )}
+    >
+      {visibleCreatorPerf.length === 0 ? <EmptyState>No assigned tasks in this period</EmptyState> : (
+        <div className={cn('space-y-1.5 overflow-y-auto pr-1', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
+          {visibleCreatorPerf.map((c, i) => (
+            <div key={c.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
+              <span className="w-5 text-center font-mono text-[11px] text-white/25 flex-shrink-0">{i + 1}</span>
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] text-white truncate">{c.name}</div>
+                <div className="text-[10px] text-white/30 mt-0.5">{c.platform} · {c.completed}/{c.assigned} tasks</div>
+              </div>
+              {c.avgRating > 0 && <span className="flex-shrink-0 text-[11px] font-mono text-amber-300/70">★ {c.avgRating.toFixed(1)}</span>}
+              <span className="flex-shrink-0 font-mono text-[12px] text-emerald-400 w-10 text-right">{c.completionRate}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+
+  const brandSection = (
+    <Card title="Brand Performance" icon={Briefcase}>
+      {brandPerf.length === 0 ? <EmptyState>No brands yet</EmptyState> : (
+        <div className={cn('space-y-1.5 overflow-y-auto pr-1', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[360px]')}>
+          {brandPerf.map(b => (
+            <div key={b.brandName} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] text-white truncate">{b.brandName}</div>
+                <div className="text-[10px] text-white/30 mt-0.5">{b.campaignCount} campaign{b.campaignCount !== 1 ? 's' : ''} · {b.totalTasks} tasks · RM {b.budget.toLocaleString()}</div>
+              </div>
+              <span className="flex-shrink-0 font-mono text-[12px] text-emerald-400 w-10 text-right">{b.completionRate}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+
+  const picSection = (
+    <Card title="Staff (PIC) Workload" icon={Users}>
+      {picWorkload.length === 0 ? <EmptyState>No PICs assigned yet</EmptyState> : (
+        <div className={cn('space-y-1.5 overflow-y-auto pr-1', viewMode === 'category' ? 'max-h-[560px]' : 'max-h-[300px]')}>
+          {picWorkload.map(p => (
+            <div key={p.pic} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
+              <div className="flex-1 min-w-0">
+                <div className="text-[12px] text-white truncate">{p.pic}</div>
+                <div className="text-[10px] text-white/30 mt-0.5">{p.creatorsManaged} creators · {p.tasksAssigned} tasks · {p.recruitsHandled} recruits</div>
+              </div>
+              <span className="flex-shrink-0 font-mono text-[12px] text-white/50 w-10 text-right">{p.completionRate}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+
+  const recruitmentSection = (
+    <Card title="Recruitment Pipeline" icon={GitBranch}>
+      <div className="mb-4">
+        <DistributionBar
+          data={pipelineData.filter(d => d.count > 0)}
+          colorFor={d => d.name === 'Approved' ? STATUS_COLOR['Completed'] : d.name === 'Rejected' ? STATUS_COLOR['Overdue'] : d.name === 'Under Review' ? STATUS_COLOR['Under Review'] : STATUS_COLOR['Not Started']}
+        />
+      </div>
+      {sourceEffectiveness.length > 0 && (
+        <div className="border-t border-white/7 pt-3 space-y-1.5">
+          <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-1.5">Source Effectiveness</div>
+          {sourceEffectiveness.map(s => (
+            <div key={s.source} className="flex items-center gap-3 text-[12px]">
+              <span className="flex-1 text-white/60 truncate">{s.source}</span>
+              <span className="font-mono text-white/40">{s.approved}/{s.total}</span>
+              <span className="font-mono text-emerald-400 w-10 text-right">{s.approvalRate}%</span>
+            </div>
+          ))}
+        </div>
+      )}
+    </Card>
+  )
+
+  const CATEGORY_SECTION = {
+    campaigns:   campaignSection,
+    creators:    creatorSection,
+    brands:      brandSection,
+    pic:         picSection,
+    recruitment: recruitmentSection,
   }
 
   return (
     <div className="animate-[fadeUp_.3s_ease]">
-      <div className="flex items-end justify-between mb-5 gap-4 flex-wrap">
+      <div className="flex items-end justify-between mb-4 gap-4 flex-wrap">
         <div>
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Reports</h1>
           <p className="text-[12px] text-white/30 mt-1">Campaign, creator, and pipeline performance</p>
@@ -413,182 +603,135 @@ export default function Reports() {
             onClick={handleExport}
             className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/7 hover:border-white/12 text-white/60 hover:text-white text-[12px] font-medium transition-all"
           >
-            <Download size={13} /> Export CSV
+            <Download size={13} /> {viewMode === 'category' ? `Export ${CATEGORIES.find(c => c.key === category)?.label}` : 'Export CSV'}
           </button>
         </div>
       </div>
 
-      {/* Overview KPIs */}
-      <div className="grid grid-cols-6 gap-3 mb-5">
-        <KpiTile icon={Users}       label="Active Creators"  value={activeCreatorsCount}  caption="Now"                iconBg="bg-violet-400/15 text-violet-300" />
-        <KpiTile icon={FolderOpen}  label="Active Campaigns" value={activeCampaignsCount} caption="Now"                iconBg="bg-blue-400/12 text-blue-400" />
-        <KpiTile icon={AlertTriangle} label="Overdue"        value={overdueNow}           caption="Now — needs action" iconBg="bg-rose-400/12 text-rose-400" />
-        <KpiTile icon={ListTodo}    label="Tasks"             value={totalInPeriod}        caption="This period"       iconBg="bg-teal-400/12 text-teal-400" />
-        <KpiTile icon={TrendingUp}  label="Completion Rate"   value={`${completionRate}%`}  caption={`${completedInPeriod} completed`} iconBg="bg-emerald-400/12 text-emerald-400" />
-        <KpiTile icon={UserPlus}    label="Pending Recruits"  value={pendingRecruitsInPeriod} caption="This period"     iconBg="bg-amber-400/12 text-amber-300" />
-      </div>
-
-      {/* Status + distributions */}
-      <div className="grid grid-cols-3 gap-4 mb-4">
-        <Card title="Task Status" icon={ListTodo}>
-          <StatusDonut tasks={filteredTasks} />
-        </Card>
-        <Card title="Tasks by Platform" icon={Smartphone}>
-          <DistributionBar data={taskPlatformData} colorFor={d => PLATFORM_COLOR[d.name] ?? OTHER_COLOR} />
-        </Card>
-        <Card title="Creators by Niche" icon={Tags}>
-          <DistributionBar data={nicheData} colorFor={(d, i) => d.name === 'Other' ? OTHER_COLOR : categoricalColor(i)} />
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <Card title="Creators by Platform" icon={Users}>
-          <DistributionBar data={creatorPlatformData} colorFor={d => PLATFORM_COLOR[d.name] ?? OTHER_COLOR} />
-        </Card>
-        <Card title="Overdue Tasks" icon={AlertTriangle} action={<span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/25">{overdueTasks.length}</span>}>
-          {overdueTasks.length === 0 ? (
-            <EmptyState>Nothing overdue 🎉</EmptyState>
-          ) : (
-            <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
-              {overdueTasks.map(t => (
-                <div key={t.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-rose-500/5 border border-rose-500/15">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-white truncate">{t.task}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5 truncate">{t.project} · {t.creatorName || 'Unassigned'} · PIC {t.pic || '—'}</div>
-                  </div>
-                  <span className="flex-shrink-0 text-[11px] font-mono font-semibold text-rose-300">{daysOverdue(t.dueDate)}d</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* Campaign performance */}
-      <Card title="Campaign Performance" icon={FolderOpen} className="mb-4">
-        {campaignPerf.length === 0 ? <EmptyState>No campaigns yet</EmptyState> : (
-          <div className="max-h-[360px] overflow-y-auto -mx-5 -mb-5">
-            <table className="w-full">
-              <thead className="sticky top-0 bg-[#1E1E28]">
-                <tr>
-                  {['Campaign', 'Brand', 'Status', 'Tasks', 'Completed', 'Overdue', 'Completion', 'Budget'].map(h => (
-                    <th key={h} className="px-5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {campaignPerf.map(c => (
-                  <tr key={c.id} className="border-b border-white/7 last:border-0 hover:bg-white/[.02] transition-colors">
-                    <td className="px-5 py-2.5">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: c.color }} />
-                        <span className="text-[12px] text-white/80">{c.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-2.5 text-[12px] text-white/40">{c.brandName || '—'}</td>
-                    <td className="px-5 py-2.5 text-[11px] text-white/40">{c.status}</td>
-                    <td className="px-5 py-2.5 font-mono text-[12px] text-white/60">{c.totalTasks}</td>
-                    <td className="px-5 py-2.5 font-mono text-[12px] text-emerald-400">{c.completed}</td>
-                    <td className="px-5 py-2.5 font-mono text-[12px]">{c.overdue > 0 ? <span className="text-rose-400">{c.overdue}</span> : <span className="text-white/20">0</span>}</td>
-                    <td className="px-5 py-2.5">
-                      <div className="flex items-center gap-2 w-28">
-                        <ProgressBar pct={c.completionRate} color={c.color} />
-                        <span className="font-mono text-[11px] text-white/40 w-8 text-right flex-shrink-0">{c.completionRate}%</span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-2.5 font-mono text-[12px] text-white/40">{c.budget ? `RM ${c.budget.toLocaleString()}` : '—'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+      {/* View mode + category selector */}
+      <div className="flex items-center gap-3 mb-5 flex-wrap">
+        <div className="flex items-center gap-1 bg-[#1A1A22] border border-white/7 rounded-lg p-1">
+          <button
+            onClick={() => setViewMode('summary')}
+            className={cn('flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-all',
+              viewMode === 'summary' ? 'bg-violet-600/25 text-violet-300' : 'text-white/40 hover:text-white/70')}
+          >
+            <LayoutGrid size={12} /> Summary
+          </button>
+          <button
+            onClick={() => setViewMode('category')}
+            className={cn('flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1.5 rounded-md transition-all',
+              viewMode === 'category' ? 'bg-violet-600/25 text-violet-300' : 'text-white/40 hover:text-white/70')}
+          >
+            <FolderOpen size={12} /> By Category
+          </button>
+        </div>
+        {viewMode === 'category' && (
+          <div className="flex items-center gap-1 flex-wrap">
+            {CATEGORIES.map(c => (
+              <button
+                key={c.key}
+                onClick={() => setCategory(c.key)}
+                className={cn('text-[11px] font-medium px-2.5 py-1.5 rounded-lg border transition-all',
+                  category === c.key ? 'border-violet-500/30 bg-violet-500/10 text-violet-300' : 'border-white/7 text-white/40 hover:text-white/70 hover:border-white/12')}
+              >
+                {c.label}
+              </button>
+            ))}
           </div>
         )}
-      </Card>
-
-      {/* Creator leaderboard + Brand performance */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <Card
-          title="Creator Leaderboard"
-          icon={Trophy}
-          action={creatorPerf.length > 10 && (
-            <button onClick={() => setShowAllCreators(v => !v)} className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
-              {showAllCreators ? 'Show top 10' : `Show all (${creatorPerf.length})`}
-            </button>
-          )}
-        >
-          {visibleCreatorPerf.length === 0 ? <EmptyState>No assigned tasks in this period</EmptyState> : (
-            <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
-              {visibleCreatorPerf.map((c, i) => (
-                <div key={c.id} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
-                  <span className="w-5 text-center font-mono text-[11px] text-white/25 flex-shrink-0">{i + 1}</span>
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-white truncate">{c.name}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5">{c.platform} · {c.completed}/{c.assigned} tasks</div>
-                  </div>
-                  {c.avgRating > 0 && <span className="flex-shrink-0 text-[11px] font-mono text-amber-300/70">★ {c.avgRating.toFixed(1)}</span>}
-                  <span className="flex-shrink-0 font-mono text-[12px] text-emerald-400 w-10 text-right">{c.completionRate}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Brand Performance" icon={Briefcase}>
-          {brandPerf.length === 0 ? <EmptyState>No brands yet</EmptyState> : (
-            <div className="space-y-1.5 max-h-[360px] overflow-y-auto pr-1">
-              {brandPerf.map(b => (
-                <div key={b.brandName} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-white truncate">{b.brandName}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5">{b.campaignCount} campaign{b.campaignCount !== 1 ? 's' : ''} · {b.totalTasks} tasks · RM {b.budget.toLocaleString()}</div>
-                  </div>
-                  <span className="flex-shrink-0 font-mono text-[12px] text-emerald-400 w-10 text-right">{b.completionRate}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
       </div>
 
-      {/* PIC workload + Recruitment */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <Card title="Staff (PIC) Workload" icon={Users}>
-          {picWorkload.length === 0 ? <EmptyState>No PICs assigned yet</EmptyState> : (
-            <div className="space-y-1.5 max-h-[300px] overflow-y-auto pr-1">
-              {picWorkload.map(p => (
-                <div key={p.pic} className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-white/[.03] transition-colors">
-                  <div className="flex-1 min-w-0">
-                    <div className="text-[12px] text-white truncate">{p.pic}</div>
-                    <div className="text-[10px] text-white/30 mt-0.5">{p.creatorsManaged} creators · {p.tasksAssigned} tasks · {p.recruitsHandled} recruits</div>
-                  </div>
-                  <span className="flex-shrink-0 font-mono text-[12px] text-white/50 w-10 text-right">{p.completionRate}%</span>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        <Card title="Recruitment Pipeline" icon={GitBranch}>
-          <div className="mb-4">
-            <DistributionBar
-              data={pipelineData.filter(d => d.count > 0)}
-              colorFor={d => d.name === 'Approved' ? STATUS_COLOR['Completed'] : d.name === 'Rejected' ? STATUS_COLOR['Overdue'] : d.name === 'Under Review' ? STATUS_COLOR['Under Review'] : STATUS_COLOR['Not Started']}
-            />
+      {viewMode === 'category' ? (
+        <div>{CATEGORY_SECTION[category]}</div>
+      ) : (
+        <>
+          {/* Overview KPIs */}
+          <div className="grid grid-cols-6 gap-3 mb-3">
+            <KpiTile icon={Users}       label="Active Creators"  value={activeCreatorsCount}  caption="Now"                iconBg="bg-violet-400/15 text-violet-300" />
+            <KpiTile icon={FolderOpen}  label="Active Campaigns" value={activeCampaignsCount} caption="Now"                iconBg="bg-blue-400/12 text-blue-400" />
+            <KpiTile icon={AlertTriangle} label="Overdue"        value={overdueNow}           caption="Now — needs action" iconBg="bg-rose-400/12 text-rose-400" />
+            <KpiTile icon={ListTodo}    label="Tasks"             value={totalInPeriod}        caption="This period"       iconBg="bg-teal-400/12 text-teal-400" />
+            <KpiTile icon={TrendingUp}  label="Completion Rate"   value={`${completionRate}%`}  caption={`${completedInPeriod} completed`} iconBg="bg-emerald-400/12 text-emerald-400" />
+            <KpiTile icon={UserPlus}    label="Pending Recruits"  value={pendingRecruitsInPeriod} caption="This period"     iconBg="bg-amber-400/12 text-amber-300" />
           </div>
-          {sourceEffectiveness.length > 0 && (
-            <div className="border-t border-white/7 pt-3 space-y-1.5">
-              <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-1.5">Source Effectiveness</div>
-              {sourceEffectiveness.map(s => (
-                <div key={s.source} className="flex items-center gap-3 text-[12px]">
-                  <span className="flex-1 text-white/60 truncate">{s.source}</span>
-                  <span className="font-mono text-white/40">{s.approved}/{s.total}</span>
-                  <span className="font-mono text-emerald-400 w-10 text-right">{s.approvalRate}%</span>
+
+          {/* Velocity KPIs */}
+          <div className="grid grid-cols-4 gap-3 mb-5">
+            <KpiTile icon={Zap}   label="Completed (7d)"  value={velocity?.completedLast7 ?? '—'}  caption="Trailing 7 days"  iconBg="bg-emerald-400/12 text-emerald-400" />
+            <KpiTile icon={Zap}   label="Completed (30d)" value={velocity?.completedLast30 ?? '—'} caption="Trailing 30 days" iconBg="bg-emerald-400/12 text-emerald-400" />
+            <KpiTile icon={Clock} label="Avg Completion Time" value={formatDuration(velocity?.avgCompletionHours)} caption={`${velocity?.sampleSize?.completions ?? 0} tasks measured`} iconBg="bg-violet-400/15 text-violet-300" />
+            <KpiTile icon={Clock} label="Avg Recruit Approval Time" value={formatDuration(velocity?.avgApprovalHours)} caption={`${velocity?.sampleSize?.approvals ?? 0} recruits measured`} iconBg="bg-violet-400/15 text-violet-300" />
+          </div>
+
+          {/* Status + distributions */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <Card title="Task Status" icon={ListTodo}>
+              <StatusDonut tasks={filteredTasks} />
+            </Card>
+            <Card title="Tasks by Platform" icon={Smartphone}>
+              <DistributionBar data={taskPlatformData} colorFor={d => PLATFORM_COLOR[d.name] ?? OTHER_COLOR} />
+            </Card>
+            <Card title="Creators by Niche" icon={Tags}>
+              <DistributionBar data={nicheData} colorFor={(d, i) => d.name === 'Other' ? OTHER_COLOR : categoricalColor(i)} />
+            </Card>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <Card title="Creators by Platform" icon={Users}>
+              <DistributionBar data={creatorPlatformData} colorFor={d => PLATFORM_COLOR[d.name] ?? OTHER_COLOR} />
+            </Card>
+            <Card title="Overdue Tasks" icon={AlertTriangle} action={<span className="font-mono text-[10px] px-2 py-0.5 rounded-full bg-rose-500/15 text-rose-300 border border-rose-500/25">{overdueTasks.length}</span>}>
+              {overdueTasks.length === 0 ? (
+                <EmptyState>Nothing overdue 🎉</EmptyState>
+              ) : (
+                <div className="max-h-[220px] overflow-y-auto space-y-1.5 pr-1">
+                  {overdueTasks.map(t => (
+                    <div key={t.id} className="flex items-center gap-3 px-3 py-2 rounded-lg bg-rose-500/5 border border-rose-500/15">
+                      <div className="flex-1 min-w-0">
+                        <div className="text-[12px] text-white truncate">{t.task}</div>
+                        <div className="text-[10px] text-white/30 mt-0.5 truncate">{t.project} · {t.creatorName || 'Unassigned'} · PIC {t.pic || '—'}</div>
+                      </div>
+                      <span className="flex-shrink-0 text-[11px] font-mono font-semibold text-rose-300">{daysOverdue(t.dueDate)}d</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
+              )}
+            </Card>
+          </div>
+
+          <div className="mb-4">{campaignSection}</div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {creatorSection}
+            {brandSection}
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            {picSection}
+            {recruitmentSection}
+          </div>
+
+          {/* Recent activity */}
+          <Card title="Recent Activity" icon={Activity}>
+            {recentLog.length === 0 ? <EmptyState>No activity recorded yet</EmptyState> : (
+              <div className="space-y-2 max-h-[280px] overflow-y-auto pr-1">
+                {recentLog.map(a => (
+                  <div key={a.id} className="flex items-center gap-3 text-[12px]">
+                    <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ backgroundColor: STATUS_COLOR[a.toStatus] ?? '#71717a' }} />
+                    <span className="flex-1 min-w-0 truncate text-white/60">
+                      <span className="text-white font-medium">{a.entityName || a.entityType}</span>
+                      {' → '}{a.toStatus}
+                      {a.actor && <span className="text-white/30"> · {a.actor}</span>}
+                    </span>
+                    <span className="flex-shrink-0 text-white/25 font-mono text-[10px]">{relativeTime(a.createdAt)}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Card>
+        </>
+      )}
     </div>
   )
 }
