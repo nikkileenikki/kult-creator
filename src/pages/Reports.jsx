@@ -215,7 +215,7 @@ function buildCsvSections(data, taskTimeline) {
         submittedAt: fmtDate(taskTimeline?.[t.id]?.submittedAt),
         completedAt: fmtDate(taskTimeline?.[t.id]?.completedAt),
       })), [
-        { key: 'project', label: 'Campaign' }, { key: 'task', label: 'Task' }, { key: 'creatorName', label: 'Creator' },
+        { key: 'project', label: 'Campaign' }, { key: 'task', label: 'Task' }, { key: 'creatorName', label: 'Creator' }, { key: 'pic', label: 'PIC' },
         { key: 'status', label: 'Status' }, { key: 'priority', label: 'Priority' }, { key: 'dueDate', label: 'Due Date' },
         { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
       ]),
@@ -231,7 +231,7 @@ function buildCsvSections(data, taskTimeline) {
       submittedAt:  fmtDate(taskTimeline?.[t.id]?.submittedAt),
       completedAt:  fmtDate(taskTimeline?.[t.id]?.completedAt),
     })), [
-      { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' },
+      { key: 'task', label: 'Task' }, { key: 'project', label: 'Campaign' }, { key: 'creatorName', label: 'Creator' }, { key: 'pic', label: 'PIC' },
       { key: 'status', label: 'Status' }, { key: 'dueDate', label: 'Due Date' },
       { key: 'assignedAt', label: 'Assigned' }, { key: 'submittedAt', label: 'Submitted' }, { key: 'completedAt', label: 'Completed' },
     ]),
@@ -512,6 +512,7 @@ export default function Reports() {
   const [campaignFilter, setCampaignFilter] = useState('all')
   const [brandFilter, setBrandFilter]       = useState('all')
   const [creatorFilter, setCreatorFilter]   = useState('all')
+  const [picFilter, setPicFilter]           = useState('all')
 
   const bounds = useMemo(() => getRangeBounds(range), [range])
 
@@ -522,8 +523,14 @@ export default function Reports() {
   }, [])
 
   const brandOptions = useMemo(() => [...new Set(campaigns.map(c => c.brandName).filter(Boolean))].sort(), [campaigns])
+  const picOptions = useMemo(() => [...new Set([
+    ...creators.map(c => c.pic).filter(Boolean),
+    ...tasks.map(t => t.pic).filter(Boolean),
+    ...requests.map(r => r.pic).filter(Boolean),
+  ])].sort(), [creators, tasks, requests])
 
-  // ── Entity filters — cascade campaign -> brand -> creator through every section
+  // ── Entity filters — campaign/brand/creator/PIC all combine with AND semantics,
+  //    and cascade through every section (charts, KPIs, tables, export)
   const scopedCampaigns = useMemo(() => campaigns.filter(c =>
     (brandFilter === 'all' || c.brandName === brandFilter) &&
     (campaignFilter === 'all' || c.id === campaignFilter),
@@ -533,23 +540,29 @@ export default function Reports() {
 
   const scopedTasks = useMemo(() => tasks.filter(t =>
     scopedCampaignNames.has(t.project) &&
-    (creatorFilter === 'all' || t.creatorId === creatorFilter),
-  ), [tasks, scopedCampaignNames, creatorFilter])
+    (creatorFilter === 'all' || t.creatorId === creatorFilter) &&
+    (picFilter === 'all' || t.pic === picFilter),
+  ), [tasks, scopedCampaignNames, creatorFilter, picFilter])
 
-  const scopedCreators = useMemo(() => {
-    if (creatorFilter !== 'all') return creators.filter(c => c.id === creatorFilter)
-    if (campaignFilter === 'all' && brandFilter === 'all') return creators
-    const creatorIdsInScope = new Set(
-      tasks.filter(t => scopedCampaignNames.has(t.project)).map(t => t.creatorId).filter(Boolean),
-    )
-    return creators.filter(c => creatorIdsInScope.has(c.id))
-  }, [creators, tasks, scopedCampaignNames, campaignFilter, brandFilter, creatorFilter])
+  const scopedRequests = useMemo(() => requests.filter(r =>
+    picFilter === 'all' || r.pic === picFilter,
+  ), [requests, picFilter])
 
-  const hasEntityFilter = campaignFilter !== 'all' || brandFilter !== 'all' || creatorFilter !== 'all'
+  const scopedCreators = useMemo(() => creators.filter(c => {
+    if (creatorFilter !== 'all' && c.id !== creatorFilter) return false
+    if (picFilter !== 'all' && c.pic !== picFilter) return false
+    if (campaignFilter !== 'all' || brandFilter !== 'all') {
+      const hasTaskInScope = tasks.some(t => scopedCampaignNames.has(t.project) && t.creatorId === c.id)
+      if (!hasTaskInScope) return false
+    }
+    return true
+  }), [creators, tasks, scopedCampaignNames, campaignFilter, brandFilter, creatorFilter, picFilter])
+
+  const hasEntityFilter = campaignFilter !== 'all' || brandFilter !== 'all' || creatorFilter !== 'all' || picFilter !== 'all'
 
   const data = useMemo(
-    () => buildReportData(bounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests }),
-    [bounds, scopedCreators, scopedTasks, scopedCampaigns, requests],
+    () => buildReportData(bounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests: scopedRequests }),
+    [bounds, scopedCreators, scopedTasks, scopedCampaigns, scopedRequests],
   )
 
   // Overview (state gauges, scoped by entity filters but not the date range)
@@ -588,7 +601,7 @@ export default function Reports() {
 
   function handleExportAll(exportRange, selectedKeys) {
     const exportBounds = getRangeBounds(exportRange)
-    const exportData   = buildReportData(exportBounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests })
+    const exportData   = buildReportData(exportBounds, { creators: scopedCreators, tasks: scopedTasks, campaigns: scopedCampaigns, requests: scopedRequests })
     const csv          = buildCsvSections(exportData, taskTimeline)
     const dateSuffix    = new Date().toISOString().slice(0, 10)
 
@@ -707,7 +720,7 @@ export default function Reports() {
           <table className="w-full">
             <thead className="sticky top-0 bg-[#1E1E28]">
               <tr>
-                {['Task', 'Campaign', 'Creator', 'Status', 'Due', 'Assigned', 'Submitted', 'Completed'].map(h => (
+                {['Task', 'Campaign', 'Creator', 'PIC', 'Status', 'Due', 'Assigned', 'Submitted', 'Completed'].map(h => (
                   <th key={h} className="px-5 py-2.5 text-left font-mono text-[10px] font-medium text-white/20 uppercase tracking-[.08em] border-b border-white/7 whitespace-nowrap">{h}</th>
                 ))}
               </tr>
@@ -720,6 +733,7 @@ export default function Reports() {
                     <td className="px-5 py-2.5 text-[12px] text-white/80 max-w-[220px] truncate">{t.task}</td>
                     <td className="px-5 py-2.5 text-[12px] text-white/40 max-w-[160px] truncate">{t.project}</td>
                     <td className="px-5 py-2.5 text-[12px] text-white/40">{t.creatorName || 'Unassigned'}</td>
+                    <td className="px-5 py-2.5 text-[12px] text-white/40">{t.pic || '—'}</td>
                     <td className="px-5 py-2.5">
                       <span className="text-[10px] font-mono px-2 py-0.5 rounded-full" style={{ color: STATUS_COLOR[t.status], backgroundColor: `${STATUS_COLOR[t.status]}1a` }}>{t.status}</span>
                     </td>
@@ -833,9 +847,13 @@ export default function Reports() {
           <option value="all">All Creators</option>
           {creators.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
         </select>
+        <select value={picFilter} onChange={e => setPicFilter(e.target.value)} className={SELECT}>
+          <option value="all">All PICs</option>
+          {picOptions.map(p => <option key={p} value={p}>{p}</option>)}
+        </select>
         {hasEntityFilter && (
           <button
-            onClick={() => { setCampaignFilter('all'); setBrandFilter('all'); setCreatorFilter('all') }}
+            onClick={() => { setCampaignFilter('all'); setBrandFilter('all'); setCreatorFilter('all'); setPicFilter('all') }}
             className="text-[11px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium"
           >
             Clear filters
