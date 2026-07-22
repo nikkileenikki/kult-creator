@@ -1,11 +1,11 @@
 import { json, err, opts, getDB } from '../_helpers.js'
-import { requireAuth } from '../_auth.js'
+import { requirePermission } from '../_auth.js'
 import { hashPassword } from '../_passwords.js'
 
 export const onRequestOptions = () => opts()
 
 export async function onRequestDelete({ params, request, env }) {
-  const { authError } = await requireAuth(request, env)
+  const { authError } = await requirePermission(request, env, 'users.manage')
   if (authError) return authError
   const db = getDB(env)
   const existing = await db.prepare('SELECT id FROM ca_user WHERE id = ?').bind(params.id).first()
@@ -15,7 +15,7 @@ export async function onRequestDelete({ params, request, env }) {
 }
 
 export async function onRequestPatch({ params, request, env }) {
-  const { authError } = await requireAuth(request, env)
+  const { authError } = await requirePermission(request, env, 'users.manage')
   if (authError) return authError
   const db = getDB(env)
   const existing = await db.prepare('SELECT id FROM ca_user WHERE id = ?').bind(params.id).first()

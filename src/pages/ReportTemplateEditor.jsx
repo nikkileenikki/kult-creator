@@ -33,10 +33,17 @@ export default function ReportTemplateEditor() {
   const campaigns = useCampaignStore(s => s.campaigns)
   const tasks     = useTaskStore(s => s.tasks)
 
+  const can       = useAuthStore(s => s.can)
+  const canManage = can('reports.manage')
+
   const [tpl, setTpl] = useState(DEFAULT_TEMPLATE)
   const [saving, setSaving]         = useState(false)
   const [generating, setGenerating] = useState(false)
   const [loading, setLoading]       = useState(!isNew)
+
+  useEffect(() => {
+    if (!canManage) navigate('/reports/templates', { replace: true })
+  }, [canManage]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (isNew) return

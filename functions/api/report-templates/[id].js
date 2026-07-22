@@ -1,4 +1,5 @@
 import { json, err, opts, getDB } from '../_helpers'
+import { requireAuth, requirePermission } from '../_auth'
 
 export const onRequestOptions = () => opts()
 
@@ -42,7 +43,9 @@ function mapTemplate(row) {
   }
 }
 
-export async function onRequestGet({ params, env }) {
+export async function onRequestGet({ request, params, env }) {
+  const { authError } = await requireAuth(request, env)
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   const row = await db.prepare('SELECT * FROM report_templates WHERE id = ? AND deleted_at IS NULL').bind(params.id).first()
@@ -51,6 +54,8 @@ export async function onRequestGet({ params, env }) {
 }
 
 export async function onRequestPatch({ request, env, params }) {
+  const { authError } = await requirePermission(request, env, 'reports.manage')
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   const body = await request.json()
@@ -73,7 +78,9 @@ export async function onRequestPatch({ request, env, params }) {
   return json({ id: row.id })
 }
 
-export async function onRequestDelete({ params, env }) {
+export async function onRequestDelete({ request, params, env }) {
+  const { authError } = await requirePermission(request, env, 'reports.manage')
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   const existing = await db.prepare('SELECT id FROM report_templates WHERE id = ? AND deleted_at IS NULL').bind(params.id).first()

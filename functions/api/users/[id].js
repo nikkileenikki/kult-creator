@@ -10,13 +10,22 @@ function mapUser(r) {
 }
 
 export async function onRequestPatch({ params, request, env }) {
-  const { authError } = await requireAdmin(request, env)
+  const { authError, user: caller } = await requireAdmin(request, env)
   if (authError) return authError
   const db = getDB(env)
   const existing = await db.prepare('SELECT * FROM users WHERE id = ?').bind(params.id).first()
   if (!existing) return err('User not found', 404)
   let body
   try { body = await request.json() } catch { return err('Invalid JSON', 400) }
+
+  const isSelf = params.id === caller.sub
+  if (isSelf && (body.role !== undefined || body.permissions !== undefined)) {
+    const nextPerms = body.permissions ?? (body.role !== undefined ? ROLE_PERMISSIONS[body.role] ?? [] : JSON.parse(existing.permissions ?? '[]'))
+    if (!nextPerms.includes('users.manage')) {
+      return err('You cannot remove your own user management access', 400)
+    }
+  }
+
   const sets = [], vals = []
   if (body.displayName !== undefined) { sets.push('display_name = ?'); vals.push(body.displayName.trim()) }
   if (body.username !== undefined) {

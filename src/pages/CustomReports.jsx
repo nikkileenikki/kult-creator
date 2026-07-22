@@ -4,6 +4,7 @@ import { useCreatorStore } from '@/store/creatorStore'
 import { useTaskStore } from '@/store/taskStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { request } from '@/lib/api'
 import { fetchTemplates, deleteTemplate } from '@/lib/api/reportTemplates'
 import { generateReport, RANGE_OPTIONS } from '@/lib/reportBuilder'
@@ -19,6 +20,8 @@ export default function CustomReports() {
   const creators  = useCreatorStore(s => s.creators)
   const tasks     = useTaskStore(s => s.tasks)
   const campaigns = useCampaignStore(s => s.campaigns)
+  const can       = useAuthStore(s => s.can)
+  const canManage = can('reports.manage')
 
   const [templates, setTemplates] = useState([])
   const [loading, setLoading]     = useState(true)
@@ -67,12 +70,14 @@ export default function CustomReports() {
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Custom Reports</h1>
           <p className="text-[12px] text-white/30 mt-1">Saved report templates you can re-run anytime</p>
         </div>
-        <button
-          onClick={() => navigate('/reports/templates/new')}
-          className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all"
-        >
-          <Plus size={14} /> New Template
-        </button>
+        {canManage && (
+          <button
+            onClick={() => navigate('/reports/templates/new')}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-[13px] font-semibold transition-all"
+          >
+            <Plus size={14} /> New Template
+          </button>
+        )}
       </div>
 
       {loading ? (
@@ -81,9 +86,11 @@ export default function CustomReports() {
         <div className="flex flex-col items-center justify-center h-64 rounded-[14px] bg-[#1E1E28] border border-white/7 text-white/20">
           <FileSpreadsheet size={28} className="mb-3 opacity-40" />
           <p className="text-[13px]">No custom report templates yet</p>
-          <button onClick={() => navigate('/reports/templates/new')} className="mt-3 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
-            Create your first template
-          </button>
+          {canManage && (
+            <button onClick={() => navigate('/reports/templates/new')} className="mt-3 text-[12px] text-violet-400/70 hover:text-violet-300 transition-colors font-medium">
+              Create your first template
+            </button>
+          )}
         </div>
       ) : (
         <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] overflow-hidden">
@@ -115,20 +122,24 @@ export default function CustomReports() {
                       >
                         <Download size={11} /> {runningId === t.id ? 'Generating…' : 'Generate'}
                       </button>
-                      <button
-                        onClick={() => navigate(`/reports/templates/${t.id}`)}
-                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
-                        title="Edit"
-                      >
-                        <Pencil size={12} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(t)}
-                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/40 hover:text-rose-400 transition-all"
-                        title="Delete"
-                      >
-                        <Trash2 size={12} />
-                      </button>
+                      {canManage && (
+                        <>
+                          <button
+                            onClick={() => navigate(`/reports/templates/${t.id}`)}
+                            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all"
+                            title="Edit"
+                          >
+                            <Pencil size={12} />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(t)}
+                            className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/40 hover:text-rose-400 transition-all"
+                            title="Delete"
+                          >
+                            <Trash2 size={12} />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

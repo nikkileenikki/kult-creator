@@ -263,11 +263,11 @@ export async function onRequestGet({ env }) {
   if ((existingUsers[0]?.count ?? 0) === 0) {
     const defaultUsers = [
       { id: 'u1', username: 'admin',  displayName: 'Admin',    password: 'admin123',  role: 'admin',
-        permissions: ['users.manage','contacts.view_all','creators.edit','campaigns.manage','brands.manage','recruits.approve'] },
+        permissions: ['users.manage','contacts.view_all','creators.edit','campaigns.manage','brands.manage','recruits.approve','projects.manage','reports.manage'] },
       { id: 'u2', username: 'sarah',  displayName: 'Sarah K.', password: 'sarah123',  role: 'pic',
-        permissions: ['contacts.view_assigned','creators.edit'] },
+        permissions: ['contacts.view_assigned','creators.edit','projects.manage'] },
       { id: 'u3', username: 'lina',   displayName: 'Lina M.',  password: 'lina123',   role: 'pic',
-        permissions: ['contacts.view_assigned','creators.edit'] },
+        permissions: ['contacts.view_assigned','creators.edit','projects.manage'] },
     ]
     for (const u of defaultUsers) {
       const hash = await hashPassword(u.password)

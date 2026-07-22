@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
+import { useAuthStore } from '@/store/authStore'
 import { request } from '@/lib/api'
 import { Plus, Trash2, Check, Eye, EyeOff, Pencil } from 'lucide-react'
 
@@ -103,6 +104,8 @@ function EditForm({ account, creators, linkedCreatorIds, onSave, onCancel }) {
 export default function CreatorAccounts() {
   const creators  = useCreatorStore(s => s.creators)
   const showToast = useUIStore(s => s.showToast)
+  const can       = useAuthStore(s => s.can)
+  const canManage = can('users.manage')
 
   const [accounts,   setAccounts]   = useState([])
   const [loading,    setLoading]    = useState(true)
@@ -169,16 +172,22 @@ export default function CreatorAccounts() {
           <h1 className="font-syne text-[22px] font-extrabold text-white tracking-tight">Creator Accounts</h1>
           <p className="text-[12px] text-white/30 mt-1">{accounts.length} portal account{accounts.length !== 1 ? 's' : ''}</p>
         </div>
-        <button
-          onClick={() => setShowForm(s => !s)}
-          className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)]"
-        >
-          <Plus size={14} /> New Account
-        </button>
+        {canManage && (
+          <button
+            onClick={() => setShowForm(s => !s)}
+            className="flex items-center gap-1.5 px-4 py-[7px] rounded-lg bg-violet-600 text-white text-[13px] font-semibold hover:bg-violet-500 transition-all shadow-[0_0_20px_rgba(108,92,231,.3)]"
+          >
+            <Plus size={14} /> New Account
+          </button>
+        )}
       </div>
 
+      {!canManage && (
+        <div className="text-[12px] text-white/25 italic bg-[#1E1E28] border border-white/7 rounded-[14px] px-5 py-3 mb-4">View only — you don't have permission to manage creator accounts.</div>
+      )}
+
       {/* Create form */}
-      {showForm && (
+      {showForm && canManage && (
         <div className="bg-[#1E1E28] border border-white/7 rounded-[14px] p-5 mb-4">
           <div className="text-[11px] font-semibold text-white/30 uppercase tracking-wider mb-4">New Creator Account</div>
           <form onSubmit={handleCreate} className="space-y-4">
@@ -263,25 +272,27 @@ export default function CreatorAccounts() {
                         }
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
-                      <button
-                        onClick={() => setEditingId(editingId === a.id ? null : a.id)}
-                        className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editingId === a.id ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70'}`}
-                        title="Edit account"
-                      >
-                        <Pencil size={11} />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(a)}
-                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
-                        title="Delete account"
-                      >
-                        <Trash2 size={11} />
-                      </button>
-                    </div>
+                    {canManage && (
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          onClick={() => setEditingId(editingId === a.id ? null : a.id)}
+                          className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all ${editingId === a.id ? 'bg-violet-500/20 text-violet-300' : 'bg-white/5 hover:bg-white/10 text-white/30 hover:text-white/70'}`}
+                          title="Edit account"
+                        >
+                          <Pencil size={11} />
+                        </button>
+                        <button
+                          onClick={() => handleDelete(a)}
+                          className="w-7 h-7 rounded-lg bg-white/5 hover:bg-rose-500/15 flex items-center justify-center text-white/30 hover:text-rose-400 transition-all"
+                          title="Delete account"
+                        >
+                          <Trash2 size={11} />
+                        </button>
+                      </div>
+                    )}
                   </div>
 
-                  {editingId === a.id && (
+                  {editingId === a.id && canManage && (
                     <EditForm
                       account={a}
                       creators={creators}

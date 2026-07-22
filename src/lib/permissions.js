@@ -1,7 +1,7 @@
 export const ROLE_PERMISSIONS = {
-  admin:   ['users.manage', 'contacts.view_all', 'creators.edit', 'campaigns.manage', 'brands.manage', 'recruits.approve'],
-  manager: ['contacts.view_all', 'creators.edit', 'campaigns.manage', 'brands.manage', 'recruits.approve'],
-  pic:     ['contacts.view_assigned', 'creators.edit'],
+  admin:   ['users.manage', 'contacts.view_all', 'creators.edit', 'campaigns.manage', 'brands.manage', 'recruits.approve', 'projects.manage', 'reports.manage'],
+  manager: ['contacts.view_all', 'creators.edit', 'campaigns.manage', 'brands.manage', 'recruits.approve', 'projects.manage', 'reports.manage'],
+  pic:     ['contacts.view_assigned', 'creators.edit', 'projects.manage'],
   viewer:  [],
 }
 
@@ -20,6 +20,8 @@ export const PERMISSIONS = [
   { key: 'campaigns.manage',       label: 'Manage Campaigns',       group: 'Campaigns', desc: 'Create and edit campaigns' },
   { key: 'brands.manage',          label: 'Manage Brands',          group: 'Brands',    desc: 'Create and edit brands' },
   { key: 'recruits.approve',       label: 'Approve Recruits',       group: 'Recruit',   desc: 'Approve or reject recruit requests' },
+  { key: 'projects.manage',        label: 'Manage Projects',        group: 'Projects',  desc: 'Create, edit and move tasks in Project Management' },
+  { key: 'reports.manage',         label: 'Manage Reports',         group: 'Reports',   desc: 'Create, edit and delete custom report templates' },
 ]
 
 export const ROLE_COLOR = {

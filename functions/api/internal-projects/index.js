@@ -1,4 +1,5 @@
 import { json, err, opts, getDB } from '../_helpers'
+import { requireAuth, requirePermission } from '../_auth'
 
 function mapProject(row) {
   if (!row) return null
@@ -16,7 +17,9 @@ function mapProject(row) {
 
 export const onRequestOptions = () => opts()
 
-export async function onRequestGet({ env }) {
+export async function onRequestGet({ request, env }) {
+  const { authError } = await requireAuth(request, env)
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   const { results } = await db.prepare(
@@ -26,6 +29,8 @@ export async function onRequestGet({ env }) {
 }
 
 export async function onRequestPost({ request, env }) {
+  const { authError } = await requirePermission(request, env, 'projects.manage')
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   try {
