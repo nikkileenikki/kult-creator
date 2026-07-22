@@ -26,6 +26,7 @@ import CreatorMyTasks from '@/pages/portal/CreatorMyTasks'
 import CreatorTasks from '@/pages/portal/CreatorTasks'
 import CreatorAccount from '@/pages/portal/CreatorAccount'
 import CreatorAccounts from '@/pages/CreatorAccounts'
+import AgreementSheets from '@/pages/AgreementSheets'
 import AddTaskModal from '@/components/modals/AddTaskModal'
 import AddCreatorModal from '@/components/modals/AddCreatorModal'
 import AddCampaignModal from '@/components/modals/AddCampaignModal'
@@ -176,6 +177,7 @@ export default function App() {
             <Route path="/users"            element={<Users />} />
             <Route path="/users/new"        element={<NewUser />} />
             <Route path="/creator-accounts" element={<CreatorAccounts />} />
+            <Route path="/agreement-sheets" element={<AgreementSheets />} />
             <Route path="*"                 element={<Navigate to="/" replace />} />
           </Routes>
         </main>

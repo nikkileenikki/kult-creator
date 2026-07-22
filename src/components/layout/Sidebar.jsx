@@ -4,7 +4,7 @@ import { useRecruitStore } from '@/store/recruitStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import {
-  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase, ShieldCheck, Kanban, BarChart3,
+  LayoutGrid, FolderOpen, Users, Star, UserPlus, User, Settings, ChevronLeft, ChevronRight, Briefcase, ShieldCheck, Kanban, BarChart3, FileDown,
 } from 'lucide-react'
 
 const ROLE_AVATAR_COLOR = {
@@ -46,8 +46,9 @@ export default function Sidebar() {
 
   const NAV = can('users.manage')
     ? [...NAV_BASE, { section: 'Admin', items: [
-        { to: '/users',            label: 'Users',            icon: ShieldCheck },
-        { to: '/creator-accounts', label: 'Creator Accounts', icon: User },
+        { to: '/users',             label: 'Users',             icon: ShieldCheck },
+        { to: '/creator-accounts',  label: 'Creator Accounts',  icon: User },
+        { to: '/agreement-sheets',  label: 'Agreement Sheets',  icon: FileDown },
       ]}]
     : NAV_BASE
 
