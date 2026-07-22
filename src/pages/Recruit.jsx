@@ -5,10 +5,7 @@ import { useAuthStore } from '@/store/authStore'
 import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar, FileDown } from 'lucide-react'
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
-import { downloadAgreementDocx } from '@/lib/agreementDoc'
-
-const AGREEMENT_INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-2.5 py-2 text-[12px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
-const AGREEMENT_LABEL = 'block text-[10px] font-semibold text-white/35 uppercase tracking-wider mb-1'
+import AgreementModal from '@/components/modals/AgreementModal'
 
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
@@ -34,36 +31,12 @@ function Row({ icon: Icon, label, children }) {
 function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
   const storedPics = useAuthStore(s => s.pics)
   const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
-  const [step, setStep]                     = useState(null)  // null | 'approve' | 'reject' | 'review' | 'agreement'
+  const [step, setStep]                     = useState(null)  // null | 'approve' | 'reject' | 'review'
   const [selectedPic, setSelectedPic]       = useState(PICS[0])
   const [rejectionReason, setRejectionReason] = useState('')
   const [reviewer, setReviewer]             = useState(PICS[0])
-  const [agreement, setAgreement] = useState({
-    astroSignatory1Name: '', astroSignatory1Email: '',
-    astroSignatory2Name: '', astroSignatory2Email: '',
-    counterparty1Name: r.name || '', counterparty1Email: r.email || '', counterparty1Nric: '',
-    counterparty2Name: '', counterparty2Email: '', counterparty2Nric: '',
-    ccRepName: '', ccRepEmail: '',
-    signingOrderRequired: 'No', signingOrderSequence: '',
-    cesBoardRequired: 'No',
-    costCentre: '', contractAmount: '',
-    stampDutyParty: 'Astro',
-    specialRequests: '',
-  })
-  const [generatingDoc, setGeneratingDoc] = useState(false)
+  const [showAgreement, setShowAgreement]   = useState(false)
   const can = useAuthStore(s => s.can)
-
-  function setAgreementField(patch) { setAgreement(a => ({ ...a, ...patch })) }
-
-  async function handleGenerateAgreement() {
-    setGeneratingDoc(true)
-    try {
-      const filename = `Agreement-${r.name.replace(/[^\w\-]+/g, '_')}-${new Date().toISOString().slice(0, 10)}.docx`
-      await downloadAgreementDocx(filename, agreement)
-    } finally {
-      setGeneratingDoc(false)
-    }
-  }
 
   useEffect(() => {
     function handleKey(e) {
@@ -188,7 +161,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
 
             {!step && (
               r.status === 'Approved' ? (
-                <button onClick={() => setStep('agreement')} className="w-full flex items-center justify-center gap-1.5 bg-violet-500/12 text-violet-300 border border-violet-500/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-violet-500/20 transition-all">
+                <button onClick={() => setShowAgreement(true)} className="w-full flex items-center justify-center gap-1.5 bg-violet-500/12 text-violet-300 border border-violet-500/20 py-2 rounded-lg text-[13px] font-semibold hover:bg-violet-500/20 transition-all">
                   <FileDown size={14} /> Generate Agreement Sheet
                 </button>
               ) : can('recruits.approve') ? (
@@ -225,7 +198,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
                 <div className="flex gap-2">
                   <button onClick={() => setStep(null)} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">Cancel</button>
                   <button
-                    onClick={async () => { await onApprove(r.id, selectedPic); setStep('agreement') }}
+                    onClick={async () => { await onApprove(r.id, selectedPic); setStep(null); setShowAgreement(true) }}
                     className="flex-1 bg-emerald-400/15 text-emerald-400 border border-emerald-400/25 py-2 rounded-lg text-[13px] font-semibold hover:bg-emerald-400/25 transition-all"
                   >
                     ✓ Confirm Approve — assign to {selectedPic}
@@ -279,114 +252,13 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
               </div>
             )}
 
-            {step === 'agreement' && (
-              <div className="space-y-3 max-h-[46vh] overflow-y-auto pr-1">
-                <div className="text-[12px] text-white/40">Fill in the DocuSign & stamping details, then generate the routing sheet as a .docx.</div>
-
-                <div>
-                  <div className={AGREEMENT_LABEL.replace('mb-1', 'mb-1.5')}>Astro Signatories</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 1 name" value={agreement.astroSignatory1Name} onChange={e => setAgreementField({ astroSignatory1Name: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 1 email" value={agreement.astroSignatory1Email} onChange={e => setAgreementField({ astroSignatory1Email: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 2 name" value={agreement.astroSignatory2Name} onChange={e => setAgreementField({ astroSignatory2Name: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 2 email" value={agreement.astroSignatory2Email} onChange={e => setAgreementField({ astroSignatory2Email: e.target.value })} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className={AGREEMENT_LABEL.replace('mb-1', 'mb-1.5')}>Counterparty Signatories</div>
-                  <div className="grid grid-cols-3 gap-2 mb-2">
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 1 name" value={agreement.counterparty1Name} onChange={e => setAgreementField({ counterparty1Name: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 1 email" value={agreement.counterparty1Email} onChange={e => setAgreementField({ counterparty1Email: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="NRIC/Passport" value={agreement.counterparty1Nric} onChange={e => setAgreementField({ counterparty1Nric: e.target.value })} />
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 2 name" value={agreement.counterparty2Name} onChange={e => setAgreementField({ counterparty2Name: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Signatory 2 email" value={agreement.counterparty2Email} onChange={e => setAgreementField({ counterparty2Email: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="NRIC/Passport" value={agreement.counterparty2Nric} onChange={e => setAgreementField({ counterparty2Nric: e.target.value })} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className={AGREEMENT_LABEL.replace('mb-1', 'mb-1.5')}>Counterparty Representative to be Copied</div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <input className={AGREEMENT_INPUT} placeholder="Name" value={agreement.ccRepName} onChange={e => setAgreementField({ ccRepName: e.target.value })} />
-                    <input className={AGREEMENT_INPUT} placeholder="Email" value={agreement.ccRepEmail} onChange={e => setAgreementField({ ccRepEmail: e.target.value })} />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className={AGREEMENT_LABEL}>Signing Order Required?</div>
-                    <div className="flex gap-2">
-                      {['No', 'Yes'].map(v => (
-                        <button key={v} type="button" onClick={() => setAgreementField({ signingOrderRequired: v })}
-                          className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold border transition-all ${agreement.signingOrderRequired === v ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/50 hover:border-white/20'}`}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                    {agreement.signingOrderRequired === 'Yes' && (
-                      <input className={AGREEMENT_INPUT + ' mt-2'} placeholder="e.g. A to sign first, then followed by B" value={agreement.signingOrderSequence} onChange={e => setAgreementField({ signingOrderSequence: e.target.value })} />
-                    )}
-                  </div>
-                  <div>
-                    <div className={AGREEMENT_LABEL}>CES / Board Paper Required?</div>
-                    <div className="flex gap-2">
-                      {['No', 'Yes'].map(v => (
-                        <button key={v} type="button" onClick={() => setAgreementField({ cesBoardRequired: v })}
-                          className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold border transition-all ${agreement.cesBoardRequired === v ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/50 hover:border-white/20'}`}>
-                          {v}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <div className={AGREEMENT_LABEL}>Cost Centre for Stamp Duty</div>
-                    <input className={AGREEMENT_INPUT} value={agreement.costCentre} onChange={e => setAgreementField({ costCentre: e.target.value })} />
-                  </div>
-                  <div>
-                    <div className={AGREEMENT_LABEL}>Contract Amount</div>
-                    <input className={AGREEMENT_INPUT} value={agreement.contractAmount} onChange={e => setAgreementField({ contractAmount: e.target.value })} />
-                  </div>
-                </div>
-
-                <div>
-                  <div className={AGREEMENT_LABEL}>Which Party Will Bear the Stamp Duty?</div>
-                  <div className="flex gap-2">
-                    {['Astro', 'Counterparty', 'Shared'].map(v => (
-                      <button key={v} type="button" onClick={() => setAgreementField({ stampDutyParty: v })}
-                        className={`flex-1 py-1.5 rounded-lg text-[12px] font-semibold border transition-all ${agreement.stampDutyParty === v ? 'bg-violet-500/20 border-violet-500/40 text-violet-300' : 'bg-white/5 border-white/7 text-white/50 hover:border-white/20'}`}>
-                        {v}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <div className={AGREEMENT_LABEL}>Any Special Requests?</div>
-                  <textarea rows={2} className={AGREEMENT_INPUT + ' resize-none'} value={agreement.specialRequests} onChange={e => setAgreementField({ specialRequests: e.target.value })} />
-                </div>
-
-                <div className="flex gap-2 pt-1">
-                  <button onClick={() => setStep(null)} className="px-4 py-2 rounded-lg text-[13px] font-semibold text-white/40 hover:text-white hover:bg-white/5 transition-all">Close</button>
-                  <button
-                    onClick={handleGenerateAgreement}
-                    disabled={generatingDoc}
-                    className="flex-1 flex items-center justify-center gap-1.5 bg-violet-500/15 text-violet-300 border border-violet-500/25 py-2 rounded-lg text-[13px] font-semibold hover:bg-violet-500/25 disabled:opacity-50 transition-all"
-                  >
-                    <FileDown size={14} /> {generatingDoc ? 'Generating…' : 'Generate & Download .docx'}
-                  </button>
-                </div>
-              </div>
-            )}
-
           </div>
         </div>
       </div>
+
+      {showAgreement && (
+        <AgreementModal creatorName={r.name} creatorEmail={r.email} onClose={() => setShowAgreement(false)} />
+      )}
     </>
   )
 }
