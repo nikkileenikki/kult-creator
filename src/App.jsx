@@ -19,6 +19,7 @@ import ReportTemplateEditor from '@/pages/ReportTemplateEditor'
 import Settings from '@/pages/Settings'
 import Users from '@/pages/Users'
 import NewUser from '@/pages/NewUser'
+import EditUser from '@/pages/EditUser'
 import Login from '@/pages/Login'
 import CreatorLogin from '@/pages/CreatorLogin'
 import CreatorDashboard from '@/pages/portal/CreatorDashboard'
@@ -176,6 +177,7 @@ export default function App() {
             <Route path="/settings"         element={<Settings />} />
             <Route path="/users"            element={<Users />} />
             <Route path="/users/new"        element={<NewUser />} />
+            <Route path="/users/:id/edit"   element={<EditUser />} />
             <Route path="/creator-accounts" element={<CreatorAccounts />} />
             <Route path="/agreement-sheets" element={<AgreementSheets />} />
             <Route path="*"                 element={<Navigate to="/" replace />} />
