@@ -1,8 +1,11 @@
 import { json, err, opts, getDB } from '../_helpers'
+import { requirePermission } from '../_auth'
 
 export const onRequestOptions = () => opts()
 
 export async function onRequestPatch({ request, env, params }) {
+  const { authError } = await requirePermission(request, env, 'projects.manage')
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   const { id } = params
@@ -33,7 +36,9 @@ export async function onRequestPatch({ request, env, params }) {
   return json({ ok: true })
 }
 
-export async function onRequestDelete({ env, params }) {
+export async function onRequestDelete({ request, env, params }) {
+  const { authError } = await requirePermission(request, env, 'projects.manage')
+  if (authError) return authError
   const db = getDB(env)
   if (!db) return err('DB binding not found', 500)
   await db.prepare("UPDATE internal_tasks SET deleted_at = datetime('now') WHERE id = ?").bind(params.id).run()

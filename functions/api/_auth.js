@@ -14,8 +14,12 @@ export async function requireAuth(request, env) {
 }
 
 export async function requireAdmin(request, env) {
+  return requirePermission(request, env, 'users.manage')
+}
+
+export async function requirePermission(request, env, permission) {
   const { authError, user } = await requireAuth(request, env)
   if (authError) return { authError, user: null }
-  if (!user.permissions?.includes('users.manage')) return { authError: err('Forbidden — admin only', 403), user: null }
+  if (!user.permissions?.includes(permission)) return { authError: err('Forbidden — insufficient permissions', 403), user: null }
   return { authError: null, user }
 }

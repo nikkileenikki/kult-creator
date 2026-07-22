@@ -296,16 +296,17 @@ function TaskModal({ open, onClose, initial, projectId, onSave, pics }) {
 
 // ── Kanban DnD ───────────────────────────────────────────────────────────────
 
-function ProjKanbanCard({ task, onCardClick, handleDeleteTask }) {
-  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id })
+function ProjKanbanCard({ task, onCardClick, handleDeleteTask, canManage }) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({ id: task.id, disabled: !canManage })
   return (
     <div
       ref={setNodeRef}
-      {...listeners}
+      {...(canManage ? listeners : {})}
       {...attributes}
       onClick={() => !isDragging && onCardClick(task)}
       className={cn(
-        'group bg-[#1E1E28] border border-l-2 border-white/7 rounded-xl p-4 cursor-grab active:cursor-grabbing select-none transition-all',
+        'group bg-[#1E1E28] border border-l-2 border-white/7 rounded-xl p-4 select-none transition-all',
+        canManage ? 'cursor-grab active:cursor-grabbing' : 'cursor-pointer',
         isDragging ? 'opacity-40' : 'hover:border-violet-500/30 hover:bg-[#23233A] hover:shadow-[0_4px_16px_rgba(0,0,0,.4)]',
         PRIORITY_BORDER[task.priority],
       )}
@@ -319,34 +320,38 @@ function ProjKanbanCard({ task, onCardClick, handleDeleteTask }) {
         <span className="text-[10px] text-white/35">{task.assignee || 'Unassigned'}</span>
         <div className="flex items-center gap-1.5">
           {task.dueDate && <span className="font-mono text-[10px] text-white/25">{task.dueDate}</span>}
-          <button
-            onClick={e => { e.stopPropagation(); handleDeleteTask(task.id) }}
-            className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
-          >
-            <Trash2 size={11} />
-          </button>
+          {canManage && (
+            <button
+              onClick={e => { e.stopPropagation(); handleDeleteTask(task.id) }}
+              className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
+            >
+              <Trash2 size={11} />
+            </button>
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-function ProjKanbanCol({ col, tasks, onCardClick, handleDeleteTask, openNewTask, isOver }) {
-  const { setNodeRef } = useDroppable({ id: col })
+function ProjKanbanCol({ col, tasks, onCardClick, handleDeleteTask, openNewTask, isOver, canManage }) {
+  const { setNodeRef } = useDroppable({ id: col, disabled: !canManage })
   return (
     <div ref={setNodeRef} className="flex-shrink-0 w-48 flex flex-col min-h-0">
       <div className={cn('flex items-center justify-between mb-2 pb-2 border-b flex-shrink-0 transition-colors', isOver ? 'border-violet-500/40' : 'border-white/[0.06]')}>
         <span className={`text-[11px] font-semibold uppercase tracking-wider ${KANBAN_HDR[col]}`}>{col}</span>
         <div className="flex items-center gap-1">
           <span className="font-mono text-[10px] text-white/20">{tasks.length}</span>
-          <button onClick={() => openNewTask(col)} className="w-5 h-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-all">
-            <Plus size={11} />
-          </button>
+          {canManage && (
+            <button onClick={() => openNewTask(col)} className="w-5 h-5 rounded flex items-center justify-center text-white/20 hover:text-white/60 hover:bg-white/5 transition-all">
+              <Plus size={11} />
+            </button>
+          )}
         </div>
       </div>
       <div className={cn('space-y-2.5 overflow-y-auto flex-1 pr-0.5 rounded-lg transition-colors', isOver && 'bg-violet-500/5')}>
-        {tasks.map(t => <ProjKanbanCard key={t.id} task={t} onCardClick={onCardClick} handleDeleteTask={handleDeleteTask} />)}
-        {tasks.length === 0 && (
+        {tasks.map(t => <ProjKanbanCard key={t.id} task={t} onCardClick={onCardClick} handleDeleteTask={handleDeleteTask} canManage={canManage} />)}
+        {tasks.length === 0 && canManage && (
           <button
             onClick={() => openNewTask(col)}
             className="w-full text-center text-[11px] text-white/15 hover:text-white/30 py-5 border border-dashed border-white/[0.05] rounded-xl transition-all"
@@ -359,18 +364,19 @@ function ProjKanbanCol({ col, tasks, onCardClick, handleDeleteTask, openNewTask,
   )
 }
 
-function ProjKanban({ projTasks, updateTask, openNewTask, handleDeleteTask, onCardClick }) {
+function ProjKanban({ projTasks, updateTask, openNewTask, handleDeleteTask, onCardClick, canManage }) {
   const [activeTask, setActiveTask] = useState(null)
   const [overId,     setOverId]     = useState(null)
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
 
   function handleDragStart({ active }) {
+    if (!canManage) return
     setActiveTask(projTasks.find(t => t.id === active.id) ?? null)
   }
-  function handleDragOver({ over }) { setOverId(over?.id ?? null) }
+  function handleDragOver({ over }) { if (canManage) setOverId(over?.id ?? null) }
   async function handleDragEnd({ active, over }) {
     setActiveTask(null); setOverId(null)
-    if (!over) return
+    if (!canManage || !over) return
     const task = projTasks.find(t => t.id === active.id)
     if (!task || task.status === over.id) return
     await updateTask(task.id, { status: over.id })
@@ -388,6 +394,7 @@ function ProjKanban({ projTasks, updateTask, openNewTask, handleDeleteTask, onCa
             handleDeleteTask={handleDeleteTask}
             openNewTask={openNewTask}
             isOver={overId === col}
+            canManage={canManage}
           />
         ))}
       </div>
@@ -408,6 +415,8 @@ function ProjKanban({ projTasks, updateTask, openNewTask, handleDeleteTask, onCa
 export default function ProjectManagement() {
   const { projects, tasks, loading, fetchProjects, fetchTasks, addProject, updateProject, deleteProject, addTask, updateTask, deleteTask } = useInternalProjectStore()
   const storedPics = useAuthStore(s => s.pics)
+  const can        = useAuthStore(s => s.can)
+  const canManage  = can('projects.manage')
   const showToast  = useUIStore(s => s.showToast)
   const PICS = storedPics.length ? storedPics : ['Sarah K.', 'Lina M.']
 
@@ -522,12 +531,14 @@ export default function ProjectManagement() {
       <div className="w-52 flex-shrink-0 flex flex-col gap-3">
         <div className="flex items-center justify-between">
           <h2 className="font-syne text-[14px] font-bold text-white">Projects</h2>
-          <button
-            onClick={() => { setEditProject(null); setProjModal(true) }}
-            className="w-7 h-7 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-400 flex items-center justify-center transition-all"
-          >
-            <Plus size={13} />
-          </button>
+          {canManage && (
+            <button
+              onClick={() => { setEditProject(null); setProjModal(true) }}
+              className="w-7 h-7 rounded-lg bg-violet-600/20 hover:bg-violet-600/30 border border-violet-500/30 text-violet-400 flex items-center justify-center transition-all"
+            >
+              <Plus size={13} />
+            </button>
+          )}
         </div>
 
         <div className="space-y-1.5 flex-1 overflow-y-auto">
@@ -560,12 +571,14 @@ export default function ProjectManagement() {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-1">
                     <div className="text-[12px] font-semibold leading-snug truncate">{p.name}</div>
-                    <button
-                      onClick={e => { e.stopPropagation(); setEditProject(p); setProjModal(true) }}
-                      className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-white/70 transition-all flex-shrink-0 mt-px"
-                    >
-                      <Pencil size={10} />
-                    </button>
+                    {canManage && (
+                      <button
+                        onClick={e => { e.stopPropagation(); setEditProject(p); setProjModal(true) }}
+                        className="opacity-0 group-hover:opacity-100 text-white/25 hover:text-white/70 transition-all flex-shrink-0 mt-px"
+                      >
+                        <Pencil size={10} />
+                      </button>
+                    )}
                   </div>
                   {p.description && <div className="text-[11px] text-white/30 truncate mt-0.5">{p.description}</div>}
                   <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
@@ -606,28 +619,34 @@ export default function ProjectManagement() {
                 {selected.description && <p className="text-[12px] text-white/30 mt-1 ml-5.5">{selected.description}</p>}
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => { setEditProject(selected); setProjModal(true) }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/40 hover:text-white/70 text-[12px] transition-all"
-                >
-                  <Pencil size={11} /> Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteProject(selected.id)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-rose-500/30 hover:bg-rose-500/10 text-white/40 hover:text-rose-400 text-[12px] transition-all"
-                >
-                  <Trash2 size={11} />
-                </button>
+                {canManage && (
+                  <>
+                    <button
+                      onClick={() => { setEditProject(selected); setProjModal(true) }}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/40 hover:text-white/70 text-[12px] transition-all"
+                    >
+                      <Pencil size={11} /> Edit
+                    </button>
+                    <button
+                      onClick={() => handleDeleteProject(selected.id)}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-rose-500/30 hover:bg-rose-500/10 text-white/40 hover:text-rose-400 text-[12px] transition-all"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </>
+                )}
                 <div className="flex items-center gap-1 bg-[#1A1A22] border border-white/[0.07] rounded-lg p-1">
                   <button onClick={() => setView('kanban')} className={cn('p-1.5 rounded-md transition-all', view==='kanban' ? 'bg-violet-600/20 text-violet-300' : 'text-white/30 hover:text-white/60')} title="Kanban"><Kanban size={13} /></button>
                   <button onClick={() => setView('list')}   className={cn('p-1.5 rounded-md transition-all', view==='list'   ? 'bg-violet-600/20 text-violet-300' : 'text-white/30 hover:text-white/60')} title="List"><List size={13} /></button>
                 </div>
-                <button
-                  onClick={() => openNewTask('To Do')}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[12px] font-semibold transition-all"
-                >
-                  <Plus size={13} /> Add Task
-                </button>
+                {canManage && (
+                  <button
+                    onClick={() => openNewTask('To Do')}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-violet-600/15 border border-violet-500/25 text-violet-300 hover:bg-violet-600/25 text-[12px] font-semibold transition-all"
+                  >
+                    <Plus size={13} /> Add Task
+                  </button>
+                )}
               </div>
             </div>
 
@@ -654,12 +673,14 @@ export default function ProjectManagement() {
             {projTasks.length === 0 && view === 'list' ? (
               <div className="flex-1 flex flex-col items-center justify-center text-white/20 border border-dashed border-white/5 rounded-2xl">
                 <p className="text-[13px]">No tasks yet</p>
-                <button onClick={() => openNewTask('To Do')} className="mt-3 text-violet-400 text-[12px] hover:underline">+ Add first task</button>
+                {canManage && (
+                  <button onClick={() => openNewTask('To Do')} className="mt-3 text-violet-400 text-[12px] hover:underline">+ Add first task</button>
+                )}
               </div>
             ) : view === 'kanban' ? (
 
               /* Kanban */
-              <ProjKanban projTasks={projTasks} updateTask={updateTask} openNewTask={openNewTask} handleDeleteTask={handleDeleteTask} onCardClick={setDetailTask} />
+              <ProjKanban projTasks={projTasks} updateTask={updateTask} openNewTask={openNewTask} handleDeleteTask={handleDeleteTask} onCardClick={setDetailTask} canManage={canManage} />
 
             ) : (
 
@@ -694,12 +715,14 @@ export default function ProjectManagement() {
                         <td className="px-4 py-3 text-[12px] text-white/40">{t.assignee || '—'}</td>
                         <td className="px-4 py-3 font-mono text-[11px] text-white/30">{t.dueDate || '—'}</td>
                         <td className="px-4 py-3">
-                          <button
-                            onClick={e => { e.stopPropagation(); handleDeleteTask(t.id) }}
-                            className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
-                          >
-                            <Trash2 size={13} />
-                          </button>
+                          {canManage && (
+                            <button
+                              onClick={e => { e.stopPropagation(); handleDeleteTask(t.id) }}
+                              className="opacity-0 group-hover:opacity-100 text-white/20 hover:text-rose-400 transition-all"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -739,12 +762,14 @@ export default function ProjectManagement() {
                 <span className={cn('text-[10px] px-2 py-0.5 rounded-full border font-medium', PRIORITY_BADGE[detailTask.priority])}>{detailTask.priority}</span>
               </div>
               <div className="flex items-center gap-2 flex-shrink-0">
-                <button
-                  onClick={() => { openEditTask(detailTask); setDetailTask(null) }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/50 hover:text-white text-[12px] transition-all"
-                >
-                  <Pencil size={11} /> Edit
-                </button>
+                {canManage && (
+                  <button
+                    onClick={() => { openEditTask(detailTask); setDetailTask(null) }}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 border border-white/7 hover:border-white/12 text-white/50 hover:text-white text-[12px] transition-all"
+                  >
+                    <Pencil size={11} /> Edit
+                  </button>
+                )}
                 <button
                   onClick={() => setDetailTask(null)}
                   className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white/80 transition-all"
@@ -792,17 +817,19 @@ export default function ProjectManagement() {
             </div>
 
             {/* Footer */}
-            <div className="px-5 py-4 border-t border-white/[0.07]">
-              <button
-                onClick={async () => {
-                  await handleDeleteTask(detailTask.id)
-                  setDetailTask(null)
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[12px] transition-all"
-              >
-                <Trash2 size={12} /> Delete Task
-              </button>
-            </div>
+            {canManage && (
+              <div className="px-5 py-4 border-t border-white/[0.07]">
+                <button
+                  onClick={async () => {
+                    await handleDeleteTask(detailTask.id)
+                    setDetailTask(null)
+                  }}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/5 hover:bg-rose-500/15 border border-white/7 hover:border-rose-500/20 text-white/40 hover:text-rose-400 text-[12px] transition-all"
+                >
+                  <Trash2 size={12} /> Delete Task
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}

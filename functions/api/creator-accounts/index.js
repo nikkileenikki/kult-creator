@@ -1,11 +1,11 @@
 import { json, err, opts, getDB } from '../_helpers.js'
-import { requireAuth } from '../_auth.js'
+import { requirePermission } from '../_auth.js'
 import { hashPassword } from '../_passwords.js'
 
 export const onRequestOptions = () => opts()
 
 export async function onRequestGet({ request, env }) {
-  const { authError } = await requireAuth(request, env)
+  const { authError } = await requirePermission(request, env, 'users.manage')
   if (authError) return authError
   const db = getDB(env)
   const { results } = await db.prepare(
@@ -21,7 +21,7 @@ export async function onRequestGet({ request, env }) {
 }
 
 export async function onRequestPost({ request, env }) {
-  const { authError } = await requireAuth(request, env)
+  const { authError } = await requirePermission(request, env, 'users.manage')
   if (authError) return authError
 
   let body

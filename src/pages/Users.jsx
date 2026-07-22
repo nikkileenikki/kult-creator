@@ -20,7 +20,7 @@ function getInitials(name) {
   return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-function EditForm({ user, onSave, onCancel }) {
+function EditForm({ user, isSelf, onSave, onCancel }) {
   const [displayName, setDisplayName] = useState(user.displayName)
   const [username,    setUsername]    = useState(user.username)
   const [password,    setPassword]    = useState('')
@@ -30,8 +30,14 @@ function EditForm({ user, onSave, onCancel }) {
   const [saving,      setSaving]      = useState(false)
   const [error,       setError]       = useState('')
 
-  function applyRole(r) { setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? []) }
-  function togglePerm(key) { setPerms(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key]) }
+  function applyRole(r) {
+    if (isSelf && r !== 'admin') return
+    setRole(r); setPerms(ROLE_PERMISSIONS[r] ?? [])
+  }
+  function togglePerm(key) {
+    if (isSelf && key === 'users.manage') return
+    setPerms(p => p.includes(key) ? p.filter(k => k !== key) : [...p, key])
+  }
 
   const permGroups = PERMISSIONS.reduce((acc, p) => {
     acc[p.group] = acc[p.group] ?? []
@@ -85,29 +91,37 @@ function EditForm({ user, onSave, onCancel }) {
       <div>
         <label className={LABEL}>Role</label>
         <div className="flex gap-2 flex-wrap">
-          {ROLES.map(r => (
-            <button key={r.key} type="button" onClick={() => applyRole(r.key)}
-              className={`px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all ${role === r.key
-                ? `${ROLE_COLOR[r.key].bg} ring-1 ring-white/20`
-                : 'bg-white/5 border-white/7 text-white/40 hover:text-white/60'}`}>
-              {r.label}
-            </button>
-          ))}
+          {ROLES.map(r => {
+            const disabled = isSelf && r.key !== 'admin'
+            return (
+              <button key={r.key} type="button" onClick={() => applyRole(r.key)} disabled={disabled}
+                title={disabled ? "You can't change your own role away from Admin" : undefined}
+                className={`px-3 py-1.5 rounded-lg text-[12px] font-medium border transition-all ${role === r.key
+                  ? `${ROLE_COLOR[r.key].bg} ring-1 ring-white/20`
+                  : 'bg-white/5 border-white/7 text-white/40 hover:text-white/60'} ${disabled ? 'opacity-30 cursor-not-allowed hover:!text-white/40' : ''}`}>
+                {r.label}
+              </button>
+            )
+          })}
         </div>
         <p className="text-[11px] text-white/25 mt-1.5">{ROLES.find(r => r.key === role)?.desc}</p>
+        {isSelf && <p className="text-[11px] text-amber-400/70 mt-1">You can't change your own role or remove your own User Management access.</p>}
       </div>
 
       <div>
         <label className={LABEL}>Permissions</label>
         <div className="grid grid-cols-2 gap-x-6 gap-y-1">
-          {PERMISSIONS.map(p => (
-            <label key={p.key} className="flex items-center gap-2 cursor-pointer py-1 group" onClick={() => togglePerm(p.key)}>
-              <div className={`w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${perms.includes(p.key) ? 'bg-violet-500 border-violet-500' : 'bg-transparent border-white/15 group-hover:border-white/30'}`}>
-                {perms.includes(p.key) && <Check size={10} className="text-white" strokeWidth={3} />}
-              </div>
-              <span className="text-[12px] text-white/60">{p.label}</span>
-            </label>
-          ))}
+          {PERMISSIONS.map(p => {
+            const locked = isSelf && p.key === 'users.manage'
+            return (
+              <label key={p.key} className={`flex items-center gap-2 py-1 group ${locked ? 'cursor-not-allowed' : 'cursor-pointer'}`} onClick={() => togglePerm(p.key)}>
+                <div className={`w-4 h-4 rounded flex-shrink-0 border flex items-center justify-center transition-all ${perms.includes(p.key) ? 'bg-violet-500 border-violet-500' : 'bg-transparent border-white/15 group-hover:border-white/30'} ${locked ? 'opacity-50' : ''}`}>
+                  {perms.includes(p.key) && <Check size={10} className="text-white" strokeWidth={3} />}
+                </div>
+                <span className={`text-[12px] ${locked ? 'text-white/30' : 'text-white/60'}`}>{p.label}</span>
+              </label>
+            )
+          })}
         </div>
       </div>
 
@@ -156,7 +170,10 @@ export default function Users() {
   }, [users, search])
 
   async function handleUpdate(id, body) {
-    await request('PATCH', `/users/${id}`, body)
+    const updated = await request('PATCH', `/users/${id}`, body)
+    if (id === authUser?.sub) {
+      useAuthStore.setState(s => ({ user: { ...s.user, displayName: updated.displayName, username: updated.username } }))
+    }
     showToast('User updated')
     setEditingId(null)
     fetchUsers()
@@ -269,6 +286,7 @@ export default function Users() {
                 {editingId === u.id && (
                   <EditForm
                     user={u}
+                    isSelf={u.id === authUser?.sub}
                     onSave={body => handleUpdate(u.id, body)}
                     onCancel={() => setEditingId(null)}
                   />
