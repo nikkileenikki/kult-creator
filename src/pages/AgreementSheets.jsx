@@ -55,7 +55,7 @@ export default function AgreementSheets() {
       )}
 
       {target && (
-        <AgreementModal creatorName={target.name} creatorEmail={target.email} onClose={() => setTarget(null)} />
+        <AgreementModal creatorName={target.name} creatorEmail={target.email} creatorPhone={target.contactNumber} onClose={() => setTarget(null)} />
       )}
     </div>
   )

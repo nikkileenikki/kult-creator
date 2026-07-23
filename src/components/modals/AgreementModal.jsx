@@ -5,16 +5,14 @@ import { downloadAgreementDocx } from '@/lib/agreementDoc'
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-2.5 py-2 text-[12px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const LABEL = 'block text-[10px] font-semibold text-white/35 uppercase tracking-wider mb-1'
 
-export default function AgreementModal({ creatorName, creatorEmail, onClose }) {
+export default function AgreementModal({ creatorName, creatorEmail, creatorPhone, onClose }) {
   const [agreement, setAgreement] = useState({
     astroSignatory1Name: 'MUHAMMAD MUZAMIL BIN HUSSIN', astroSignatory1Email: 'mell_hussin@kult.my',
-    astroSignatory2Name: '', astroSignatory2Email: '',
-    counterparty1Name: creatorName || '', counterparty1Email: creatorEmail || '', counterparty1Nric: '',
-    counterparty2Name: '', counterparty2Email: '', counterparty2Nric: '',
+    counterparty1Name: creatorName || '', counterparty1Phone: creatorPhone || '', counterparty1Email: creatorEmail || '', counterparty1Nric: '',
     ccRepName: '', ccRepEmail: '',
     signingOrderRequired: 'No', signingOrderSequence: '',
     cesBoardRequired: 'No',
-    costCentre: 'A300DH006', contractAmount: '0',
+    costCentre: 'A300DH006', contractAmount: 'RM0',
     stampDutyParty: 'Astro',
     specialRequests: 'Auto-reminder',
   })
@@ -59,26 +57,22 @@ export default function AgreementModal({ creatorName, creatorEmail, onClose }) {
             <div className="text-[12px] text-white/40">Fill in the DocuSign & stamping details, then generate the routing sheet as a .docx.</div>
 
             <div>
-              <div className={LABEL.replace('mb-1', 'mb-1.5')}>Astro Signatories</div>
+              <div className={LABEL.replace('mb-1', 'mb-1.5')}>Astro Signatory</div>
               <div className="grid grid-cols-2 gap-2">
-                <input className={INPUT} placeholder="Signatory 1 name" value={agreement.astroSignatory1Name} onChange={e => setField({ astroSignatory1Name: e.target.value })} />
-                <input className={INPUT} placeholder="Signatory 1 email" value={agreement.astroSignatory1Email} onChange={e => setField({ astroSignatory1Email: e.target.value })} />
-                <input className={INPUT} placeholder="Signatory 2 name" value={agreement.astroSignatory2Name} onChange={e => setField({ astroSignatory2Name: e.target.value })} />
-                <input className={INPUT} placeholder="Signatory 2 email" value={agreement.astroSignatory2Email} onChange={e => setField({ astroSignatory2Email: e.target.value })} />
+                <input className={INPUT} placeholder="Name" value={agreement.astroSignatory1Name} onChange={e => setField({ astroSignatory1Name: e.target.value })} />
+                <input className={INPUT} placeholder="Email" value={agreement.astroSignatory1Email} onChange={e => setField({ astroSignatory1Email: e.target.value })} />
               </div>
             </div>
 
             <div>
-              <div className={LABEL.replace('mb-1', 'mb-1.5')}>Counterparty Signatories</div>
-              <div className="grid grid-cols-3 gap-2 mb-2">
-                <input className={INPUT} placeholder="Signatory 1 name" value={agreement.counterparty1Name} onChange={e => setField({ counterparty1Name: e.target.value })} />
-                <input className={INPUT} placeholder="Signatory 1 email" value={agreement.counterparty1Email} onChange={e => setField({ counterparty1Email: e.target.value })} />
-                <input className={INPUT} placeholder="NRIC/Passport" value={agreement.counterparty1Nric} onChange={e => setField({ counterparty1Nric: e.target.value })} />
+              <div className={LABEL.replace('mb-1', 'mb-1.5')}>Counterparty Signatory</div>
+              <div className="grid grid-cols-2 gap-2 mb-2">
+                <input className={INPUT} placeholder="Name" value={agreement.counterparty1Name} onChange={e => setField({ counterparty1Name: e.target.value })} />
+                <input className={INPUT} placeholder="Phone number" value={agreement.counterparty1Phone} onChange={e => setField({ counterparty1Phone: e.target.value })} />
               </div>
-              <div className="grid grid-cols-3 gap-2">
-                <input className={INPUT} placeholder="Signatory 2 name" value={agreement.counterparty2Name} onChange={e => setField({ counterparty2Name: e.target.value })} />
-                <input className={INPUT} placeholder="Signatory 2 email" value={agreement.counterparty2Email} onChange={e => setField({ counterparty2Email: e.target.value })} />
-                <input className={INPUT} placeholder="NRIC/Passport" value={agreement.counterparty2Nric} onChange={e => setField({ counterparty2Nric: e.target.value })} />
+              <div className="grid grid-cols-2 gap-2">
+                <input className={INPUT} placeholder="Email" value={agreement.counterparty1Email} onChange={e => setField({ counterparty1Email: e.target.value })} />
+                <input className={INPUT} placeholder="NRIC/Passport" value={agreement.counterparty1Nric} onChange={e => setField({ counterparty1Nric: e.target.value })} />
               </div>
             </div>
 

@@ -16,12 +16,15 @@ const TOTAL_W = 9326
 const LEFT_LABEL_W = 4683   // cols 1-3
 const RIGHT_VALUE_W = 4643  // cols 4-6
 
+// Single (1.0) line spacing, tight paragraph gap so the form fits on one page.
+const SPACING = { after: 40, line: 240, lineRule: 'auto' }
+
 function run(text, opts = {}) {
   return new TextRun({ text, font: FONT, size: 24, ...opts })
 }
 
 function para(children, opts = {}) {
-  return new Paragraph({ children, spacing: { after: 160, line: 278, lineRule: 'auto' }, ...opts })
+  return new Paragraph({ children, spacing: SPACING, ...opts })
 }
 
 function cellShading(color) {
@@ -35,7 +38,7 @@ function baseCell({ children, width, colSpan, shading, valign = VerticalAlign.TO
     borders,
     shading: shading ? cellShading(shading) : undefined,
     verticalAlign: valign,
-    margins: margins ?? { top: 60, bottom: 60, left: 108, right: 108 },
+    margins: margins ?? { top: 40, bottom: 40, left: 108, right: 108 },
     children,
   })
 }
@@ -44,10 +47,13 @@ function checkbox(checked) {
   return new TextRun({ text: checked ? '☒' : '☐', font: 'MS Gothic', size: 20 })
 }
 
-// Section header: bold title + optional smaller instruction line on gray background
-function sectionHeaderRow(title, note, { noteSize = 18, colSpan = 6, width = TOTAL_W, bottomBorder = false } = {}) {
-  const paragraphs = [para([run(title, { bold: true })])]
-  if (note) paragraphs.push(para([run(note, { size: noteSize })]))
+// Section header: bold title + subtitle on the same line, plus an optional smaller note
+// paragraph underneath — all in one gray cell.
+function sectionHeaderRow(title, subtitle, note, { noteSize = 16, colSpan = 6, width = TOTAL_W, bottomBorder = false } = {}) {
+  const titleLine = [run(title, { bold: true })]
+  if (subtitle) titleLine.push(run(` ${subtitle}`, { size: 18 }))
+  const paragraphs = [para(titleLine)]
+  if (note) paragraphs.push(para([run(note, { italics: true, size: noteSize })]))
   return new TableRow({
     children: [baseCell({
       children: paragraphs,
@@ -57,47 +63,34 @@ function sectionHeaderRow(title, note, { noteSize = 18, colSpan = 6, width = TOT
   })
 }
 
-function noteRow(text, size = 16, italics = true) {
-  return new TableRow({
-    children: [baseCell({
-      children: [para([run(text, { italics, size })])],
-      width: TOTAL_W, colSpan: 6, shading: GRAY,
-    })],
-  })
-}
-
-function signatoryPairRow(name1, email1, name2, email2, nric1, nric2) {
-  function block(label, name, email, nric) {
-    const paragraphs = [para([run(label)])]
-    if (name) paragraphs.push(para([run(name)]))
-    if (email) paragraphs.push(para([run(email)]))
-    if (nric) paragraphs.push(para([run(`NRIC/Passport: ${nric}`, { size: 18, italics: true })]))
-    if (!name && !email && !nric) paragraphs.push(para([run('')]))
-    return paragraphs
-  }
+// Single signatory row: left box = name (+ phone), right box = email (+ NRIC)
+function signatoryRow({ name, phone, email, nric }) {
+  const left = [para([run(name || '')])]
+  if (phone) left.push(para([run(phone)]))
+  const right = [para([run(email || '')])]
+  if (nric) right.push(para([run(`NRIC/Passport: ${nric}`, { size: 18, italics: true })]))
   return new TableRow({
     children: [
-      baseCell({ children: block('1.', name1, email1, nric1), width: LEFT_LABEL_W, colSpan: 3 }),
-      baseCell({ children: block('2.', name2, email2, nric2), width: RIGHT_VALUE_W, colSpan: 3 }),
+      baseCell({ children: left, width: LEFT_LABEL_W, colSpan: 3 }),
+      baseCell({ children: right, width: RIGHT_VALUE_W, colSpan: 3 }),
     ],
   })
 }
 
 function ccRepRow(name, email) {
-  const paragraphs = [para([run('1.')])]
-  if (name) paragraphs.push(para([run(name)]))
-  if (email) paragraphs.push(para([run(email)]))
-  if (!name && !email) paragraphs.push(para([run('')]))
   return new TableRow({
-    children: [baseCell({ children: paragraphs, width: TOTAL_W, colSpan: 6 })],
+    children: [baseCell({
+      children: [para([run(name || '')]), para([run(email || '')])],
+      width: TOTAL_W, colSpan: 6,
+    })],
   })
 }
 
 function labelValueRow(label, value) {
   return new TableRow({
     children: [
-      baseCell({ children: [para([run(label, { bold: true })]), para([run('', { bold: true })])], width: LEFT_LABEL_W, colSpan: 3, shading: GRAY }),
-      baseCell({ children: [para([run(value || '', { size: 20 })])], width: RIGHT_VALUE_W, colSpan: 2 }),
+      baseCell({ children: [para([run(label, { bold: true })])], width: LEFT_LABEL_W, colSpan: 3, shading: GRAY, valign: VerticalAlign.CENTER }),
+      baseCell({ children: [para([run(value || '', { size: 20 })])], width: RIGHT_VALUE_W, colSpan: 2, valign: VerticalAlign.CENTER }),
     ],
   })
 }
@@ -109,23 +102,21 @@ export function generateAgreementDocx(data) {
       // Title
       new TableRow({
         children: [baseCell({
-          children: [para([run('ASTRO DOCUSIGN & STAMPING INFORMATION SHEET', { bold: true, size: 28, color: WHITE })], { alignment: AlignmentType.CENTER, spacing: { before: 240, after: 240 } })],
+          children: [para([run('ASTRO DOCUSIGN & STAMPING INFORMATION SHEET', { bold: true, size: 28, color: WHITE })], { alignment: AlignmentType.CENTER, spacing: { ...SPACING, before: 120 } })],
           width: TOTAL_W, colSpan: 6, shading: PINK, valign: VerticalAlign.CENTER,
         })],
       }),
 
-      // Astro signatories
-      sectionHeaderRow('ASTRO SIGNATORIES ', '– Full Name and Email Address'),
-      noteRow('* It is the responsibility of the contract owner to ensure that the Astro signatory has the proper LOA to sign the document'),
-      signatoryPairRow(data.astroSignatory1Name, data.astroSignatory1Email, data.astroSignatory2Name, data.astroSignatory2Email),
+      // Astro signatory
+      sectionHeaderRow('ASTRO SIGNATORIES', '– Full Name and Email Address', '* It is the responsibility of the contract owner to ensure that the Astro signatory has the proper LOA to sign the document'),
+      signatoryRow({ name: data.astroSignatory1Name, email: data.astroSignatory1Email }),
 
-      // Counterparty signatories
-      sectionHeaderRow('COUNTERPARTY SIGNATORIES ', '– Full Name and Email Address'),
-      noteRow('*(If Individual please provide NRIC No/Passport Details for stamping purposes)'),
-      signatoryPairRow(data.counterparty1Name, data.counterparty1Email, data.counterparty2Name, data.counterparty2Email, data.counterparty1Nric, data.counterparty2Nric),
+      // Counterparty signatory
+      sectionHeaderRow('COUNTERPARTY SIGNATORIES', '– Full Name and Email Address', '*(If Individual please provide NRIC No/Passport Details for stamping purposes)'),
+      signatoryRow({ name: data.counterparty1Name, phone: data.counterparty1Phone, email: data.counterparty1Email, nric: data.counterparty1Nric }),
 
       // CC representative
-      sectionHeaderRow('COUNTERPARTY REPRESENTATIVE TO BE COPIED', '*(if applicable) - Full Name and Email Address *'),
+      sectionHeaderRow('COUNTERPARTY REPRESENTATIVE TO BE COPIED', null, '*(if applicable) - Full Name and Email Address'),
       ccRepRow(data.ccRepName, data.ccRepEmail),
 
       // Signing order
@@ -169,10 +160,10 @@ export function generateAgreementDocx(data) {
       labelValueRow('COST CENTRE FOR STAMP DUTY:', data.costCentre),
 
       // Contract amount
-      labelValueRow('CONTRACT AMOUNT: ', data.contractAmount),
+      labelValueRow('CONTRACT AMOUNT:', data.contractAmount),
 
       // Stamp duty party header
-      sectionHeaderRow('WHICH PARTY WILL BEAR THE STAMP DUTY?', null, { bottomBorder: true }),
+      sectionHeaderRow('WHICH PARTY WILL BEAR THE STAMP DUTY?', null, null, { bottomBorder: true }),
 
       // Stamp duty checkboxes — 4 cells: spacer | Astro | Counterparty | Shared
       new TableRow({
@@ -194,14 +185,10 @@ export function generateAgreementDocx(data) {
       }),
 
       // Special requests
-      sectionHeaderRow('ANY SPECIAL REQUESTS? ', '(e.g. special message to signers; auto-reminder, to include specific documents for viewing only by specific individuals, etc.)', { noteSize: 14 }),
+      sectionHeaderRow('ANY SPECIAL REQUESTS?', null, '(e.g. special message to signers; auto-reminder, to include specific documents for viewing only by specific individuals, etc.)', { noteSize: 14 }),
       new TableRow({
         children: [baseCell({
-          children: [
-            para([run(data.specialRequests || '')]),
-            para([run('')]),
-            para([run('')]),
-          ],
+          children: [para([run(data.specialRequests || '')])],
           width: TOTAL_W, colSpan: 6,
         })],
       }),
@@ -213,11 +200,14 @@ export function generateAgreementDocx(data) {
       default: {
         document: {
           run: { font: FONT, size: 24 },
-          paragraph: { spacing: { after: 160, line: 278, lineRule: 'auto' } },
+          paragraph: { spacing: SPACING },
         },
       },
     },
-    sections: [{ children: [table] }],
+    sections: [{
+      properties: { page: { margin: { top: 720, bottom: 720, left: 900, right: 900 } } },
+      children: [table],
+    }],
   })
 }
 
