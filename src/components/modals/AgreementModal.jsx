@@ -7,16 +7,16 @@ const LABEL = 'block text-[10px] font-semibold text-white/35 uppercase tracking-
 
 export default function AgreementModal({ creatorName, creatorEmail, onClose }) {
   const [agreement, setAgreement] = useState({
-    astroSignatory1Name: '', astroSignatory1Email: '',
+    astroSignatory1Name: 'MUHAMMAD MUZAMIL BIN HUSSIN', astroSignatory1Email: 'mell_hussin@kult.my',
     astroSignatory2Name: '', astroSignatory2Email: '',
     counterparty1Name: creatorName || '', counterparty1Email: creatorEmail || '', counterparty1Nric: '',
     counterparty2Name: '', counterparty2Email: '', counterparty2Nric: '',
     ccRepName: '', ccRepEmail: '',
     signingOrderRequired: 'No', signingOrderSequence: '',
     cesBoardRequired: 'No',
-    costCentre: '', contractAmount: '',
+    costCentre: 'A300DH006', contractAmount: '0',
     stampDutyParty: 'Astro',
-    specialRequests: '',
+    specialRequests: 'Auto-reminder',
   })
   const [generating, setGenerating] = useState(false)
 
