@@ -153,6 +153,97 @@ export async function onRequestGet({ env }) {
     { name: 'Add last_login_device to users',            sql: `ALTER TABLE users ADD COLUMN last_login_device  TEXT NOT NULL DEFAULT ''` },
     { name: 'Add last_login_country to users',           sql: `ALTER TABLE users ADD COLUMN last_login_country TEXT NOT NULL DEFAULT ''` },
     { name: 'Add last_login_city to users',              sql: `ALTER TABLE users ADD COLUMN last_login_city    TEXT NOT NULL DEFAULT ''` },
+    {
+      name: 'Create agreement_sheets table',
+      sql: `CREATE TABLE IF NOT EXISTS agreement_sheets (
+        id           TEXT PRIMARY KEY,
+        creator_id   TEXT NOT NULL,
+        data         TEXT NOT NULL DEFAULT '{}',
+        archived     INTEGER NOT NULL DEFAULT 0,
+        created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
+    { name: 'Index agreement_sheets.creator_id', sql: `CREATE INDEX IF NOT EXISTS idx_agreement_sheets_creator_id ON agreement_sheets(creator_id)` },
+    {
+      name: 'Create report_templates table',
+      sql: `CREATE TABLE IF NOT EXISTS report_templates (
+        id           TEXT PRIMARY KEY,
+        title        TEXT NOT NULL,
+        report_type  TEXT NOT NULL DEFAULT 'summary',
+        file_type    TEXT NOT NULL DEFAULT 'csv',
+        date_range   TEXT NOT NULL DEFAULT 'all',
+        range_start  TEXT NOT NULL DEFAULT '',
+        range_end    TEXT NOT NULL DEFAULT '',
+        campaign_ids TEXT NOT NULL DEFAULT '[]',
+        brand_names  TEXT NOT NULL DEFAULT '[]',
+        creator_ids  TEXT NOT NULL DEFAULT '[]',
+        pics         TEXT NOT NULL DEFAULT '[]',
+        levels       TEXT NOT NULL DEFAULT '["campaign","creator"]',
+        metrics      TEXT NOT NULL DEFAULT '[]',
+        created_by   TEXT NOT NULL DEFAULT '',
+        created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        deleted_at   TEXT
+      )`,
+    },
+    {
+      name: 'Create activity_log table',
+      sql: `CREATE TABLE IF NOT EXISTS activity_log (
+        id          TEXT PRIMARY KEY,
+        entity_type TEXT NOT NULL,
+        entity_id   TEXT NOT NULL,
+        entity_name TEXT NOT NULL DEFAULT '',
+        action      TEXT NOT NULL,
+        from_status TEXT NOT NULL DEFAULT '',
+        to_status   TEXT NOT NULL DEFAULT '',
+        actor       TEXT NOT NULL DEFAULT '',
+        meta        TEXT NOT NULL DEFAULT '{}',
+        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
+    {
+      name: 'Create internal_projects table',
+      sql: `CREATE TABLE IF NOT EXISTS internal_projects (
+        id          TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        status      TEXT NOT NULL DEFAULT 'Active',
+        priority    TEXT NOT NULL DEFAULT 'Medium',
+        due_date    TEXT NOT NULL DEFAULT '',
+        color       TEXT NOT NULL DEFAULT '#6C5CE7',
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        deleted_at  TEXT DEFAULT NULL
+      )`,
+    },
+    {
+      name: 'Create internal_tasks table',
+      sql: `CREATE TABLE IF NOT EXISTS internal_tasks (
+        id          TEXT PRIMARY KEY,
+        project_id  TEXT NOT NULL,
+        title       TEXT NOT NULL,
+        description TEXT NOT NULL DEFAULT '',
+        status      TEXT NOT NULL DEFAULT 'To Do',
+        priority    TEXT NOT NULL DEFAULT 'Medium',
+        assignee    TEXT NOT NULL DEFAULT '',
+        due_date    TEXT NOT NULL DEFAULT '',
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        deleted_at  TEXT DEFAULT NULL
+      )`,
+    },
+    {
+      name: 'Create notifications table',
+      sql: `CREATE TABLE IF NOT EXISTS notifications (
+        id TEXT PRIMARY KEY,
+        user_display_name TEXT NOT NULL,
+        task_id TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        task_title TEXT NOT NULL,
+        message TEXT NOT NULL,
+        read_at TEXT DEFAULT NULL,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+      )`,
+    },
   ]
 
   for (const step of steps) {
