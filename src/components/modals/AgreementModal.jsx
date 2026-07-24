@@ -1,26 +1,15 @@
 import { useState, useEffect } from 'react'
 import { X, FileDown } from 'lucide-react'
 import { downloadAgreementDocx } from '@/lib/agreementDoc'
+import { buildAgreementDefaults } from '@/lib/agreementDefaults'
 import { createAgreementSheet, updateAgreementSheet } from '@/lib/api/agreementSheets'
 
 const INPUT = 'w-full bg-[#1A1A22] border border-white/[0.07] rounded-lg px-2.5 py-2 text-[12px] text-white placeholder:text-white/20 focus:outline-none focus:border-violet-500/50 focus:ring-1 focus:ring-violet-500/20 transition-all'
 const LABEL = 'block text-[10px] font-semibold text-white/35 uppercase tracking-wider mb-1'
 
-const DEFAULTS = {
-  astroSignatory1Name: 'MUHAMMAD MUZAMIL BIN HUSSIN', astroSignatory1Email: 'mell_hussin@kult.my',
-  counterparty1Nric: '',
-  ccRepName: '', ccRepEmail: '',
-  signingOrderRequired: 'No', signingOrderSequence: '',
-  cesBoardRequired: 'No',
-  costCentre: 'A300DH006', contractAmount: 'RM0',
-  stampDutyParty: 'Astro',
-  specialRequests: 'Auto-reminder',
-}
-
 export default function AgreementModal({ creatorId, creatorName, creatorEmail, creatorPhone, recordId, initialData, onClose, onSaved }) {
   const [agreement, setAgreement] = useState({
-    ...DEFAULTS,
-    counterparty1Name: creatorName || '', counterparty1Phone: creatorPhone || '', counterparty1Email: creatorEmail || '',
+    ...buildAgreementDefaults({ name: creatorName, email: creatorEmail, phone: creatorPhone }),
     ...(initialData || {}),
   })
   const [generating, setGenerating] = useState(false)

@@ -6,6 +6,7 @@ import { useRecruitStore } from '@/store/recruitStore'
 import { useCampaignStore } from '@/store/campaignStore'
 import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
+import { formatCompactNumber } from '@/lib/utils'
 import { getTier } from '@/lib/tierUtils'
 import { fetchDashboardMetrics, fetchTierDistribution, fetchActivityFeed } from '@/lib/api/analytics'
 import MetricsGrid from '@/components/dashboard/MetricsGrid'
@@ -53,7 +54,7 @@ function CampaignProgressCard({ campaign, tasks, onClick }) {
         </div>
         <div className="flex items-center gap-3 text-[10px] font-mono">
           {overdue > 0 && <span className="text-rose-400">{overdue} overdue</span>}
-          {campaign.budget > 0 && <span className="text-emerald-400/60 ml-auto">RM {(campaign.budget/1000).toFixed(0)}k</span>}
+          {campaign.budget > 0 && <span className="text-emerald-400/60 ml-auto">RM {formatCompactNumber(campaign.budget)}</span>}
         </div>
       </div>
     </div>

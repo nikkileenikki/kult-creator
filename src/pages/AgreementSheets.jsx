@@ -5,6 +5,7 @@ import { Mail, FileDown, Pencil, Archive, ArchiveRestore } from 'lucide-react'
 import Avatar from '@/components/shared/Avatar'
 import AgreementModal from '@/components/modals/AgreementModal'
 import { downloadAgreementDocx } from '@/lib/agreementDoc'
+import { buildAgreementDefaults } from '@/lib/agreementDefaults'
 import { fetchAgreementSheets, createAgreementSheet, updateAgreementSheet } from '@/lib/api/agreementSheets'
 
 const TAB_BTN = 'px-3 py-1.5 rounded-lg text-[12px] font-semibold border transition-all'
@@ -38,6 +39,7 @@ export default function AgreementSheets() {
   const rows = useMemo(() => {
     const q = globalSearch?.toLowerCase()
     return creators
+      .filter(c => c.status !== 'Rejected')
       .map(c => ({ creator: c, sheet: sheetByCreator.get(c.id) ?? null }))
       .filter(({ creator }) => !q || creator.name.toLowerCase().includes(q) || creator.email?.toLowerCase().includes(q))
       .filter(({ sheet }) => tab === 'archived' ? sheet?.archived : !sheet?.archived)
@@ -48,8 +50,15 @@ export default function AgreementSheets() {
   async function handleDownload(creator, sheet) {
     setBusyId(creator.id)
     try {
+      const hasData = sheet && Object.keys(sheet.data || {}).length > 0
+      const data = hasData ? sheet.data : buildAgreementDefaults({ name: creator.name, email: creator.email, phone: creator.contactNumber })
       const filename = `Agreement-${creator.name.replace(/[^\w\-]+/g, '_')}-${new Date().toISOString().slice(0, 10)}.docx`
-      await downloadAgreementDocx(filename, sheet.data)
+      await downloadAgreementDocx(filename, data)
+      if (!hasData) {
+        if (sheet) await updateAgreementSheet(sheet.id, { data })
+        else await createAgreementSheet({ creatorId: creator.id, data })
+        await loadSheets()
+      }
     } catch (e) {
       showToast('Failed to generate document: ' + e.message, 'error')
     } finally {
@@ -116,16 +125,14 @@ export default function AgreementSheets() {
                   {sheet && !sheet.archived ? `Generated ${new Date(sheet.updatedAt).toLocaleDateString('en-MY', { day: 'numeric', month: 'short', year: 'numeric' })}` : sheet?.archived ? 'Archived' : 'Not generated yet'}
                 </div>
                 <div className="flex items-center gap-1.5 flex-shrink-0">
-                  {sheet && Object.keys(sheet.data || {}).length > 0 && (
-                    <button
-                      onClick={() => handleDownload(creator, sheet)}
-                      disabled={busyId === creator.id}
-                      title="Download"
-                      className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-40"
-                    >
-                      <FileDown size={13} />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => handleDownload(creator, sheet)}
+                    disabled={busyId === creator.id}
+                    title="Download"
+                    className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/40 hover:text-white transition-all disabled:opacity-40"
+                  >
+                    <FileDown size={13} />
+                  </button>
                   <button
                     onClick={() => setEditTarget({ creator, sheet })}
                     title="Edit"

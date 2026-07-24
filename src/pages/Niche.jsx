@@ -5,6 +5,7 @@ import { useUIStore } from '@/store/uiStore'
 import { useNicheStore } from '@/store/nicheStore'
 import { useAuthStore } from '@/store/authStore'
 import Avatar from '@/components/shared/Avatar'
+import { formatCompactNumber } from '@/lib/utils'
 
 export default function Niche() {
   const creators       = useCreatorStore(s => s.creators)
@@ -71,7 +72,7 @@ export default function Niche() {
                   )}
                 </div>
                 <div className="flex items-center justify-between mt-3 pt-3 border-t border-white/7 text-[11px] font-mono text-white/30">
-                  <span>{(c.followers / 1000).toFixed(0)}K followers</span>
+                  <span>{formatCompactNumber(c.followers)} followers</span>
                   <span className={
                     c.status === 'Active'          ? 'text-emerald-400' :
                     c.status === 'Suspended'        ? 'text-rose-400' :
@@ -159,7 +160,7 @@ export default function Niche() {
             <div className="text-[10px] text-white/25 mb-2">
               {list.length === 0
                 ? 'No creators yet'
-                : `${list.length} creator${list.length !== 1 ? 's' : ''} · ${(totalFollowers / 1000).toFixed(0)}K total followers`
+                : `${list.length} creator${list.length !== 1 ? 's' : ''} · ${formatCompactNumber(totalFollowers)} total followers`
               }
             </div>
 
