@@ -16,8 +16,8 @@ const TOTAL_W = 9326
 const LEFT_LABEL_W = 4683   // cols 1-3
 const RIGHT_VALUE_W = 4643  // cols 4-6
 
-// Single (1.0) line spacing, tight paragraph gap so the form fits on one page.
-const SPACING = { after: 40, line: 240, lineRule: 'auto' }
+// Single (1.0) line spacing, with a comfortable paragraph gap.
+const SPACING = { after: 120, line: 240, lineRule: 'auto' }
 
 function run(text, opts = {}) {
   return new TextRun({ text, font: FONT, size: 24, ...opts })
@@ -38,7 +38,7 @@ function baseCell({ children, width, colSpan, shading, valign = VerticalAlign.TO
     borders,
     shading: shading ? cellShading(shading) : undefined,
     verticalAlign: valign,
-    margins: margins ?? { top: 40, bottom: 40, left: 108, right: 108 },
+    margins: margins ?? { top: 100, bottom: 100, left: 160, right: 160 },
     children,
   })
 }
@@ -90,7 +90,7 @@ function labelValueRow(label, value) {
   return new TableRow({
     children: [
       baseCell({ children: [para([run(label, { bold: true })])], width: LEFT_LABEL_W, colSpan: 3, shading: GRAY, valign: VerticalAlign.CENTER }),
-      baseCell({ children: [para([run(value || '', { size: 20 })])], width: RIGHT_VALUE_W, colSpan: 2, valign: VerticalAlign.CENTER }),
+      baseCell({ children: [para([run(value || '', { size: 20 })])], width: RIGHT_VALUE_W, colSpan: 3, valign: VerticalAlign.CENTER }),
     ],
   })
 }
@@ -205,7 +205,7 @@ export function generateAgreementDocx(data) {
       },
     },
     sections: [{
-      properties: { page: { margin: { top: 720, bottom: 720, left: 900, right: 900 } } },
+      properties: { page: { margin: { top: 1080, bottom: 1080, left: 1080, right: 1080 } } },
       children: [table],
     }],
   })
