@@ -179,7 +179,7 @@ export default function App() {
             <Route path="/users/new"        element={<NewUser />} />
             <Route path="/users/:id/edit"   element={<EditUser />} />
             <Route path="/creator-accounts" element={<CreatorAccounts />} />
-            <Route path="/agreement-sheets" element={<AgreementSheets />} />
+            <Route path="/agreement" element={<AgreementSheets />} />
             <Route path="*"                 element={<Navigate to="/" replace />} />
           </Routes>
         </main>

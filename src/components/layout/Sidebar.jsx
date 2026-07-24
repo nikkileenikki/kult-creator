@@ -48,7 +48,7 @@ export default function Sidebar() {
     ? [...NAV_BASE, { section: 'Admin', items: [
         { to: '/users',             label: 'Users',             icon: ShieldCheck },
         { to: '/creator-accounts',  label: 'Creator Accounts',  icon: User },
-        { to: '/agreement-sheets',  label: 'Agreement Sheets',  icon: FileDown },
+        { to: '/agreement',         label: 'Agreement Sheets',  icon: FileDown },
       ]}]
     : NAV_BASE
 
