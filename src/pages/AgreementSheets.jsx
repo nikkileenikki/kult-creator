@@ -39,6 +39,7 @@ export default function AgreementSheets() {
   const rows = useMemo(() => {
     const q = globalSearch?.toLowerCase()
     return creators
+      .filter(c => c.status !== 'Rejected')
       .map(c => ({ creator: c, sheet: sheetByCreator.get(c.id) ?? null }))
       .filter(({ creator }) => !q || creator.name.toLowerCase().includes(q) || creator.email?.toLowerCase().includes(q))
       .filter(({ sheet }) => tab === 'archived' ? sheet?.archived : !sheet?.archived)

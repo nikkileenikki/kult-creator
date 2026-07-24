@@ -11,7 +11,7 @@ import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
 import ProgressBar from '@/components/shared/ProgressBar'
 import { ChevronRight, Pencil, X, Check, Plus, CheckCircle2, Star, Eye, EyeOff, Lock, Trash2, ExternalLink } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn, formatCompactNumber } from '@/lib/utils'
 
 const PLATFORM_URL = {
   'TikTok':      u => `https://www.tiktok.com/@${u.replace(/^@/, '')}`,
@@ -421,7 +421,7 @@ export default function Persona() {
             ) : (
               <div>
                 {[
-                  ['Followers',      (creator.followers/1000).toFixed(0) + 'K'],
+                  ['Followers',      formatCompactNumber(creator.followers)],
                   ['Platform',       creator.platform],
                   ...(creator.secondaryPlatform ? [['2nd Platform', creator.secondaryPlatform]] : []),
                   ['Niches', [creator.niche, creator.secondaryNiche].filter(Boolean).join(', ')],

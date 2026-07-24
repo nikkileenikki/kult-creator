@@ -4,6 +4,7 @@ import { useCreatorStore } from '@/store/creatorStore'
 import { useUIStore } from '@/store/uiStore'
 import { useAuthStore } from '@/store/authStore'
 import { getTier } from '@/lib/tierUtils'
+import { formatCompactNumber } from '@/lib/utils'
 import { useNicheStore } from '@/store/nicheStore'
 import Avatar from '@/components/shared/Avatar'
 import Badge from '@/components/shared/Badge'
@@ -171,7 +172,7 @@ export default function Creators() {
                 <div className="grid grid-cols-3 gap-2 border-t border-white/7 pt-3.5">
                   <div>
                     <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">Followers</div>
-                    <div className="font-syne text-[14px] font-bold text-white mt-0.5">{(c.followers/1000).toFixed(0)}K</div>
+                    <div className="font-syne text-[14px] font-bold text-white mt-0.5">{formatCompactNumber(c.followers)}</div>
                   </div>
                   <div>
                     <div className="font-mono text-[10px] text-white/25 uppercase tracking-[.04em]">Tasks</div>

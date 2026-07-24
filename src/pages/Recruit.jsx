@@ -6,6 +6,7 @@ import { Mail, Phone, ExternalLink, Video, Users, AtSign, X, Calendar, FileDown 
 import Badge from '@/components/shared/Badge'
 import Avatar from '@/components/shared/Avatar'
 import AgreementModal from '@/components/modals/AgreementModal'
+import { formatCompactNumber } from '@/lib/utils'
 
 const STATUS_BADGE = { Pending: 'amber', 'Under Review': 'blue', Approved: 'green', Rejected: 'red' }
 
@@ -66,7 +67,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
                   {r.tiktokUsername && <span className="text-[13px] text-violet-400/80">{r.tiktokUsername}</span>}
                   {r.tiktokUsername && <span className="text-white/15">·</span>}
                   <span className="text-[13px] text-white/40">
-                    {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`} followers
+                    {r.followerRange || formatCompactNumber(r.followers)} followers
                   </span>
                 </div>
               </div>
@@ -119,7 +120,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
                   <div className="text-[10px] font-semibold text-white/25 uppercase tracking-wider mb-3">Creator Info</div>
                   <div className="grid grid-cols-2 gap-3">
                     <Row icon={Users} label="Follow Count">
-                      {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`}
+                      {r.followerRange || formatCompactNumber(r.followers)}
                     </Row>
                     <Row icon={Video} label="Live Experience">
                       <span className={r.liveExperience === 'Yes' ? 'text-emerald-400' : r.liveExperience ? 'text-white/40' : 'text-white/20'}>
@@ -334,7 +335,7 @@ export default function Recruit() {
                       {r.tiktokUsername && <span className="text-[12px] text-violet-400/80">{r.tiktokUsername}</span>}
                       {r.tiktokUsername && <span className="text-white/15">·</span>}
                       <span className="text-[12px] text-white/30">
-                        {r.followerRange || `${(r.followers / 1000).toFixed(0)}K`} followers
+                        {r.followerRange || formatCompactNumber(r.followers)} followers
                       </span>
                     </div>
                   </div>
