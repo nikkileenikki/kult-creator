@@ -4,7 +4,14 @@ import { useAuthStore } from '@/store/authStore'
 import { useUIStore } from '@/store/uiStore'
 import { request } from '@/lib/api'
 import { ROLES, PERMISSIONS, ROLE_COLOR } from '@/lib/permissions'
-import { Search, Plus, Pencil, Trash2 } from 'lucide-react'
+import { Search, Plus, Pencil, Trash2, Ban, Power, LogOut } from 'lucide-react'
+
+function formatLastLogin(u) {
+  if (!u.lastLoginAt) return 'Never logged in'
+  const when = new Date(u.lastLoginAt + 'Z').toLocaleString('en-MY', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+  const place = [u.lastLoginCity, u.lastLoginCountry].filter(Boolean).join(', ')
+  return [when, u.lastLoginDevice, place, u.lastLoginIp].filter(Boolean).join(' · ')
+}
 
 const ROLE_AVATAR = {
   admin:   'from-amber-500 to-amber-400',
@@ -56,6 +63,28 @@ export default function Users() {
     }
   }
 
+  async function handleToggleDisabled(u) {
+    const action = u.disabled ? 'Enable' : 'Disable'
+    if (!confirm(`${action} "${u.displayName}"? ${u.disabled ? '' : 'They will be signed out of all devices and unable to log in.'}`)) return
+    try {
+      await request('PATCH', `/users/${u.id}`, { disabled: !u.disabled })
+      showToast(u.disabled ? `${u.displayName} re-enabled` : `${u.displayName} disabled`)
+      fetchUsers()
+    } catch (e) {
+      showToast(e.message, 'error')
+    }
+  }
+
+  async function handleSignOutAll(u) {
+    if (!confirm(`Sign "${u.displayName}" out of all devices? Their current session(s) will be invalidated immediately.`)) return
+    try {
+      await request('PATCH', `/users/${u.id}`, { signOutAll: true })
+      showToast(`${u.displayName} signed out of all devices`)
+    } catch (e) {
+      showToast(e.message, 'error')
+    }
+  }
+
   return (
     <div className="animate-[fadeUp_.3s_ease]">
       {/* Header */}
@@ -98,7 +127,7 @@ export default function Users() {
           <div className="divide-y divide-white/[0.05]">
             {filtered.map(u => (
               <div key={u.id}>
-                <div className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[.02] transition-colors">
+                <div className={`flex items-center gap-3 px-5 py-3.5 hover:bg-white/[.02] transition-colors ${u.disabled ? 'opacity-50' : ''}`}>
                   {/* Avatar */}
                   <div className={`w-8 h-8 rounded-full bg-gradient-to-br ${ROLE_AVATAR[u.role] ?? 'from-white/20 to-white/10'} flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0`}>
                     {getInitials(u.displayName)}
@@ -111,6 +140,11 @@ export default function Users() {
                       <span className="font-mono text-[11px] text-white/25">@{u.username}</span>
                       {u.id === authUser?.sub && (
                         <span className="text-[10px] text-violet-400/60 bg-violet-400/10 border border-violet-400/15 px-1.5 py-0.5 rounded-full">You</span>
+                      )}
+                      {u.disabled && (
+                        <span className="flex items-center gap-1 text-[10px] text-rose-400/70 bg-rose-400/10 border border-rose-400/15 px-1.5 py-0.5 rounded-full">
+                          <Ban size={9} /> Disabled
+                        </span>
                       )}
                     </div>
                     <div className="flex items-center gap-1.5 mt-1 flex-wrap">
@@ -126,11 +160,30 @@ export default function Users() {
                         <span className="text-[10px] text-white/20">+{u.permissions.length - 3} more</span>
                       )}
                     </div>
+                    <div className="text-[10px] text-white/20 mt-1 truncate" title={formatLastLogin(u)}>
+                      {formatLastLogin(u)}
+                    </div>
                   </div>
 
                   {/* Actions */}
                   {can('users.manage') && (
                     <div className="flex items-center gap-1 flex-shrink-0">
+                      <button
+                        onClick={() => handleSignOutAll(u)}
+                        title="Sign out of all devices"
+                        className="w-7 h-7 rounded-lg bg-white/5 hover:bg-amber-500/15 flex items-center justify-center text-white/30 hover:text-amber-400 transition-all"
+                      >
+                        <LogOut size={11} />
+                      </button>
+                      {u.id !== authUser?.sub && (
+                        <button
+                          onClick={() => handleToggleDisabled(u)}
+                          title={u.disabled ? 'Re-enable account' : 'Disable account'}
+                          className={`w-7 h-7 rounded-lg bg-white/5 flex items-center justify-center text-white/30 transition-all ${u.disabled ? 'hover:bg-emerald-500/15 hover:text-emerald-400' : 'hover:bg-rose-500/15 hover:text-rose-400'}`}
+                        >
+                          {u.disabled ? <Power size={11} /> : <Ban size={11} />}
+                        </button>
+                      )}
                       <button
                         onClick={() => navigate(`/users/${u.id}/edit`)}
                         className="w-7 h-7 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/30 hover:text-white/70 transition-all"

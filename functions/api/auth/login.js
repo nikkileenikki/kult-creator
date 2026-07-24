@@ -1,6 +1,7 @@
 import { json, err, opts, getDB } from '../_helpers'
 import { verifyPassword } from '../_passwords'
 import { signJWT } from '../_jwt'
+import { describeDevice, getRequestLocation } from '../_deviceInfo'
 
 export const onRequestOptions = () => opts()
 
@@ -23,9 +24,18 @@ export async function onRequestPost({ request, env }) {
   }
 
   if (!user) return err('Invalid credentials', 401)
+  if (user.disabled) return err('This account has been disabled. Contact an admin for access.', 403)
   const ok = await verifyPassword(password, user.password_hash)
   if (!ok) return err('Invalid credentials', 401)
+
+  const { ip, country, city } = getRequestLocation(request)
+  const device = describeDevice(request.headers.get('User-Agent'))
+  await db.prepare(
+    `UPDATE users SET last_login_at = datetime('now'), last_login_ip = ?, last_login_device = ?, last_login_country = ?, last_login_city = ? WHERE id = ?`
+  ).bind(ip, device, country, city, user.id).run().catch(() => {})
+
   const permissions = JSON.parse(user.permissions ?? '[]')
-  const token = await signJWT({ sub: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions }, env)
+  const tokenVersion = user.token_version ?? 0
+  const token = await signJWT({ sub: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions, tokenVersion }, env)
   return json({ token, user: { id: user.id, username: user.username, displayName: user.display_name, role: user.role, permissions } })
 }

@@ -6,14 +6,23 @@ import { ROLE_PERMISSIONS } from '../_permissions'
 export const onRequestOptions = () => opts()
 
 function mapUser(r) {
-  return { id: r.id, username: r.username, displayName: r.display_name, role: r.role, permissions: JSON.parse(r.permissions ?? '[]'), createdAt: r.created_at }
+  return {
+    id: r.id, username: r.username, displayName: r.display_name, role: r.role,
+    permissions: JSON.parse(r.permissions ?? '[]'), createdAt: r.created_at,
+    disabled: !!r.disabled,
+    lastLoginAt: r.last_login_at || null,
+    lastLoginIp: r.last_login_ip || '',
+    lastLoginDevice: r.last_login_device || '',
+    lastLoginCountry: r.last_login_country || '',
+    lastLoginCity: r.last_login_city || '',
+  }
 }
 
 export async function onRequestGet({ request, env }) {
   const { authError } = await requireAdmin(request, env)
   if (authError) return authError
   const db = getDB(env)
-  const { results } = await db.prepare('SELECT id,username,display_name,role,permissions,created_at FROM users ORDER BY created_at ASC').all()
+  const { results } = await db.prepare('SELECT * FROM users ORDER BY created_at ASC').all()
   return json(results.map(mapUser))
 }
 
