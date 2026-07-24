@@ -1,0 +1,7 @@
+ALTER TABLE users ADD COLUMN disabled           INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN token_version      INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE users ADD COLUMN last_login_at      TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN last_login_ip      TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN last_login_device  TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN last_login_country TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN last_login_city    TEXT NOT NULL DEFAULT '';
