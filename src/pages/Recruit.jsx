@@ -257,7 +257,7 @@ function ProfileModal({ recruit: r, onClose, onApprove, onReject, onReview }) {
       </div>
 
       {showAgreement && (
-        <AgreementModal creatorName={r.name} creatorEmail={r.email} creatorPhone={r.contactNumber} onClose={() => setShowAgreement(false)} />
+        <AgreementModal creatorId={`c_r_${r.id}`} creatorName={r.name} creatorEmail={r.email} creatorPhone={r.contactNumber} onClose={() => setShowAgreement(false)} />
       )}
     </>
   )
